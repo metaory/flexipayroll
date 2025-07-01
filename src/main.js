@@ -1,4 +1,7 @@
+import "@fontsource/bungee"
+import "@fontsource/baloo-2"
 import './app.css'
+
 import { mount } from 'svelte'
 import App from './App.svelte'
 
