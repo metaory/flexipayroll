@@ -8,23 +8,25 @@ export const el = (tag, attrs = {}, children = []) => {
   const element = document.createElement(tag)
 
   // Set attributes
-  Object.entries(attrs).forEach(([key, value]) => {
+  for (const [key, value] of Object.entries(attrs)) {
     if (key === 'class') {
-      value.split(' ').filter(Boolean).forEach(cls => element.classList.add(cls))
+      for (const cls of value.split(' ').filter(Boolean)) {
+        element.classList.add(cls)
+      }
     } else if (key.startsWith('on') && typeof value === 'function') {
       element.addEventListener(key.substring(2).toLowerCase(), value)
     } else {
       element.setAttribute(key, value)
     }
-  })
+  }
 
   // Add children
   if (Array.isArray(children)) {
-    children.forEach(child => {
+    for (const child of children) {
       if (child !== null && child !== undefined) {
         element.append(typeof child === 'string' ? document.createTextNode(child) : child)
       }
-    })
+    }
   } else if (children !== null && children !== undefined) {
     element.append(typeof children === 'string' ? document.createTextNode(children) : children)
   }
@@ -94,9 +96,9 @@ export const createTable = (headers, rows, options = {}) => {
   const thead = el('thead')
   const headerRow = el('tr')
 
-  headers.forEach(header => {
+  for (const header of headers) {
     headerRow.appendChild(el('th', {}, header))
-  })
+  }
 
   thead.appendChild(headerRow)
   table.appendChild(thead)
@@ -104,15 +106,15 @@ export const createTable = (headers, rows, options = {}) => {
   // Add body rows
   const tbody = el('tbody')
 
-  rows.forEach(row => {
+  for (const row of rows) {
     const tr = el('tr')
 
-    row.forEach(cell => {
+    for (const cell of row) {
       tr.appendChild(el('td', {}, cell))
-    })
+    }
 
     tbody.appendChild(tr)
-  })
+  }
 
   table.appendChild(tbody)
 
