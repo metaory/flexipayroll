@@ -3,9 +3,9 @@
  * Handles recording and viewing employee attendance
  */
 
-import { employees, storeUtils } from '../store.js'
+import { employees, attendance } from '../store.js'
 import { el, formGroup, modal, notify, createTable, formatDate } from '../ui.js'
-import { DAY_TYPES } from '../calc.js'
+import { DAY_TYPES } from '../core.js'
 
 // Create attendance form
 const createAttendanceForm = (employeeId, date, onSubmit, existingData = {}) => {
@@ -98,14 +98,14 @@ const createAttendanceForm = (employeeId, date, onSubmit, existingData = {}) => 
 
 // Show attendance form modal
 const showAttendanceModal = (employeeId, date, existingData) => {
-  const employee = employees.find(emp => emp.id === employeeId)
+  const employee = employees.getById(employeeId)
   if (!employee) {
     notify('Employee not found', 'error')
     return
   }
 
   const form = createAttendanceForm(employeeId, date, (attendanceData) => {
-    storeUtils.recordAttendance(employeeId, date, attendanceData)
+    attendance.record(employeeId, date, attendanceData)
     modal.close()
     notify('Attendance recorded successfully', 'success')
     renderAttendanceList() // Re-render the list
@@ -150,9 +150,9 @@ const createDateSelector = () => {
   // Add options for all employees
   employeeSelect.appendChild(el('option', { value: '' }, 'All Employees'))
 
-  employees.forEach(emp => {
+  for (const emp of employees.getAll()) {
     employeeSelect.appendChild(el('option', { value: emp.id }, emp.name))
-  })
+  }
 
   // Create selector container
   return el('div', { class: 'attendance-selector' }, [
@@ -191,8 +191,8 @@ const renderAttendanceList = () => {
 
   // Determine which employees to display
   const employeesToDisplay = selectedEmployeeId
-    ? employees.filter(emp => emp.id === selectedEmployeeId)
-    : employees
+    ? employees.getAll().filter(emp => emp.id === selectedEmployeeId)
+    : employees.getAll()
 
   if (employeesToDisplay.length === 0) {
     container.appendChild(el('div', { class: 'empty-state' }, 'No employees found.'))
@@ -203,7 +203,7 @@ const renderAttendanceList = () => {
   const daysInMonth = getDaysInMonth(year, month)
 
   // For each employee, create an attendance table
-  employeesToDisplay.forEach(employee => {
+  for (const employee of employeesToDisplay) {
     // Create table headers with day numbers
     const headers = ['Day', 'Date', 'Type', 'Entry', 'Exit', 'Notes', 'Actions']
     const rows = []
@@ -213,29 +213,30 @@ const renderAttendanceList = () => {
       const date = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`
 
       // Check if attendance is recorded for this day
-      const attendance = employee.attendance?.[date] || {}
+      const attendanceData = attendance.getForEmployee(employee.id, date, date) || {}
+      const dayAttendance = attendanceData[date] || {}
 
       // Create row data
-      const typeDisplay = attendance.type
+      const typeDisplay = dayAttendance.type
         ? {
             [DAY_TYPES.REGULAR]: 'Regular',
             [DAY_TYPES.HOLIDAY]: 'Holiday',
             [DAY_TYPES.PAID_LEAVE]: 'Paid Leave',
             [DAY_TYPES.UNPAID_LEAVE]: 'Unpaid Leave'
-          }[attendance.type]
+          }[dayAttendance.type]
         : '-'
 
       rows.push([
         day,
         formatDate(new Date(date)),
         typeDisplay,
-        attendance.entryTime || '-',
-        attendance.exitTime || '-',
-        attendance.notes || '-',
+        dayAttendance.entryTime || '-',
+        dayAttendance.exitTime || '-',
+        dayAttendance.notes || '-',
         el('button', {
           class: 'btn small',
-          onclick: () => showAttendanceModal(employee.id, date, attendance)
-        }, attendance.type ? 'Edit' : 'Record')
+          onclick: () => showAttendanceModal(employee.id, date, dayAttendance)
+        }, dayAttendance.type ? 'Edit' : 'Record')
       ])
     }
 
@@ -249,7 +250,7 @@ const renderAttendanceList = () => {
     ])
 
     container.appendChild(employeeSection)
-  })
+  }
 }
 
 // Initialize component

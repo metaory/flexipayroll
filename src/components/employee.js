@@ -3,9 +3,9 @@
  * Handles CRUD operations for employees
  */
 
-import { employees, storeUtils } from '../store.js'
+import { employees } from '../store.js'
 import { el, formGroup, modal, notify, createTable } from '../ui.js'
-import { VALIDATION_RULES, BUSINESS_RULES } from '../core.js'
+import { validateEmployee, EMPLOYEE_ATTRIBUTES } from '../core.js'
 
 // Create employee form
 const createEmployeeForm = (employee, onSubmit) => {
@@ -26,7 +26,7 @@ const createEmployeeForm = (employee, onSubmit) => {
       }
 
       // Validate employee data
-      const validation = VALIDATION_RULES.validateEmployee(employeeData)
+      const validation = validateEmployee(employeeData)
       if (!validation.isValid) {
         notify(validation.errors.join(', '), 'error')
         return
@@ -47,7 +47,7 @@ const createEmployeeForm = (employee, onSubmit) => {
   // Gender field
   const genderSelect = el('select', { name: 'gender', required: 'required' }, [
     el('option', { value: '' }, 'Select Gender'),
-    ...BUSINESS_RULES.EMPLOYEE_ATTRIBUTES.GENDER.map(gender => 
+    ...EMPLOYEE_ATTRIBUTES.GENDER.map(gender => 
       el('option', { 
         value: gender, 
         selected: employee.gender === gender 
@@ -59,7 +59,7 @@ const createEmployeeForm = (employee, onSubmit) => {
   // Marital status field
   const maritalStatusSelect = el('select', { name: 'maritalStatus', required: 'required' }, [
     el('option', { value: '' }, 'Select Marital Status'),
-    ...BUSINESS_RULES.EMPLOYEE_ATTRIBUTES.MARITAL_STATUS.map(status => 
+    ...EMPLOYEE_ATTRIBUTES.MARITAL_STATUS.map(status => 
       el('option', { 
         value: status, 
         selected: employee.maritalStatus === status 
@@ -102,7 +102,7 @@ const createEmployeeForm = (employee, onSubmit) => {
 // Create a new employee modal
 const showAddEmployeeModal = () => {
   const form = createEmployeeForm({}, (employeeData) => {
-    storeUtils.addEmployee(employeeData)
+    employees.add(employeeData)
     modal.close()
     notify('Employee added successfully', 'success')
     renderEmployeeList() // Re-render the list
@@ -114,7 +114,7 @@ const showAddEmployeeModal = () => {
 // Edit employee modal
 const showEditEmployeeModal = (employee) => {
   const form = createEmployeeForm(employee, (employeeData) => {
-    storeUtils.updateEmployee(employee.id, employeeData)
+    employees.update(employee.id, employeeData)
     modal.close()
     notify('Employee updated successfully', 'success')
     renderEmployeeList() // Re-render the list
@@ -135,7 +135,7 @@ const showDeleteConfirmation = (employee) => {
       el('button', {
         class: 'btn danger',
         onclick: () => {
-          storeUtils.deleteEmployee(employee.id)
+          employees.delete(employee.id)
           modal.close()
           notify('Employee deleted successfully', 'success')
           renderEmployeeList() // Re-render the list
@@ -154,7 +154,7 @@ const renderEmployeeList = () => {
 
   container.innerHTML = ''
 
-  if (employees.length === 0) {
+  if (employees.getAll().length === 0) {
     container.appendChild(el('div', { class: 'empty-state' }, [
       el('p', {}, 'No employees found.'),
       el('button', {
@@ -168,7 +168,7 @@ const renderEmployeeList = () => {
   // Create employee table
   const headers = ['Name', 'Gender', 'Marital Status', 'Monthly Salary', 'Actions']
 
-  const rows = employees.map(employee => [
+  const rows = employees.getAll().map(employee => [
     employee.name,
     employee.gender,
     employee.maritalStatus,

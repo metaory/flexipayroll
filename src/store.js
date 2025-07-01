@@ -1,23 +1,23 @@
 /**
- * Storage module for xPayroll
- * Handles persistence using localStorage with proxied objects
+ * Storage and data management for xPayroll
+ * Consumer-focused APIs with localStorage persistence
  */
 
-import { getDefaultConfig } from './core.js'
+import { DEFAULT_CONFIG } from './core.js'
 
-// Storage keys
-const KEYS = {
+// ============================================================================
+// STORAGE LAYER
+// ============================================================================
+
+const STORAGE_KEYS = {
   EMPLOYEES: 'xpayroll_employees',
-  ATTENDANCE: 'xpayroll_attendance',
-  CONFIG: 'xpayroll_config',
+  ATTENDANCE: 'xpayroll_attendance', 
+  CONFIG: 'xpayroll_config'
 }
 
-// Create reactive storage with localStorage persistence
-const createStore = (key, defaultValue = {}) => {
-  // Load data from localStorage or use default
+const createReactiveStore = (key, defaultValue) => {
   const data = JSON.parse(localStorage.getItem(key) || JSON.stringify(defaultValue))
-
-  // Create a proxy to intercept changes and save to localStorage
+  
   return new Proxy(data, {
     set(target, prop, value) {
       target[prop] = value
@@ -32,52 +32,61 @@ const createStore = (key, defaultValue = {}) => {
   })
 }
 
-// Store instances
-export const employees = createStore(KEYS.EMPLOYEES, [])
-export const attendance = createStore(KEYS.ATTENDANCE, {})
-export const config = createStore(KEYS.CONFIG, getDefaultConfig())
+// ============================================================================
+// DATA STORES
+// ============================================================================
 
-// Helper methods for store management
-export const storeUtils = {
-  // Add a new employee
-  addEmployee(employee) {
-    employee.id = Date.now().toString()
-    employees.push(employee)
-    return employee.id
+const employeesData = createReactiveStore(STORAGE_KEYS.EMPLOYEES, [])
+const attendanceData = createReactiveStore(STORAGE_KEYS.ATTENDANCE, {})
+const configData = createReactiveStore(STORAGE_KEYS.CONFIG, DEFAULT_CONFIG)
+
+// ============================================================================
+// CONSUMER-FRIENDLY APIs
+// ============================================================================
+
+// Employee management
+export const employees = {
+  // Get all employees
+  getAll: () => employeesData,
+  
+  // Get employee by ID
+  getById: (id) => employeesData.find(emp => emp.id === id),
+  
+  // Add new employee
+  add: (employee) => {
+    const newEmployee = { ...employee, id: Date.now().toString() }
+    employeesData.push(newEmployee)
+    return newEmployee.id
   },
-
-  // Update an existing employee
-  updateEmployee(id, updates) {
-    const index = employees.findIndex(emp => emp.id === id)
+  
+  // Update employee
+  update: (id, updates) => {
+    const index = employeesData.findIndex(emp => emp.id === id)
     if (index >= 0) {
-      employees[index] = { ...employees[index], ...updates }
+      employeesData[index] = { ...employeesData[index], ...updates }
       return true
     }
     return false
   },
-
-  // Delete an employee
-  deleteEmployee(id) {
-    const index = employees.findIndex(emp => emp.id === id)
+  
+  // Delete employee
+  delete: (id) => {
+    const index = employeesData.findIndex(emp => emp.id === id)
     if (index >= 0) {
-      employees.splice(index, 1)
+      employeesData.splice(index, 1)
       return true
     }
     return false
-  },
+  }
+}
 
-  // Record attendance for an employee
-  recordAttendance(employeeId, date, data) {
-    if (!attendance[employeeId]) attendance[employeeId] = {}
-    attendance[employeeId][date] = data
-  },
-
-  // Get attendance for an employee in a date range
-  getAttendance(employeeId, startDate, endDate) {
+// Attendance management
+export const attendance = {
+  // Get attendance for employee in date range
+  getForEmployee: (employeeId, startDate, endDate) => {
     const results = {}
-    if (!attendance[employeeId]) return results
-
-    const empAttendance = attendance[employeeId]
+    const empAttendance = attendanceData[employeeId] || {}
+    
     for (const date of Object.keys(empAttendance)) {
       if (date >= startDate && date <= endDate) {
         results[date] = empAttendance[date]
@@ -85,17 +94,55 @@ export const storeUtils = {
     }
     return results
   },
-
-  // Update configuration values
-  updateConfig(updates) {
-    Object.assign(config, updates)
+  
+  // Get attendance for employee in month
+  getForMonth: (employeeId, year, month) => {
+    const monthStr = `${year}-${month.toString().padStart(2, '0')}`
+    const results = {}
+    const empAttendance = attendanceData[employeeId] || {}
+    
+    for (const [date, data] of Object.entries(empAttendance)) {
+      if (date.startsWith(monthStr)) {
+        results[date] = data
+      }
+    }
+    return results
   },
-
-  // Clear all data (for testing)
-  clearAllData() {
-    localStorage.removeItem(KEYS.EMPLOYEES)
-    localStorage.removeItem(KEYS.ATTENDANCE)
-    localStorage.removeItem(KEYS.CONFIG)
-    location.reload()
+  
+  // Record attendance
+  record: (employeeId, date, data) => {
+    if (!attendanceData[employeeId]) {
+      attendanceData[employeeId] = {}
+    }
+    attendanceData[employeeId][date] = data
   }
 }
+
+// Configuration management
+export const config = {
+  // Get current config
+  get: () => configData,
+  
+  // Update config
+  update: (updates) => {
+    Object.assign(configData, updates)
+  },
+  
+  // Reset to defaults
+  reset: () => {
+    Object.assign(configData, DEFAULT_CONFIG)
+  }
+}
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+export const clearAllData = () => {
+  localStorage.removeItem(STORAGE_KEYS.EMPLOYEES)
+  localStorage.removeItem(STORAGE_KEYS.ATTENDANCE)
+  localStorage.removeItem(STORAGE_KEYS.CONFIG)
+  location.reload()
+}
+
+

@@ -3,7 +3,7 @@
  * Handles system configuration settings
  */
 
-import { config, storeUtils } from '../store.js'
+import { config, clearAllData } from '../store.js'
 import { el, formGroup, notify } from '../ui.js'
 
 // Create config form
@@ -14,18 +14,23 @@ const createConfigForm = () => {
       e.preventDefault()
 
       const formData = new FormData(e.target)
+      const currentConfig = config.get()
       const updates = {
         workdayHours: Number(formData.get('workdayHours')),
-        bonusE: Number(formData.get('bonusE')),
-        bonusS: Number(formData.get('bonusS')),
-        bonusK: Number(formData.get('bonusK')),
-        bonusM: Number(formData.get('bonusM')),
-        bonusT: Number(formData.get('bonusT')),
-        deductI: Number(formData.get('deductI')) / 100, // Convert from percentage to decimal
+        bonuses: {
+          E: { ...currentConfig.bonuses.E, value: Number(formData.get('bonusE')) },
+          S: { ...currentConfig.bonuses.S, value: Number(formData.get('bonusS')) },
+          K: { ...currentConfig.bonuses.K, value: Number(formData.get('bonusK')) },
+          M: { ...currentConfig.bonuses.M, value: Number(formData.get('bonusM')) },
+          T: { ...currentConfig.bonuses.T, value: Number(formData.get('bonusT')) }
+        },
+        deductions: {
+          insurance: { ...currentConfig.deductions.insurance, value: Number(formData.get('deductI')) / 100 }
+        }
       }
 
       // Update config
-      storeUtils.updateConfig(updates)
+      config.update(updates)
       notify('Configuration updated successfully', 'success')
     }
   })
@@ -34,7 +39,7 @@ const createConfigForm = () => {
   form.appendChild(formGroup('Working Hours Per Day', el('input', {
     type: 'number',
     name: 'workdayHours',
-    value: config.workdayHours,
+    value: config.get().workdayHours,
     step: '0.5',
     min: '1',
     max: '24',
@@ -49,7 +54,7 @@ const createConfigForm = () => {
   bonusSection.appendChild(formGroup('Bonus E (Days)', el('input', {
     type: 'number',
     name: 'bonusE',
-    value: config.bonusE,
+    value: config.get().bonuses.E.value,
     step: '0.5',
     min: '0',
     required: 'required'
@@ -59,7 +64,7 @@ const createConfigForm = () => {
   bonusSection.appendChild(formGroup('Bonus S (Days)', el('input', {
     type: 'number',
     name: 'bonusS',
-    value: config.bonusS,
+    value: config.get().bonuses.S.value,
     step: '0.5',
     min: '0',
     required: 'required'
@@ -69,7 +74,7 @@ const createConfigForm = () => {
   bonusSection.appendChild(formGroup('Bonus K (Fixed Amount)', el('input', {
     type: 'number',
     name: 'bonusK',
-    value: config.bonusK,
+    value: config.get().bonuses.K.value,
     step: '100000',
     min: '0',
     required: 'required'
@@ -79,7 +84,7 @@ const createConfigForm = () => {
   bonusSection.appendChild(formGroup('Bonus M (Fixed Amount)', el('input', {
     type: 'number',
     name: 'bonusM',
-    value: config.bonusM,
+    value: config.get().bonuses.M.value,
     step: '100000',
     min: '0',
     required: 'required'
@@ -89,7 +94,7 @@ const createConfigForm = () => {
   bonusSection.appendChild(formGroup('Bonus T (Married Only)', el('input', {
     type: 'number',
     name: 'bonusT',
-    value: config.bonusT,
+    value: config.get().bonuses.T.value,
     step: '100000',
     min: '0',
     required: 'required'
@@ -105,7 +110,7 @@ const createConfigForm = () => {
   deductionSection.appendChild(formGroup('Insurance Deduction (%)', el('input', {
     type: 'number',
     name: 'deductI',
-    value: config.deductI * 100, // Convert to percentage for display
+    value: config.get().deductions.insurance.value * 100, // Convert to percentage for display
     step: '0.1',
     min: '0',
     max: '100',
@@ -123,7 +128,7 @@ const createConfigForm = () => {
     class: 'btn',
     onclick: () => {
       if (confirm('Reset configuration to default values?')) {
-        storeUtils.clearAllData()
+        clearAllData()
       }
     }
   }, 'Reset to Defaults')
