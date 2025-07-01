@@ -7,21 +7,23 @@
 
 import { config } from './store.js'
 import { 
-  BUSINESS_RULES, 
-  calculateWorkingHours, 
-  calculateDailyRate, 
-  calculateHourlyRate,
-  calculateAttendanceSummary,
-  calculateBasicSalary,
-  calculateCompleteSalary
+  calculateSalaryBreakdown,
+  calculateWorkingHours,
+  calculateAttendanceSummary
 } from './core.js'
 
 // Legacy exports for backward compatibility
-export const DAY_TYPES = BUSINESS_RULES.DAY_TYPES
+export const DAY_TYPES = {
+  REGULAR: 'regular',
+  HOLIDAY: 'holiday', 
+  PAID_LEAVE: 'paid_leave',
+  UNPAID_LEAVE: 'unpaid_leave'
+}
+
 export const calculateHours = calculateWorkingHours
 export const calculateTotalHours = calculateAttendanceSummary
 
 // Calculate total salary with all bonuses and deductions
 export const calculateSalary = (employee, attendanceData, adjustments = []) => {
-  return calculateCompleteSalary(employee, attendanceData, config, adjustments)
+  return calculateSalaryBreakdown(employee, attendanceData, adjustments, config)
 }

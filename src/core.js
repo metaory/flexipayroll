@@ -1,435 +1,323 @@
 /**
  * Business Logic Core for XPayroll
- * Contains all payroll rules, calculations, and business understanding
+ * Functional, composable, and declarative payroll calculations
  */
 
 // ============================================================================
-// BUSINESS CONSTANTS & RULES
+// CONFIGURATION & CONSTANTS
 // ============================================================================
 
-export const BUSINESS_RULES = {
-  // Working hours configuration
-  WORKDAY_HOURS: 8, // Including 1-hour lunch break
-  WORKING_DAYS_PER_MONTH: 22, // Standard working days per month
-  
-  // Day types for attendance
-  DAY_TYPES: {
-    REGULAR: 'regular',      // Normal working day with entry/exit times
-    HOLIDAY: 'holiday',      // Holiday with pay (8 hours)
-    PAID_LEAVE: 'paid_leave', // Paid leave (8 hours)
-    UNPAID_LEAVE: 'unpaid_leave' // Unpaid leave (0 hours)
+export const DEFAULT_CONFIG = {
+  workdayHours: 8,
+  workingDaysPerMonth: 22,
+  dayTypes: {
+    regular: { hours: 'calculated', label: 'Regular Work Day' },
+    holiday: { hours: 8, label: 'Holiday' },
+    paid_leave: { hours: 8, label: 'Paid Leave' },
+    unpaid_leave: { hours: 0, label: 'Unpaid Leave' }
   },
-  
-  // Employee attributes that affect calculations
-  EMPLOYEE_ATTRIBUTES: {
-    GENDER: ['male', 'female'],
-    MARITAL_STATUS: ['single', 'married']
+  bonuses: {
+    E: { type: 'daily_rate_multiplier', value: 5, label: 'Bonus E' },
+    S: { type: 'daily_rate_multiplier', value: 2.5, label: 'Bonus S' },
+    K: { type: 'fixed_amount', value: 14000000, label: 'Bonus K' },
+    M: { type: 'fixed_amount', value: 9000000, label: 'Bonus M' },
+    T: { type: 'fixed_amount', value: 5000000, label: 'Bonus T', condition: emp => emp.maritalStatus === 'married' }
+  },
+  deductions: {
+    insurance: { type: 'percentage', value: 0.07, label: 'Insurance Deduction' }
   }
 }
 
 // ============================================================================
-// BONUS & DEDUCTION RULES
+// PURE FUNCTIONS - RATE CALCULATIONS
 // ============================================================================
 
-export const BONUS_RULES = {
-  // Bonus E: 5 working days × Daily rate
-  BONUS_E: {
-    name: 'Bonus E',
-    description: 'Additional bonus of 5 working days',
-    calculation: (dailyRate) => dailyRate * 5,
-    condition: () => true, // Applies to all employees
-    type: 'daily_rate_multiplier'
-  },
-  
-  // Bonus S: 2.5 working days × Daily rate
-  BONUS_S: {
-    name: 'Bonus S', 
-    description: 'Additional bonus of 2.5 working days',
-    calculation: (dailyRate) => dailyRate * 2.5,
-    condition: () => true, // Applies to all employees
-    type: 'daily_rate_multiplier'
-  },
-  
-  // Bonus K: Fixed 14 million (global)
-  BONUS_K: {
-    name: 'Bonus K',
-    description: 'Fixed additional bonus of 14 million',
-    calculation: () => 14000000,
-    condition: () => true, // Applies to all employees
-    type: 'fixed_amount'
-  },
-  
-  // Bonus M: Fixed 9 million (global)
-  BONUS_M: {
-    name: 'Bonus M',
-    description: 'Fixed additional bonus of 9 million',
-    calculation: () => 9000000,
-    condition: () => true, // Applies to all employees
-    type: 'fixed_amount'
-  },
-  
-  // Bonus T: Fixed 5 million (married employees only)
-  BONUS_T: {
-    name: 'Bonus T',
-    description: 'Fixed additional bonus of 5 million (married only)',
-    calculation: () => 5000000,
-    condition: (employee) => employee.maritalStatus === 'married',
-    type: 'fixed_amount'
-  }
-}
+export const calculateDailyRate = (monthlySalary, workingDays = DEFAULT_CONFIG.workingDaysPerMonth) =>
+  monthlySalary / workingDays
 
-export const DEDUCTION_RULES = {
-  // Deduct I: 7% of total calculated salary (includes all bonuses)
-  DEDUCT_I: {
-    name: 'Insurance Deduction',
-    description: 'Deduction of 7 percent of total calculated salary for insurance',
-    calculation: (subtotal) => subtotal * 0.07,
-    condition: () => true, // Applies to all employees
-    type: 'percentage'
-  }
-}
+export const calculateHourlyRate = (monthlySalary, config = DEFAULT_CONFIG) =>
+  calculateDailyRate(monthlySalary, config.workingDaysPerMonth) / config.workdayHours
 
 // ============================================================================
-// CORE CALCULATION FUNCTIONS
+// PURE FUNCTIONS - TIME CALCULATIONS
 // ============================================================================
 
-/**
- * Calculate daily rate from monthly salary
- * @param {number} monthlySalary - Employee's monthly salary
- * @returns {number} Daily rate
- */
-export const calculateDailyRate = (monthlySalary) => {
-  return monthlySalary / BUSINESS_RULES.WORKING_DAYS_PER_MONTH
+export const parseTime = time => time?.split(':').map(Number) || [0, 0]
+
+export const timeToMinutes = time => {
+  const [hours, minutes] = parseTime(time)
+  return hours * 60 + minutes
 }
 
-/**
- * Calculate hourly rate from monthly salary
- * @param {number} monthlySalary - Employee's monthly salary
- * @returns {number} Hourly rate
- */
-export const calculateHourlyRate = (monthlySalary) => {
-  const dailyRate = calculateDailyRate(monthlySalary)
-  return dailyRate / BUSINESS_RULES.WORKDAY_HOURS
-}
-
-/**
- * Calculate working hours from entry and exit times
- * @param {string} entryTime - Entry time in HH:MM format
- * @param {string} exitTime - Exit time in HH:MM format
- * @returns {number} Working hours (rounded to 2 decimal places)
- */
 export const calculateWorkingHours = (entryTime, exitTime) => {
   if (!entryTime || !exitTime) return 0
-
-  const [entryHour, entryMin] = entryTime.split(':').map(Number)
-  const [exitHour, exitMin] = exitTime.split(':').map(Number)
-
-  const entryMinutes = entryHour * 60 + entryMin
-  const exitMinutes = exitHour * 60 + exitMin
-
-  // Calculate duration in hours, round to 2 decimal places
-  return Math.round((exitMinutes - entryMinutes) / 60 * 100) / 100
+  const duration = timeToMinutes(exitTime) - timeToMinutes(entryTime)
+  return Math.round((duration / 60) * 100) / 100
 }
 
-/**
- * Calculate total hours and day counts from attendance data
- * @param {Object} attendanceData - Attendance records for a period
- * @returns {Object} Summary of hours and day counts
- */
-export const calculateAttendanceSummary = (attendanceData) => {
-  let totalHours = 0
-  let totalRegularDays = 0
-  let totalHolidays = 0
-  let totalPaidLeave = 0
-  let totalUnpaidLeave = 0
+// ============================================================================
+// PURE FUNCTIONS - ATTENDANCE PROCESSING
+// ============================================================================
 
-  for (const day of Object.values(attendanceData)) {
-    switch (day.type) {
-      case BUSINESS_RULES.DAY_TYPES.REGULAR:
-        totalHours += calculateWorkingHours(day.entryTime, day.exitTime)
-        totalRegularDays++
-        break
-      case BUSINESS_RULES.DAY_TYPES.HOLIDAY:
-      case BUSINESS_RULES.DAY_TYPES.PAID_LEAVE:
-        totalHours += BUSINESS_RULES.WORKDAY_HOURS
-        day.type === BUSINESS_RULES.DAY_TYPES.HOLIDAY ? totalHolidays++ : totalPaidLeave++
-        break
-      case BUSINESS_RULES.DAY_TYPES.UNPAID_LEAVE:
-        totalUnpaidLeave++
-        break
+export const getDayHours = (dayData, config = DEFAULT_CONFIG) => {
+  const dayType = config.dayTypes[dayData.type]
+  return dayType?.hours === 'calculated' 
+    ? calculateWorkingHours(dayData.entryTime, dayData.exitTime)
+    : dayType?.hours || 0
+}
+
+export const processAttendanceDay = (dayData, config = DEFAULT_CONFIG) => ({
+  type: dayData.type,
+  hours: getDayHours(dayData, config),
+  entryTime: dayData.entryTime,
+  exitTime: dayData.exitTime,
+  notes: dayData.notes
+})
+
+export const processAttendanceData = (attendanceData, config = DEFAULT_CONFIG) =>
+  Object.entries(attendanceData).map(([date, dayData]) => ({
+    date,
+    ...processAttendanceDay(dayData, config)
+  }))
+
+export const countDayType = (summary, dayType) => {
+  const newByType = Object.assign({}, summary.byType)
+  newByType[dayType] = (newByType[dayType] || 0) + 1
+  return newByType
+}
+
+export const aggregateDayStats = (summary, day) => ({
+  hours: summary.hours + day.hours,
+  days: summary.days + 1,
+  byType: countDayType(summary, day.type)
+})
+
+export const calculateAttendanceSummary = (attendanceData, config = DEFAULT_CONFIG) => {
+  const processedDays = processAttendanceData(attendanceData, config)
+  return processedDays.reduce(aggregateDayStats, { hours: 0, days: 0, byType: {} })
+}
+
+// ============================================================================
+// PURE FUNCTIONS - SALARY COMPONENTS
+// ============================================================================
+
+export const calculateBasicSalary = (monthlySalary, totalHours, config = DEFAULT_CONFIG) =>
+  calculateHourlyRate(monthlySalary, config) * totalHours
+
+export const isBonusApplicable = (bonus, employee) =>
+  bonus && (!bonus.condition || bonus.condition(employee))
+
+export const calculateBonusAmount = (bonus, dailyRate) =>
+  bonus.type === 'daily_rate_multiplier' ? dailyRate * bonus.value : bonus.value
+
+export const calculateBonus = (bonusKey, employee, config = DEFAULT_CONFIG) => {
+  const bonus = config.bonuses[bonusKey]
+  if (!isBonusApplicable(bonus, employee)) return 0
+  
+  const dailyRate = calculateDailyRate(employee.monthlySalary, config.workingDaysPerMonth)
+  return calculateBonusAmount(bonus, dailyRate)
+}
+
+export const calculateAllBonuses = (employee, config = DEFAULT_CONFIG) =>
+  Object.keys(config.bonuses).reduce((bonuses, key) => {
+    bonuses[key] = {
+      amount: calculateBonus(key, employee, config),
+      label: config.bonuses[key].label
     }
-  }
+    return bonuses
+  }, {})
 
+export const calculateDeduction = (deductionKey, subtotal, config = DEFAULT_CONFIG) => {
+  const deduction = config.deductions[deductionKey]
+  return deduction ? subtotal * deduction.value : 0
+}
+
+export const calculateAllDeductions = (subtotal, config = DEFAULT_CONFIG) =>
+  Object.keys(config.deductions).reduce((deductions, key) => {
+    deductions[key] = {
+      amount: calculateDeduction(key, subtotal, config),
+      label: config.deductions[key].label
+    }
+    return deductions
+  }, {})
+
+// ============================================================================
+// PURE FUNCTIONS - SALARY CALCULATION STEPS
+// ============================================================================
+
+export const sumBonusTotal = (bonuses) =>
+  Object.values(bonuses).reduce((sum, bonus) => sum + bonus.amount, 0)
+
+export const sumAdjustmentTotal = (adjustments) =>
+  adjustments.reduce((sum, adj) => sum + adj.amount, 0)
+
+export const sumDeductionTotal = (deductions) =>
+  Object.values(deductions).reduce((sum, deduction) => sum + deduction.amount, 0)
+
+export const calculateSubtotal = (basicSalary, bonusTotal, adjustmentTotal) =>
+  basicSalary + bonusTotal + adjustmentTotal
+
+export const calculateFinalTotal = (subtotal, deductionTotal) =>
+  subtotal - deductionTotal
+
+// ============================================================================
+// PURE FUNCTIONS - COMPLETE CALCULATION
+// ============================================================================
+
+export const calculateSalaryBreakdown = (employee, attendanceData, adjustments = [], config = DEFAULT_CONFIG) => {
+  const attendanceSummary = calculateAttendanceSummary(attendanceData, config)
+  const basicSalary = calculateBasicSalary(employee.monthlySalary, attendanceSummary.hours, config)
+  const bonuses = calculateAllBonuses(employee, config)
+  const bonusTotal = sumBonusTotal(bonuses)
+  const adjustmentTotal = sumAdjustmentTotal(adjustments)
+  const subtotal = calculateSubtotal(basicSalary, bonusTotal, adjustmentTotal)
+  const deductions = calculateAllDeductions(subtotal, config)
+  const deductionTotal = sumDeductionTotal(deductions)
+  const total = calculateFinalTotal(subtotal, deductionTotal)
+  
   return {
-    hours: totalHours,
-    regularDays: totalRegularDays,
-    holidays: totalHolidays,
-    paidLeave: totalPaidLeave,
-    unpaidLeave: totalUnpaidLeave,
-    totalDays: Object.keys(attendanceData).length
+    basicSalary,
+    bonuses,
+    bonusTotal,
+    adjustments,
+    adjustmentTotal,
+    deductions,
+    deductionTotal,
+    subtotal,
+    total,
+    attendanceSummary
   }
 }
 
-/**
- * Calculate basic salary based on hours worked
- * @param {number} monthlySalary - Employee's monthly salary
- * @param {number} totalHours - Total hours worked
- * @returns {number} Basic salary
- */
-export const calculateBasicSalary = (monthlySalary, totalHours) => {
-  const hourlyRate = calculateHourlyRate(monthlySalary)
-  return hourlyRate * totalHours
+// ============================================================================
+// PURE FUNCTIONS - VALIDATION HELPERS
+// ============================================================================
+
+export const runValidations = (validations) => {
+  const errors = validations
+    .filter(validation => !validation.test())
+    .map(validation => validation.message)
+  
+  return { isValid: errors.length === 0, errors }
 }
 
+export const validateName = (name) => name?.trim().length >= 2
+
+export const validateGender = (gender) => ['male', 'female'].includes(gender)
+
+export const validateMaritalStatus = (maritalStatus) => ['single', 'married'].includes(maritalStatus)
+
+export const validateSalary = (salary) => salary > 0
+
+export const validateDayType = (type, config) => Object.keys(config.dayTypes).includes(type)
+
+export const validateRegularDayTimes = (type, entryTime, exitTime) =>
+  type !== 'regular' || (entryTime && exitTime)
+
+export const validateTimeSequence = (type, entryTime, exitTime) =>
+  type !== 'regular' || calculateWorkingHours(entryTime, exitTime) >= 0
+
 // ============================================================================
-// BONUS & DEDUCTION CALCULATIONS
+// PURE FUNCTIONS - VALIDATION
 // ============================================================================
 
-/**
- * Calculate all applicable bonuses for an employee
- * @param {Object} employee - Employee data
- * @param {Object} config - Current configuration
- * @returns {Object} All bonus calculations
- */
-export const calculateBonuses = (employee, config) => {
-  const dailyRate = calculateDailyRate(employee.monthlySalary)
-  const bonuses = {}
-
-  // Calculate each bonus based on rules
-  for (const [key, rule] of Object.entries(BONUS_RULES)) {
-    if (rule.condition(employee)) {
-      bonuses[key] = {
-        name: rule.name,
-        description: rule.description,
-        amount: rule.calculation(dailyRate),
-        type: rule.type
-      }
-    }
-  }
-
-  return bonuses
+export const validateEmployee = (employee) => {
+  const validations = [
+    { test: () => validateName(employee.name), message: 'Name must be at least 2 characters' },
+    { test: () => validateGender(employee.gender), message: 'Invalid gender' },
+    { test: () => validateMaritalStatus(employee.maritalStatus), message: 'Invalid marital status' },
+    { test: () => validateSalary(employee.monthlySalary), message: 'Monthly salary must be greater than 0' }
+  ]
+  
+  return runValidations(validations)
 }
 
-/**
- * Calculate all applicable deductions
- * @param {Object} employee - Employee data
- * @param {Object} config - Current configuration
- * @param {number} subtotal - Subtotal before deductions
- * @returns {Object} All deduction calculations
- */
-export const calculateDeductions = (employee, config, subtotal) => {
-  const deductions = {}
-
-  for (const [key, rule] of Object.entries(DEDUCTION_RULES)) {
-    if (rule.condition(employee)) {
-      deductions[key] = {
-        name: rule.name,
-        description: rule.description,
-        amount: rule.calculation(subtotal),
-        type: rule.type
-      }
-    }
-  }
-
-  return deductions
-}
-
-// ============================================================================
-// COMPLETE SALARY CALCULATION
-// ============================================================================
-
-/**
- * Calculate complete salary breakdown for an employee
- * @param {Object} employee - Employee data
- * @param {Object} attendanceData - Attendance records for the period
- * @param {Object} config - Current configuration
- * @param {Array} adjustments - Manual adjustments
- * @returns {Object} Complete salary breakdown
- */
-export const calculateCompleteSalary = (employee, attendanceData, config, adjustments = []) => {
-  // Step 1: Calculate attendance summary
-  const attendanceSummary = calculateAttendanceSummary(attendanceData)
-  
-  // Step 2: Calculate basic salary
-  const basicSalary = calculateBasicSalary(employee.monthlySalary, attendanceSummary.hours)
-  
-  // Step 3: Calculate bonuses
-  const bonuses = calculateBonuses(employee, config)
-  const bonusTotal = Object.values(bonuses).reduce((sum, bonus) => sum + bonus.amount, 0)
-  
-  // Step 4: Calculate adjustment total
-  const adjustmentTotal = adjustments.reduce((sum, adj) => sum + adj.amount, 0)
-  
-  // Step 5: Calculate subtotal before deductions
-  const subtotal = basicSalary + bonusTotal + adjustmentTotal
-  
-  // Step 6: Calculate deductions
-  const deductions = calculateDeductions(employee, config, subtotal)
-  const deductionTotal = Object.values(deductions).reduce((sum, deduction) => sum + deduction.amount, 0)
-  
-  // Step 7: Calculate final total
-  const total = subtotal - deductionTotal
-
-  return {
-    employeeId: employee.id,
-    employeeName: employee.name,
-    period: {
-      startDate: Object.keys(attendanceData).sort()[0],
-      endDate: Object.keys(attendanceData).sort().pop(),
-      ...attendanceSummary
+export const validateAttendance = (attendance, config = DEFAULT_CONFIG) => {
+  const validations = [
+    { test: () => validateDayType(attendance.type, config), message: 'Invalid day type' },
+    { 
+      test: () => validateRegularDayTimes(attendance.type, attendance.entryTime, attendance.exitTime),
+      message: 'Entry and exit times required for regular days'
     },
-    components: {
-      basicSalary,
-      bonuses,
-      bonusTotal,
-      adjustments,
-      adjustmentTotal,
-      deductions,
-      deductionTotal
-    },
-    summary: {
-      subtotal,
-      total,
-      calculatedAt: new Date().toISOString()
+    {
+      test: () => validateTimeSequence(attendance.type, attendance.entryTime, attendance.exitTime),
+      message: 'Exit time must be after entry time'
     }
-  }
-}
-
-// ============================================================================
-// VALIDATION RULES
-// ============================================================================
-
-export const VALIDATION_RULES = {
-  /**
-   * Validate employee data
-   * @param {Object} employee - Employee data to validate
-   * @returns {Object} Validation result
-   */
-  validateEmployee: (employee) => {
-    const errors = []
-    
-    if (!employee.name || employee.name.trim().length < 2) {
-      errors.push('Employee name must be at least 2 characters')
-    }
-    
-    if (!BUSINESS_RULES.EMPLOYEE_ATTRIBUTES.GENDER.includes(employee.gender)) {
-      errors.push('Invalid gender selection')
-    }
-    
-    if (!BUSINESS_RULES.EMPLOYEE_ATTRIBUTES.MARITAL_STATUS.includes(employee.maritalStatus)) {
-      errors.push('Invalid marital status selection')
-    }
-    
-    if (!employee.monthlySalary || employee.monthlySalary <= 0) {
-      errors.push('Monthly salary must be greater than 0')
-    }
-    
-    return {
-      isValid: errors.length === 0,
-      errors
-    }
-  },
-
-  /**
-   * Validate attendance data
-   * @param {Object} attendance - Attendance data to validate
-   * @returns {Object} Validation result
-   */
-  validateAttendance: (attendance) => {
-    const errors = []
-    
-    if (!attendance.type || !Object.values(BUSINESS_RULES.DAY_TYPES).includes(attendance.type)) {
-      errors.push('Invalid day type')
-    }
-    
-    if (attendance.type === BUSINESS_RULES.DAY_TYPES.REGULAR) {
-      if (!attendance.entryTime || !attendance.exitTime) {
-        errors.push('Entry and exit times required for regular days')
-      } else {
-        const hours = calculateWorkingHours(attendance.entryTime, attendance.exitTime)
-        if (hours < 0) {
-          errors.push('Exit time must be after entry time')
-        }
-        if (hours > 24) {
-          errors.push('Working hours cannot exceed 24 hours')
-        }
-      }
-    }
-    
-    return {
-      isValid: errors.length === 0,
-      errors
-    }
-  },
-
-  /**
-   * Validate configuration
-   * @param {Object} config - Configuration to validate
-   * @returns {Object} Validation result
-   */
-  validateConfig: (config) => {
-    const errors = []
-    
-    if (config.workdayHours <= 0 || config.workdayHours > 24) {
-      errors.push('Workday hours must be between 0 and 24')
-    }
-    
-    if (config.bonusE < 0) errors.push('Bonus E cannot be negative')
-    if (config.bonusS < 0) errors.push('Bonus S cannot be negative')
-    if (config.bonusK < 0) errors.push('Bonus K cannot be negative')
-    if (config.bonusM < 0) errors.push('Bonus M cannot be negative')
-    if (config.bonusT < 0) errors.push('Bonus T cannot be negative')
-    
-    if (config.deductI < 0 || config.deductI > 1) {
-      errors.push('Insurance deduction must be between 0 and 1 (0% to 100%)')
-    }
-    
-    return {
-      isValid: errors.length === 0,
-      errors
-    }
-  }
+  ]
+  
+  return runValidations(validations)
 }
 
 // ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
 
-/**
- * Get default configuration values
- * @returns {Object} Default configuration
- */
-export const getDefaultConfig = () => ({
-  workdayHours: BUSINESS_RULES.WORKDAY_HOURS,
-  bonusE: 5,
-  bonusS: 2.5,
-  bonusK: 14000000,
-  bonusM: 9000000,
-  bonusT: 5000000,
-  deductI: 0.07
-})
-
-/**
- * Format currency for display
- * @param {number} amount - Amount to format
- * @returns {string} Formatted currency string
- */
-export const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('id-ID', {
+export const formatCurrency = (amount) =>
+  new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
   }).format(amount)
+
+export const formatTime = (time) => time || ''
+
+export const mergeConfig = (baseConfig, overrides) => ({
+  ...baseConfig,
+  ...overrides,
+  dayTypes: { ...baseConfig.dayTypes, ...overrides.dayTypes },
+  bonuses: { ...baseConfig.bonuses, ...overrides.bonuses },
+  deductions: { ...baseConfig.deductions, ...overrides.deductions }
+})
+
+// ============================================================================
+// LEGACY EXPORTS FOR BACKWARD COMPATIBILITY
+// ============================================================================
+
+export const BUSINESS_RULES = {
+  WORKDAY_HOURS: DEFAULT_CONFIG.workdayHours,
+  WORKING_DAYS_PER_MONTH: DEFAULT_CONFIG.workingDaysPerMonth,
+  DAY_TYPES: Object.keys(DEFAULT_CONFIG.dayTypes).reduce((types, key) => {
+    types[key.toUpperCase()] = key
+    return types
+  }, {}),
+  EMPLOYEE_ATTRIBUTES: {
+    GENDER: ['male', 'female'],
+    MARITAL_STATUS: ['single', 'married']
+  }
 }
 
-/**
- * Format time for display
- * @param {string} time - Time in HH:MM format
- * @returns {string} Formatted time string
- */
-export const formatTime = (time) => {
-  if (!time) return ''
-  const [hours, minutes] = time.split(':')
-  return `${hours}:${minutes}`
-} 
+export const BONUS_RULES = Object.entries(DEFAULT_CONFIG.bonuses).reduce((rules, [key, bonus]) => {
+  rules[`BONUS_${key}`] = {
+    name: bonus.label,
+    description: `${bonus.label} calculation`,
+    calculation: bonus.type === 'daily_rate_multiplier' 
+      ? (dailyRate) => dailyRate * bonus.value
+      : () => bonus.value,
+    condition: bonus.condition || (() => true),
+    type: bonus.type
+  }
+  return rules
+}, {})
+
+export const DEDUCTION_RULES = Object.entries(DEFAULT_CONFIG.deductions).reduce((rules, [key, deduction]) => {
+  rules[`DEDUCT_${key.toUpperCase()}`] = {
+    name: deduction.label,
+    description: `${deduction.label} calculation`,
+    calculation: (subtotal) => subtotal * deduction.value,
+    condition: () => true,
+    type: deduction.type
+  }
+  return rules
+}, {})
+
+export const VALIDATION_RULES = {
+  validateEmployee,
+  validateAttendance,
+  validateConfig: (config) => ({ isValid: true, errors: [] })
+}
+
+export const getDefaultConfig = () => ({ ...DEFAULT_CONFIG })
+
+// Legacy function names for backward compatibility
+export const calculateCompleteSalary = calculateSalaryBreakdown 
