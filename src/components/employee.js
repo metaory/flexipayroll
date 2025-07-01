@@ -5,6 +5,7 @@
 
 import { employees, storeUtils } from '../store.js'
 import { el, formGroup, modal, notify, createTable } from '../ui.js'
+import { VALIDATION_RULES, BUSINESS_RULES } from '../core.js'
 
 // Create employee form
 const createEmployeeForm = (employee, onSubmit) => {
@@ -24,6 +25,13 @@ const createEmployeeForm = (employee, onSubmit) => {
         employeeData.id = employee.id
       }
 
+      // Validate employee data
+      const validation = VALIDATION_RULES.validateEmployee(employeeData)
+      if (!validation.isValid) {
+        notify(validation.errors.join(', '), 'error')
+        return
+      }
+
       onSubmit(employeeData)
     }
   })
@@ -39,16 +47,24 @@ const createEmployeeForm = (employee, onSubmit) => {
   // Gender field
   const genderSelect = el('select', { name: 'gender', required: 'required' }, [
     el('option', { value: '' }, 'Select Gender'),
-    el('option', { value: 'male', selected: employee.gender === 'male' }, 'Male'),
-    el('option', { value: 'female', selected: employee.gender === 'female' }, 'Female')
+    ...BUSINESS_RULES.EMPLOYEE_ATTRIBUTES.GENDER.map(gender => 
+      el('option', { 
+        value: gender, 
+        selected: employee.gender === gender 
+      }, gender.charAt(0).toUpperCase() + gender.slice(1))
+    )
   ])
   form.appendChild(formGroup('Gender', genderSelect))
 
   // Marital status field
   const maritalStatusSelect = el('select', { name: 'maritalStatus', required: 'required' }, [
     el('option', { value: '' }, 'Select Marital Status'),
-    el('option', { value: 'single', selected: employee.maritalStatus === 'single' }, 'Single'),
-    el('option', { value: 'married', selected: employee.maritalStatus === 'married' }, 'Married')
+    ...BUSINESS_RULES.EMPLOYEE_ATTRIBUTES.MARITAL_STATUS.map(status => 
+      el('option', { 
+        value: status, 
+        selected: employee.maritalStatus === status 
+      }, status.charAt(0).toUpperCase() + status.slice(1))
+    )
   ])
   form.appendChild(formGroup('Marital Status', maritalStatusSelect))
 

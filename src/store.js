@@ -3,6 +3,8 @@
  * Handles persistence using localStorage with proxied objects
  */
 
+import { getDefaultConfig } from './core.js'
+
 // Storage keys
 const KEYS = {
   EMPLOYEES: 'xpayroll_employees',
@@ -33,16 +35,7 @@ const createStore = (key, defaultValue = {}) => {
 // Store instances
 export const employees = createStore(KEYS.EMPLOYEES, [])
 export const attendance = createStore(KEYS.ATTENDANCE, {})
-export const config = createStore(KEYS.CONFIG, {
-  // Default configuration values
-  workdayHours: 8,
-  bonusE: 5, // 5 working days bonus
-  bonusS: 2.5, // 2.5 working days bonus
-  bonusK: 14000000, // Fixed bonus 14 million
-  bonusM: 9000000, // Fixed bonus 9 million
-  bonusT: 5000000, // Fixed bonus 5 million (married only)
-  deductI: 0.07, // Insurance deduction (7%)
-})
+export const config = createStore(KEYS.CONFIG, getDefaultConfig())
 
 // Helper methods for store management
 export const storeUtils = {
@@ -85,11 +78,11 @@ export const storeUtils = {
     if (!attendance[employeeId]) return results
 
     const empAttendance = attendance[employeeId]
-    Object.keys(empAttendance).forEach(date => {
+    for (const date of Object.keys(empAttendance)) {
       if (date >= startDate && date <= endDate) {
         results[date] = empAttendance[date]
       }
-    })
+    }
     return results
   },
 

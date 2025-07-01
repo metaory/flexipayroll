@@ -13,31 +13,22 @@ A lightweight, browser-based payroll management system built with vanilla JavaSc
 
 ## Getting Started
 
-### Prerequisites
-
-- Node.js (v14+)
-- npm or yarn
-
 ### Installation
 
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/xpayroll.git
+git clone https://github.com/metaory/xpayroll.git
 cd xpayroll
 ```
 
 2. Install dependencies
 ```bash
 npm install
-# or
-yarn
 ```
 
 3. Start the development server
 ```bash
 npm run dev
-# or
-yarn dev
 ```
 
 4. Open your browser and navigate to `http://localhost:5173`
@@ -95,8 +86,6 @@ All data is stored in the browser's localStorage. There is no server component.
 
 ```bash
 npm run build
-# or
-yarn build
 ```
 
 The built files will be in the `dist` directory and can be served by any static file server.
