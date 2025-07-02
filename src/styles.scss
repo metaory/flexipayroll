@@ -714,18 +714,24 @@ body {
       display: flex;
       flex-direction: column;
       gap: spacer('xs');
+    }
+    
+    &__link {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.2s ease;
+      cursor: pointer;
+      text-align: left;
+      padding: 0;
+      font-family: inherit;
       
-      a {
-        color: var(--text-muted);
-        text-decoration: none;
-        font-size: 0.9rem;
-        transition: color 0.2s ease;
-        
-        &:hover,
-        &:focus,
-        &:active {
-          color: var(--primary);
-        }
+      &:hover,
+      &:focus,
+      &:active {
+        color: var(--primary);
       }
     }
     
@@ -754,14 +760,21 @@ body {
       display: flex;
       align-items: center;
       gap: spacer('sm');
+    }
+    
+    &__social-link {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      transition: color 0.2s ease;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       
-      a {
-        color: var(--text-muted);
-        transition: color 0.2s ease;
-        
-        &:hover {
-          color: var(--primary);
-        }
+      &:hover {
+        color: var(--primary);
       }
     }
   }
