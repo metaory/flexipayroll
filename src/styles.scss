@@ -1,0 +1,7 @@
+@use 'sprucecss/scss/spruce' as *;
+
+// Generate all Spruce CSS styles
+@include generate-styles;
+
+// Your custom styles can go here
+// You can override Spruce variables or add custom styles 
