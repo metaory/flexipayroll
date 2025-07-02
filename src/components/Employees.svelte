@@ -30,7 +30,7 @@
     
     const validation = validateEmployee(employee)
     if (!validation.isValid) {
-      alert('Validation errors:\n' + validation.errors.join('\n'))
+      alert(`Validation errors:\n${validation.errors.join('\n')}`)
       return
     }
     
@@ -59,7 +59,7 @@
     
     const validation = validateEmployee(updatedEmployee)
     if (!validation.isValid) {
-      alert('Validation errors:\n' + validation.errors.join('\n'))
+      alert(`Validation errors:\n${validation.errors.join('\n')}`)
       return
     }
     
@@ -82,260 +82,141 @@
   }
 </script>
 
-<div class="employees-container">
-  <div class="header">
-    <h2>Employee Management</h2>
-    <button class="btn btn-primary" on:click={() => showAddForm = true}>
-      Add Employee
+<div class="space-y-6">
+  <!-- Header Section -->
+  <div class="flex justify-between items-center">
+    <div>
+      <h2 class="h2 text-primary-500">Employee Management</h2>
+      <p class="text-surface-600-400-token mt-1">Manage your workforce and employee information</p>
+    </div>
+    <button class="btn variant-filled-primary" on:click={() => showAddForm = true}>
+      <span class="mr-2">➕</span> Add Employee
     </button>
   </div>
 
+  <!-- Add/Edit Form -->
   {#if showAddForm}
-    <div class="form-container">
-      <h3>{editingEmployee ? 'Edit Employee' : 'Add New Employee'}</h3>
-      
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="name">Name</label>
-          <input 
-            id="name"
-            type="text" 
-            bind:value={formData.name}
-            placeholder="Employee name"
-            required
-          />
+    <div class="card p-6 bg-gradient-to-br from-primary-50-900-token to-surface-50-900-token border border-primary-200-700-token">
+      <header class="card-header mb-6">
+        <h3 class="h3 text-primary-500">{editingEmployee ? 'Edit Employee' : 'Add New Employee'}</h3>
+      </header>
+      <section class="card-body">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <label class="label">
+            <span class="text-surface-700-300-token font-medium">Full Name</span>
+            <input 
+              class="input"
+              bind:value={formData.name}
+              placeholder="Enter employee name"
+              required
+            />
+          </label>
+          
+          <label class="label">
+            <span class="text-surface-700-300-token font-medium">Gender</span>
+            <select class="select" bind:value={formData.gender}>
+              {#each EMPLOYEE_ATTRIBUTES.GENDER as gender}
+                <option value={gender}>{gender.charAt(0).toUpperCase() + gender.slice(1)}</option>
+              {/each}
+            </select>
+          </label>
+          
+          <label class="label">
+            <span class="text-surface-700-300-token font-medium">Marital Status</span>
+            <select class="select" bind:value={formData.maritalStatus}>
+              {#each EMPLOYEE_ATTRIBUTES.MARITAL_STATUS as status}
+                <option value={status}>{status.charAt(0).toUpperCase() + status.slice(1)}</option>
+              {/each}
+            </select>
+          </label>
+          
+          <label class="label">
+            <span class="text-surface-700-300-token font-medium">Monthly Salary (IDR)</span>
+            <input 
+              class="input"
+              type="number"
+              bind:value={formData.monthlySalary}
+              placeholder="Enter monthly salary"
+              min="0"
+              required
+            />
+          </label>
         </div>
         
-        <div class="form-group">
-          <label for="gender">Gender</label>
-          <select id="gender" bind:value={formData.gender}>
-            {#each EMPLOYEE_ATTRIBUTES.GENDER as gender}
-              <option value={gender}>{gender.charAt(0).toUpperCase() + gender.slice(1)}</option>
-            {/each}
-          </select>
+        <div class="flex gap-3 mt-6">
+          <button class="btn variant-filled-primary" on:click={editingEmployee ? updateEmployee : addEmployee}>
+            <span class="mr-2">{editingEmployee ? '🔄' : '➕'}</span>
+            {editingEmployee ? 'Update' : 'Add'} Employee
+          </button>
+          <button class="btn variant-ghost" on:click={cancelForm}>
+            Cancel
+          </button>
         </div>
-        
-        <div class="form-group">
-          <label for="maritalStatus">Marital Status</label>
-          <select id="maritalStatus" bind:value={formData.maritalStatus}>
-            {#each EMPLOYEE_ATTRIBUTES.MARITAL_STATUS as status}
-              <option value={status}>{status.charAt(0).toUpperCase() + status.slice(1)}</option>
-            {/each}
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label for="monthlySalary">Monthly Salary (IDR)</label>
-          <input 
-            id="monthlySalary"
-            type="number" 
-            bind:value={formData.monthlySalary}
-            placeholder="Monthly salary"
-            min="0"
-            required
-          />
-        </div>
-      </div>
-      
-      <div class="form-actions">
-        <button class="btn btn-primary" on:click={editingEmployee ? updateEmployee : addEmployee}>
-          {editingEmployee ? 'Update' : 'Add'} Employee
-        </button>
-        <button class="btn btn-secondary" on:click={cancelForm}>
-          Cancel
-        </button>
-      </div>
+      </section>
     </div>
   {/if}
 
-  <div class="employees-list">
-    {#if $employees.length === 0}
-      <div class="empty-state">
-        <p>No employees added yet. Click "Add Employee" to get started.</p>
-      </div>
-    {:else}
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Gender</th>
-              <th>Marital Status</th>
-              <th>Monthly Salary</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each $employees as employee}
-              <tr>
-                <td>{employee.name}</td>
-                <td>{employee.gender.charAt(0).toUpperCase() + employee.gender.slice(1)}</td>
-                <td>{employee.maritalStatus.charAt(0).toUpperCase() + employee.maritalStatus.slice(1)}</td>
-                <td>{formatCurrency(employee.monthlySalary)}</td>
-                <td>
-                  <button class="btn btn-small" on:click={() => editEmployee(employee)}>
-                    Edit
-                  </button>
-                  <button class="btn btn-small btn-danger" on:click={() => deleteEmployee(employee.id)}>
-                    Delete
-                  </button>
-                </td>
+  <!-- Employee List -->
+  <div class="card p-6">
+    <header class="card-header mb-6">
+      <h3 class="h3 text-primary-500">Employee Directory</h3>
+      <p class="text-surface-600-400-token">Total: {$employees.length} employees</p>
+    </header>
+    <section class="card-body">
+      {#if $employees.length === 0}
+        <div class="text-center py-12">
+          <div class="text-6xl mb-4 text-surface-400-600-token">👥</div>
+          <h4 class="h4 text-surface-600-400-token mb-2">No employees yet</h4>
+          <p class="text-surface-500-500-token mb-4">Get started by adding your first employee</p>
+          <button class="btn variant-filled-primary" on:click={() => showAddForm = true}>
+            <span class="mr-2">➕</span> Add First Employee
+          </button>
+        </div>
+      {:else}
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr class="bg-surface-100-800-token">
+                <th class="text-left">Name</th>
+                <th class="text-left">Gender</th>
+                <th class="text-left">Marital Status</th>
+                <th class="text-left">Monthly Salary</th>
+                <th class="text-center">Actions</th>
               </tr>
-            {/each}
-          </tbody>
-        </table>
-      </div>
-    {/if}
+            </thead>
+            <tbody>
+              {#each $employees as employee, index}
+                <tr class="hover:bg-surface-100-800-token transition-colors duration-200 {index % 2 === 0 ? 'bg-surface-50-900-token' : ''}">
+                  <td class="font-medium text-primary-500">{employee.name}</td>
+                  <td>
+                    <span class="badge variant-soft-{employee.gender === 'male' ? 'primary' : 'secondary'}">
+                      {employee.gender.charAt(0).toUpperCase() + employee.gender.slice(1)}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge variant-soft-{employee.maritalStatus === 'married' ? 'success' : 'warning'}">
+                      {employee.maritalStatus.charAt(0).toUpperCase() + employee.maritalStatus.slice(1)}
+                    </span>
+                  </td>
+                  <td class="font-mono font-bold text-success-500">{formatCurrency(employee.monthlySalary)}</td>
+                  <td>
+                    <div class="flex gap-2 justify-center">
+                      <button class="btn btn-sm variant-filled-secondary" on:click={() => editEmployee(employee)}>
+                        ✏️ Edit
+                      </button>
+                      <button class="btn btn-sm variant-filled-error" on:click={() => deleteEmployee(employee.id)}>
+                        🗑️ Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        </div>
+      {/if}
+    </section>
   </div>
 </div>
 
-<style>
-  .employees-container {
-    max-width: 100%;
-  }
-
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-
-  .header h2 {
-    margin: 0;
-    color: #333;
-  }
-
-  .form-container {
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    border: 1px solid #e0e0e0;
-  }
-
-  .form-container h3 {
-    margin: 0 0 20px 0;
-    color: #333;
-  }
-
-  .form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
-    margin-bottom: 20px;
-  }
-
-  .form-group {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .form-group label {
-    margin-bottom: 5px;
-    font-weight: 500;
-    color: #555;
-  }
-
-  .form-group input,
-  .form-group select {
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 14px;
-  }
-
-  .form-group input:focus,
-  .form-group select:focus {
-    outline: none;
-    border-color: #ff6b35;
-    box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.2);
-  }
-
-  .form-actions {
-    display: flex;
-    gap: 10px;
-  }
-
-  .btn {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-  }
-
-  .btn-primary {
-    background: #ff6b35;
-    color: white;
-  }
-
-  .btn-primary:hover {
-    background: #e55a2b;
-  }
-
-  .btn-secondary {
-    background: #6c757d;
-    color: white;
-  }
-
-  .btn-secondary:hover {
-    background: #5a6268;
-  }
-
-  .btn-danger {
-    background: #dc3545;
-    color: white;
-  }
-
-  .btn-danger:hover {
-    background: #c82333;
-  }
-
-  .btn-small {
-    padding: 4px 8px;
-    font-size: 12px;
-    margin-right: 5px;
-  }
-
-  .empty-state {
-    text-align: center;
-    padding: 40px;
-    color: #666;
-  }
-
-  .table-container {
-    overflow-x: auto;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  }
-
-  th, td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #e0e0e0;
-  }
-
-  th {
-    background: #f8f9fa;
-    font-weight: 600;
-    color: #333;
-  }
-
-  tr:hover {
-    background: #f8f9fa;
-  }
-
-  td:last-child {
-    white-space: nowrap;
-  }
-</style> 
+ 

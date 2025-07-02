@@ -1,137 +1,115 @@
 <script>
-  import { onMount } from 'svelte'
-  import Employees from './components/Employees.svelte'
-  import Attendance from './components/Attendance.svelte'
-  import Payroll from './components/Payroll.svelte'
-  import Config from './components/Config.svelte'
+  import './app.css';
+  import { AppBar, Avatar, Switch } from '@skeletonlabs/skeleton-svelte';
+  import { theme, toggleTheme } from './lib/stores.js';
+  import Employees from './components/Employees.svelte';
+  import Attendance from './components/Attendance.svelte';
+  import Payroll from './components/Payroll.svelte';
+  import Config from './components/Config.svelte';
   
-  let activeTab = 0
+  let activeTab = 'employees';
+  
   const tabs = [
-    { label: 'Employees', component: Employees },
-    { label: 'Attendance', component: Attendance },
-    { label: 'Payroll', component: Payroll },
-    { label: 'Configuration', component: Config }
-  ]
+    { id: 'employees', label: 'Employees', icon: '👥', component: Employees },
+    { id: 'attendance', label: 'Attendance', icon: '📅', component: Attendance },
+    { id: 'payroll', label: 'Payroll', icon: '💰', component: Payroll },
+    { id: 'config', label: 'Configuration', icon: '⚙️', component: Config }
+  ];
+  
+  // Apply theme to document with transition
+  $: {
+    document.documentElement.classList.toggle('dark', $theme.mode === 'dark');
+    document.documentElement.setAttribute('data-theme', $theme.name);
+  }
+  
+  // Initialize theme on mount
+  import { onMount } from 'svelte';
+  onMount(() => {
+    // Ensure theme is properly set on initial load
+    document.documentElement.classList.toggle('dark', $theme.mode === 'dark');
+    document.documentElement.setAttribute('data-theme', $theme.name);
+  });
+  
+
 </script>
 
-<main>
-  <header class="app-header">
-    <h1><span class="highlight">X</span>Payroll</h1>
-    <p>Simple Payroll Management System</p>
-  </header>
-
-  <div class="tab-container">
-    <div class="tab-header">
-      {#each tabs as tab, index}
-        <button 
-          class="tab-btn {activeTab === index ? 'active' : ''}"
-          on:click={() => activeTab = index}
-        >
-          {tab.label}
-        </button>
-      {/each}
-    </div>
-    
-    <div class="tab-content">
-      {#each tabs as tab, index}
-        <div class="tab-panel {activeTab === index ? 'active' : ''}">
-          <svelte:component this={tab.component} />
+<div class="min-h-screen bg-surface-50-900-token transition-colors duration-300">
+  <!-- Header -->
+  <AppBar>
+    <svelte:fragment slot="lead">
+      <div class="flex items-center gap-3">
+        <Avatar src="/logo.svg" name="XPayroll" size="lg" />
+        <div>
+          <h1 class="text-xl font-bold text-primary-500">XPayroll</h1>
+          <p class="text-sm text-surface-600-400-token">Payroll Management System</p>
         </div>
-      {/each}
+      </div>
+    </svelte:fragment>
+    <svelte:fragment slot="trail">
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-surface-600-400-token">
+            {$theme.mode === 'dark' ? '🌙' : '☀️'}
+          </span>
+          <button 
+            class="btn variant-ghost p-2 rounded-full hover:bg-surface-200-700-token transition-colors"
+            on:click={() => toggleTheme()}
+            title="Toggle theme"
+          >
+            {$theme.mode === 'dark' ? '🌙' : '☀️'}
+          </button>
+        </div>
+      </div>
+    </svelte:fragment>
+  </AppBar>
+  
+  <!-- Main Content -->
+  <main class="container mx-auto p-6 max-w-7xl">
+    <!-- Navigation Tabs -->
+    <div class="card p-0 mb-6 shadow-lg">
+      <header class="card-header bg-surface-100-800-token border-b border-surface-300-600-token">
+        <nav class="flex">
+          {#each tabs as tab}
+            <button 
+              class="flex-1 flex items-center justify-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200 border-b-2 {activeTab === tab.id 
+                ? 'text-primary-500 border-primary-500 bg-primary-50-900-token' 
+                : 'text-surface-600-400-token border-transparent hover:text-surface-900-50-token hover:bg-surface-200-700-token'}"
+              on:click={() => activeTab = tab.id}
+            >
+              <span class="text-lg">{tab.icon}</span>
+              <span>{tab.label}</span>
+            </button>
+          {/each}
+        </nav>
+      </header>
+      
+      <!-- Tab Content -->
+      <section class="p-6">
+        {#each tabs as tab}
+          {#if activeTab === tab.id}
+            <div class="animate-fade-in">
+              <svelte:component this={tab.component} />
+            </div>
+          {/if}
+        {/each}
+      </section>
     </div>
-  </div>
-
-  <footer class="app-footer">
-    <p>&copy; {new Date().getFullYear()} XPayroll - v0.1.0</p>
-  </footer>
-</main>
+  </main>
+</div>
 
 <style>
-  main {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
   }
-
-  .app-header {
-    text-align: center;
-    margin-bottom: 30px;
-    padding: 20px 0;
-    border-bottom: 2px solid #e0e0e0;
-  }
-
-  .app-header h1 {
-    font-size: 2.5rem;
-    margin: 0;
-    color: #333;
-  }
-
-  .highlight {
-    color: #ff6b35;
-    font-weight: bold;
-  }
-
-  .app-header p {
-    margin: 10px 0 0;
-    color: #666;
-    font-size: 1.1rem;
-  }
-
-  .tab-container {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    overflow: hidden;
-  }
-
-  .tab-header {
-    display: flex;
-    background: #f8f9fa;
-    border-bottom: 1px solid #e0e0e0;
-  }
-
-  .tab-btn {
-    flex: 1;
-    padding: 15px 20px;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 500;
-    color: #666;
-    transition: all 0.3s ease;
-  }
-
-  .tab-btn:hover {
-    background: #e9ecef;
-    color: #333;
-  }
-
-  .tab-btn.active {
-    background: white;
-    color: #ff6b35;
-    border-bottom: 3px solid #ff6b35;
-  }
-
-  .tab-content {
-    position: relative;
-  }
-
-  .tab-panel {
-    display: none;
-    padding: 30px;
-  }
-
-  .tab-panel.active {
-    display: block;
-  }
-
-  .app-footer {
-    text-align: center;
-    margin-top: 30px;
-    padding: 20px 0;
-    color: #666;
-    border-top: 1px solid #e0e0e0;
+  
+  @keyframes fadeIn {
+    from { 
+      opacity: 0; 
+      transform: translateY(10px); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0); 
+    }
   }
 </style>

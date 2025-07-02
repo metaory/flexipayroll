@@ -13,7 +13,8 @@ import { DEFAULT_CONFIG } from './core.js'
 const STORAGE_KEYS = {
   EMPLOYEES: 'xpayroll_employees',
   ATTENDANCE: 'xpayroll_attendance', 
-  CONFIG: 'xpayroll_config'
+  CONFIG: 'xpayroll_config',
+  THEME: 'xpayroll_theme'
 }
 
 // Helper to create persistent stores
@@ -37,6 +38,12 @@ const createPersistentStore = (key, defaultValue) => {
 export const employees = createPersistentStore(STORAGE_KEYS.EMPLOYEES, [])
 export const attendance = createPersistentStore(STORAGE_KEYS.ATTENDANCE, {})
 export const config = createPersistentStore(STORAGE_KEYS.CONFIG, DEFAULT_CONFIG)
+
+// Theme management
+export const theme = createPersistentStore(STORAGE_KEYS.THEME, {
+  mode: 'light',
+  name: 'modern'
+})
 
 // ============================================================================
 // DERIVED STORES
@@ -81,4 +88,19 @@ export const getAttendanceForMonth = (employeeId, year, month) => {
   })()
   
   return results
+}
+
+// Theme management functions
+export const toggleTheme = () => {
+  theme.update(current => ({
+    ...current,
+    mode: current.mode === 'dark' ? 'light' : 'dark'
+  }))
+}
+
+export const setTheme = (themeName) => {
+  theme.update(current => ({
+    ...current,
+    name: themeName
+  }))
 } 
