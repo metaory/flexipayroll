@@ -3,11 +3,11 @@
   import { DAY_TYPES, validateAttendance } from '../lib/core.js';
   import Icon from '@iconify/svelte';
   
-  let selectedEmployee = '';
-  let selectedDate = '';
-  let selectedType = 'regular';
-  let entryTime = '';
-  let exitTime = '';
+  let selectedEmployee = $state('');
+  let selectedDate = $state('');
+  let selectedType = $state('regular');
+  let entryTime = $state('');
+  let exitTime = $state('');
   
   // Initialize with current date
   $effect(() => {
@@ -161,7 +161,7 @@
       </div>
       
       <div class="flex gap-3 mt-6">
-        <button class="btn variant-filled-success" on:click={recordAttendance}>
+        <button class="btn variant-filled-success" onclick={recordAttendance}>
           <span class="mr-2"><Icon icon="solar:floppy-disk-bold" width="1.2em" height="1.2em" /></span> Record Attendance
         </button>
       </div>
@@ -236,7 +236,7 @@
                               <div class="flex justify-center">
                                 <button 
                                   class="btn btn-sm variant-filled-error"
-                                  on:click={() => deleteAttendance(employee.id, date)}
+                                  onclick={() => deleteAttendance(employee.id, date)}
                                 >
                                   <Icon icon="solar:trash-bin-trash-bold" width="1.1em" height="1.1em" /> Delete
                                 </button>

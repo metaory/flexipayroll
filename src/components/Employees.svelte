@@ -90,9 +90,9 @@
       <h2 class="h2 text-primary-500">Employee Management</h2>
       <p class="text-surface-600-400-token mt-1">Manage your workforce and employee information</p>
     </div>
-    <button class="btn variant-filled-primary" on:click={() => showAddForm = true}>
-      <span class="mr-2"><Icon icon="solar:user-plus-bold" width="1.2em" height="1.2em" /></span> Add Employee
-    </button>
+          <button class="btn variant-filled-primary" onclick={() => showAddForm = true}>
+        <span class="mr-2"><Icon icon="solar:user-plus-bold" width="1.2em" height="1.2em" /></span> Add Employee
+      </button>
   </div>
 
   <!-- Add/Edit Form -->
@@ -145,11 +145,11 @@
         </div>
         
         <div class="flex gap-3 mt-6">
-          <button class="btn variant-filled-primary" on:click={editingEmployee ? updateEmployee : addEmployee}>
+          <button class="btn variant-filled-primary" onclick={editingEmployee ? updateEmployee : addEmployee}>
             <span class="mr-2"><Icon icon={editingEmployee ? 'solar:refresh-bold' : 'solar:user-plus-bold'} width="1.2em" height="1.2em" /></span>
             {editingEmployee ? 'Update' : 'Add'} Employee
           </button>
-          <button class="btn variant-ghost" on:click={cancelForm}>
+          <button class="btn variant-ghost" onclick={cancelForm}>
             Cancel
           </button>
         </div>
@@ -169,7 +169,7 @@
           <div class="text-6xl mb-4 text-surface-400-600-token"><Icon icon="solar:users-group-rounded-bold" width="2.5em" height="2.5em" /></div>
           <h4 class="h4 text-surface-600-400-token mb-2">No employees yet</h4>
           <p class="text-surface-500-500-token mb-4">Get started by adding your first employee</p>
-          <button class="btn variant-filled-primary" on:click={() => showAddForm = true}>
+          <button class="btn variant-filled-primary" onclick={() => showAddForm = true}>
             <span class="mr-2"><Icon icon="solar:user-plus-bold" width="1.2em" height="1.2em" /></span> Add First Employee
           </button>
         </div>
@@ -202,10 +202,10 @@
                   <td class="font-mono font-bold text-success-500">{formatCurrency(employee.monthlySalary)}</td>
                   <td>
                     <div class="flex gap-2 justify-center">
-                      <button class="btn btn-sm variant-filled-secondary" on:click={() => editEmployee(employee)}>
+                      <button class="btn btn-sm variant-filled-secondary" onclick={() => editEmployee(employee)}>
                         <Icon icon="solar:edit-bold" width="1.1em" height="1.1em" /> Edit
                       </button>
-                      <button class="btn btn-sm variant-filled-error" on:click={() => deleteEmployee(employee.id)}>
+                      <button class="btn btn-sm variant-filled-error" onclick={() => deleteEmployee(employee.id)}>
                         <Icon icon="solar:trash-bin-trash-bold" width="1.1em" height="1.1em" /> Delete
                       </button>
                     </div>

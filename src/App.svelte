@@ -49,7 +49,7 @@
         <div class="flex items-center gap-2">
           <button 
             class="btn variant-ghost p-2 rounded-full hover:bg-surface-200-700-token transition-colors"
-            on:click={() => toggleTheme()}
+            onclick={() => toggleTheme()}
             title="Toggle theme"
           >
             <Icon icon={$theme.mode === 'dark' ? 'solar:moon-bold' : 'solar:sun-bold'} width="1.2em" height="1.2em" />
@@ -70,7 +70,7 @@
               class="flex-1 flex items-center justify-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200 border-b-2 {activeTab === tab.id 
                 ? 'text-primary-500 border-primary-500 bg-primary-50-900-token' 
                 : 'text-surface-600-400-token border-transparent hover:text-surface-900-50-token hover:bg-surface-200-700-token'}"
-              on:click={() => activeTab = tab.id}
+              onclick={() => activeTab = tab.id}
             >
               <span class="text-lg">
                 <Icon icon={tab.icon} width="1.2em" height="1.2em" />

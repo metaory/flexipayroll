@@ -207,7 +207,7 @@
     </header>
     <section class="card-body">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <button class="btn variant-filled-primary" on:click={exportData}>
+        <button class="btn variant-filled-primary" onclick={exportData}>
           Export Data
         </button>
         
@@ -221,11 +221,11 @@
           />
         </label>
         
-        <button class="btn variant-filled-warning" on:click={resetToDefaults}>
+        <button class="btn variant-filled-warning" onclick={resetToDefaults}>
           Reset Config
         </button>
         
-        <button class="btn variant-filled-error" on:click={clearAllData}>
+        <button class="btn variant-filled-error" onclick={clearAllData}>
           Clear All Data
         </button>
       </div>

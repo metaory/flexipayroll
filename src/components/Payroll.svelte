@@ -189,7 +189,7 @@
                 <div class="flex items-end">
                   <button 
                     class="btn variant-filled-primary"
-                    on:click={() => addAdjustment(employee.id)}
+                    onclick={() => addAdjustment(employee.id)}
                   >
                     <Icon icon="solar:document-add-bold" width="1.1em" height="1.1em" /> Add Adjustment
                   </button>
@@ -219,7 +219,7 @@
                           <td>
                             <button 
                               class="btn btn-sm variant-filled-error"
-                              on:click={() => removeAdjustment(employee.id, adjustment.id)}
+                              onclick={() => removeAdjustment(employee.id, adjustment.id)}
                             >
                               <Icon icon="solar:trash-bin-trash-bold" width="1.1em" height="1.1em" /> Remove
                             </button>
