@@ -8,7 +8,7 @@
   import Config from './components/Config.svelte';
   import Icon from '@iconify/svelte';
   
-  let activeTab = 'employees';
+  let activeTab = $state('employees');
   
   const tabs = [
     { id: 'employees', label: 'Employees', icon: 'solar:users-group-rounded-bold', component: Employees },
@@ -18,17 +18,15 @@
   ];
   
   // Apply theme to document with transition
-  $: {
+  $effect(() => {
     document.documentElement.classList.toggle('dark', $theme.mode === 'dark');
-    document.documentElement.setAttribute('data-theme', $theme.name);
-  }
+  });
   
   // Initialize theme on mount
   import { onMount } from 'svelte';
   onMount(() => {
     // Ensure theme is properly set on initial load
     document.documentElement.classList.toggle('dark', $theme.mode === 'dark');
-    document.documentElement.setAttribute('data-theme', $theme.name);
   });
   
 
@@ -49,15 +47,12 @@
     <svelte:fragment slot="trail">
       <div class="flex items-center gap-3">
         <div class="flex items-center gap-2">
-          <span class="text-sm text-surface-600-400-token">
-            {$theme.mode === 'dark' ? '🌙' : '☀️'}
-          </span>
           <button 
             class="btn variant-ghost p-2 rounded-full hover:bg-surface-200-700-token transition-colors"
             on:click={() => toggleTheme()}
             title="Toggle theme"
           >
-            {$theme.mode === 'dark' ? '🌙' : '☀️'}
+            <Icon icon={$theme.mode === 'dark' ? 'solar:moon-bold' : 'solar:sun-bold'} width="1.2em" height="1.2em" />
           </button>
         </div>
       </div>
