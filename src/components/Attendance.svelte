@@ -95,83 +95,88 @@
 </script>
 
 <div>
-  <div>
-    <h2>Attendance Management</h2>
-    <p>Track employee attendance and work hours</p>
+  <div class="xpayroll-card">
+    <div class="xpayroll-card__header">
+      <h2>Attendance Management</h2>
+      <p>Track employee attendance and work hours</p>
+    </div>
   </div>
   
-  <div>
-    <header>
+  <div class="xpayroll-card" style="margin-top: 1rem;">
+    <div class="xpayroll-card__header">
       <h3><Icon icon="solar:document-add-bold" width="1.2em" height="1.2em" /> Record Attendance</h3>
-    </header>
-    <section>
-      <div>
-        <label>
-          <span><Icon icon="solar:user-bold" width="1em" height="1em" /> Employee</span>
-          <select bind:value={selectedEmployee}>
+    </div>
+    <div class="xpayroll-card__body">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <div class="xpayroll-form__group">
+          <label class="xpayroll-form__label"><Icon icon="solar:user-bold" width="1em" height="1em" /> Employee</label>
+          <select class="xpayroll-form__select" bind:value={selectedEmployee}>
             <option value="">Select Employee</option>
             {#each $employees as employee}
               <option value={employee.id}>{employee.name}</option>
             {/each}
           </select>
-        </label>
+        </div>
         
-        <label>
-          <span><Icon icon="solar:calendar-bold" width="1em" height="1em" /> Date</span>
+        <div class="xpayroll-form__group">
+          <label class="xpayroll-form__label"><Icon icon="solar:calendar-bold" width="1em" height="1em" /> Date</label>
           <input 
+            class="xpayroll-form__input"
             type="date"
             bind:value={selectedDate}
             required
           />
-        </label>
+        </div>
         
-        <label>
-          <span><Icon icon="solar:tag-bold" width="1em" height="1em" /> Day Type</span>
-          <select bind:value={selectedType}>
+        <div class="xpayroll-form__group">
+          <label class="xpayroll-form__label"><Icon icon="solar:tag-bold" width="1em" height="1em" /> Day Type</label>
+          <select class="xpayroll-form__select" bind:value={selectedType}>
             {#each Object.entries(DAY_TYPES) as [key, value]}
               <option value={value}>{getDayTypeLabel(value)}</option>
             {/each}
           </select>
-        </label>
+        </div>
         
         {#if selectedType === 'regular'}
-          <label>
-            <span><Icon icon="solar:clock-circle-bold" width="1em" height="1em" /> Entry Time</span>
+          <div class="xpayroll-form__group">
+            <label class="xpayroll-form__label"><Icon icon="solar:clock-circle-bold" width="1em" height="1em" /> Entry Time</label>
             <input 
+              class="xpayroll-form__input"
               type="time"
               bind:value={entryTime}
               required
             />
-          </label>
+          </div>
           
-          <label>
-            <span><Icon icon="solar:clock-circle-bold" width="1em" height="1em" /> Exit Time</span>
+          <div class="xpayroll-form__group">
+            <label class="xpayroll-form__label"><Icon icon="solar:clock-circle-bold" width="1em" height="1em" /> Exit Time</label>
             <input 
+              class="xpayroll-form__input"
               type="time"
               bind:value={exitTime}
               required
             />
-          </label>
+          </div>
         {/if}
       </div>
       
-      <div>
-        <button onclick={recordAttendance}>
+      <div style="margin-top: 1.5rem;">
+        <button class="xpayroll-btn xpayroll-btn--primary" onclick={recordAttendance}>
           <Icon icon="solar:floppy-disk-bold" width="1.2em" height="1.2em" /> Record Attendance
         </button>
       </div>
-    </section>
+    </div>
   </div>
   
-  <div>
-    <header>
+  <div class="xpayroll-card" style="margin-top: 1rem;">
+    <div class="xpayroll-card__header">
       <h3><Icon icon="solar:chart-bold" width="1.2em" height="1.2em" /> Attendance Records</h3>
       <p>Current month: {$currentPeriod.month}/{$currentPeriod.year}</p>
-    </header>
-    <section>
+    </div>
+    <div class="xpayroll-card__body">
       {#if $employees.length === 0}
-        <div>
-          <div><Icon icon="solar:users-group-rounded-bold" width="2.5em" height="2.5em" /></div>
+        <div class="xpayroll-empty-state">
+          <Icon icon="solar:users-group-rounded-bold" width="2.5em" height="2.5em" />
           <h4>No employees added yet</h4>
           <p>Add employees first to record attendance</p>
         </div>
@@ -181,28 +186,30 @@
             {@const empAttendance = getAttendanceForEmployee(employee.id)}
             {@const attendanceDates = Object.keys(empAttendance).sort()}
             
-            <div>
-              <header>
-                <div>
-                  <h4>{employee.name}</h4>
-                  <p>
-                    {attendanceDates.length} days recorded this month
-                  </p>
-                </div>
-                <div>
-                  <div>{attendanceDates.length}</div>
-                  <div>Days</div>
-                </div>
-              </header>
-              <section>
-                {#if attendanceDates.length === 0}
+            <div class="xpayroll-card" style="margin-bottom: 1rem;">
+              <div class="xpayroll-card__header">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
                   <div>
-                    <div><Icon icon="solar:calendar-bold" width="2em" height="2em" /></div>
+                    <h4>{employee.name}</h4>
+                    <p>
+                      {attendanceDates.length} days recorded this month
+                    </p>
+                  </div>
+                  <div style="text-align: center;">
+                    <div style="font-size: 1.5rem; font-weight: bold; color: color('primary', 'xpayroll');">{attendanceDates.length}</div>
+                    <div style="font-size: 0.875rem; color: color('text-muted', 'xpayroll');">Days</div>
+                  </div>
+                </div>
+              </div>
+              <div class="xpayroll-card__body">
+                {#if attendanceDates.length === 0}
+                  <div class="xpayroll-empty-state">
+                    <Icon icon="solar:calendar-bold" width="2em" height="2em" />
                     <p>No attendance records for this month</p>
                   </div>
                 {:else}
-                  <div>
-                    <table>
+                  <div style="overflow-x: auto;">
+                    <table class="xpayroll-table">
                       <thead>
                         <tr>
                           <th>Date</th>
@@ -218,15 +225,15 @@
                           <tr>
                             <td>{new Date(date).toLocaleDateString()}</td>
                             <td>
-                              <span>
+                              <span style="text-transform: capitalize;">
                                 {getDayTypeLabel(record.type)}
                               </span>
                             </td>
                             <td>{record.entryTime || '-'}</td>
                             <td>{record.exitTime || '-'}</td>
                             <td>
-                              <div>
-                                <button onclick={() => deleteAttendance(employee.id, date)}>
+                              <div style="display: flex; gap: 0.5rem;">
+                                <button class="xpayroll-btn xpayroll-btn--danger" onclick={() => deleteAttendance(employee.id, date)}>
                                   <Icon icon="solar:trash-bin-trash-bold" width="1.1em" height="1.1em" /> Delete
                                 </button>
                               </div>
@@ -237,11 +244,11 @@
                     </table>
                   </div>
                 {/if}
-              </section>
+              </div>
             </div>
           {/each}
         </div>
       {/if}
-    </section>
+    </div>
   </div>
 </div> 
