@@ -83,13 +83,23 @@
       
       <!-- Tab Content -->
       <section class="p-6">
-        {#each tabs as tab}
-          {#if activeTab === tab.id}
-            <div class="animate-fade-in">
-              <svelte:component this={tab.component} />
-            </div>
-          {/if}
-        {/each}
+        {#if activeTab === 'employees'}
+          <div class="animate-fade-in">
+            <Employees />
+          </div>
+        {:else if activeTab === 'attendance'}
+          <div class="animate-fade-in">
+            <Attendance />
+          </div>
+        {:else if activeTab === 'payroll'}
+          <div class="animate-fade-in">
+            <Payroll />
+          </div>
+        {:else if activeTab === 'config'}
+          <div class="animate-fade-in">
+            <Config />
+          </div>
+        {/if}
       </section>
     </div>
   </main>

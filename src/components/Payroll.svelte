@@ -4,8 +4,8 @@
   import Icon from '@iconify/svelte';
   
   let adjustments = {}
-  let adjustmentAmount = ''
-  let adjustmentComment = ''
+  let adjustmentAmount = $state('')
+  let adjustmentComment = $state('')
   
   function getMonthAttendance(employeeId, year, month) {
     const monthStr = `${year}-${month.toString().padStart(2, '0')}`

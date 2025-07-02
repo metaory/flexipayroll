@@ -87,7 +87,7 @@
             class="input"
             type="number"
             bind:value={$config.workingDaysPerMonth}
-            on:change={() => updateConfig('workingDaysPerMonth', $config.workingDaysPerMonth)}
+            onchange={() => updateConfig('workingDaysPerMonth', $config.workingDaysPerMonth)}
             min="1"
             max="31"
           />
@@ -99,7 +99,7 @@
             class="input"
             type="number"
             bind:value={$config.workdayHours}
-            on:change={() => updateConfig('workdayHours', $config.workdayHours)}
+            onchange={() => updateConfig('workdayHours', $config.workdayHours)}
             min="1"
             max="24"
             step="0.5"
@@ -122,7 +122,7 @@
             class="input"
             type="number"
             bind:value={$config.bonuses.E.value}
-            on:change={() => updateConfig('bonuses.E.value', $config.bonuses.E.value)}
+            onchange={() => updateConfig('bonuses.E.value', $config.bonuses.E.value)}
             min="0"
             step="0.5"
           />
@@ -134,7 +134,7 @@
             class="input"
             type="number"
             bind:value={$config.bonuses.S.value}
-            on:change={() => updateConfig('bonuses.S.value', $config.bonuses.S.value)}
+            onchange={() => updateConfig('bonuses.S.value', $config.bonuses.S.value)}
             min="0"
             step="0.5"
           />
@@ -146,7 +146,7 @@
             class="input"
             type="number"
             bind:value={$config.bonuses.K.value}
-            on:change={() => updateConfig('bonuses.K.value', $config.bonuses.K.value)}
+            onchange={() => updateConfig('bonuses.K.value', $config.bonuses.K.value)}
             min="0"
           />
         </label>
@@ -157,7 +157,7 @@
             class="input"
             type="number"
             bind:value={$config.bonuses.M.value}
-            on:change={() => updateConfig('bonuses.M.value', $config.bonuses.M.value)}
+            onchange={() => updateConfig('bonuses.M.value', $config.bonuses.M.value)}
             min="0"
           />
         </label>
@@ -168,7 +168,7 @@
             class="input"
             type="number"
             bind:value={$config.bonuses.T.value}
-            on:change={() => updateConfig('bonuses.T.value', $config.bonuses.T.value)}
+            onchange={() => updateConfig('bonuses.T.value', $config.bonuses.T.value)}
             min="0"
           />
           <div class="text-sm text-surface-600-400-token">Married employees only</div>
@@ -190,7 +190,7 @@
             class="input"
             type="number"
             value={$config.deductions.insurance.value * 100}
-            on:change={(e) => updateConfig('deductions.insurance.value', Number(e.currentTarget.value) / 100)}
+            onchange={(e) => updateConfig('deductions.insurance.value', Number(e.currentTarget.value) / 100)}
             min="0"
             max="100"
             step="0.1"
@@ -216,7 +216,7 @@
           <input 
             type="file"
             accept=".json"
-            on:change={importData}
+            onchange={importData}
             class="hidden"
           />
         </label>

@@ -7,6 +7,10 @@ export default defineConfig({
   server: { host: true },
   plugins: [
     tailwindcss(),
-    svelte()
+    svelte({
+      compilerOptions: {
+        runes: true
+      }
+    })
   ]
 });

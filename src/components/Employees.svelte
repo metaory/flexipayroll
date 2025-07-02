@@ -3,14 +3,14 @@
   import { validateEmployee, EMPLOYEE_ATTRIBUTES, formatCurrency } from '../lib/core.js'
   import Icon from '@iconify/svelte';
   
-  let showAddForm = false
-  let editingEmployee = null
-  let formData = {
+  let showAddForm = $state(false)
+  let editingEmployee = $state(null)
+  let formData = $state({
     name: '',
     gender: 'male',
     maritalStatus: 'single',
     monthlySalary: ''
-  }
+  })
   
   function resetForm() {
     formData = {
