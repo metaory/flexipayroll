@@ -6,14 +6,15 @@
   import Attendance from './components/Attendance.svelte';
   import Payroll from './components/Payroll.svelte';
   import Config from './components/Config.svelte';
+  import Icon from '@iconify/svelte';
   
   let activeTab = 'employees';
   
   const tabs = [
-    { id: 'employees', label: 'Employees', icon: '👥', component: Employees },
-    { id: 'attendance', label: 'Attendance', icon: '📅', component: Attendance },
-    { id: 'payroll', label: 'Payroll', icon: '💰', component: Payroll },
-    { id: 'config', label: 'Configuration', icon: '⚙️', component: Config }
+    { id: 'employees', label: 'Employees', icon: 'solar:users-group-rounded-bold', component: Employees },
+    { id: 'attendance', label: 'Attendance', icon: 'solar:calendar-bold', component: Attendance },
+    { id: 'payroll', label: 'Payroll', icon: 'solar:wallet-bold', component: Payroll },
+    { id: 'config', label: 'Configuration', icon: 'solar:settings-bold', component: Config }
   ];
   
   // Apply theme to document with transition
@@ -76,7 +77,9 @@
                 : 'text-surface-600-400-token border-transparent hover:text-surface-900-50-token hover:bg-surface-200-700-token'}"
               on:click={() => activeTab = tab.id}
             >
-              <span class="text-lg">{tab.icon}</span>
+              <span class="text-lg">
+                <Icon icon={tab.icon} width="1.2em" height="1.2em" />
+              </span>
               <span>{tab.label}</span>
             </button>
           {/each}

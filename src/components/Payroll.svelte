@@ -1,6 +1,7 @@
 <script>
   import { employees, attendance, config, currentPeriod } from '../lib/stores.js'
   import { calculateSalary, formatCurrency } from '../lib/core.js'
+  import Icon from '@iconify/svelte';
   
   let adjustments = {}
   let adjustmentAmount = ''
@@ -71,7 +72,7 @@
   {#if $employees.length === 0}
     <div class="card p-6">
       <div class="text-center py-12">
-        <div class="text-6xl mb-4 text-surface-400-600-token">💰</div>
+        <div class="text-6xl mb-4 text-surface-400-600-token"><Icon icon="solar:wallet-bold" width="2.5em" height="2.5em" /></div>
         <p class="text-surface-600-400-token text-lg">No employees added yet.</p>
         <p class="text-surface-500-500-token">Add employees first to calculate payroll.</p>
       </div>
@@ -190,7 +191,7 @@
                     class="btn variant-filled-primary"
                     on:click={() => addAdjustment(employee.id)}
                   >
-                    Add Adjustment
+                    <Icon icon="solar:document-add-bold" width="1.1em" height="1.1em" /> Add Adjustment
                   </button>
                 </div>
               </div>
@@ -220,7 +221,7 @@
                               class="btn btn-sm variant-filled-error"
                               on:click={() => removeAdjustment(employee.id, adjustment.id)}
                             >
-                              Remove
+                              <Icon icon="solar:trash-bin-trash-bold" width="1.1em" height="1.1em" /> Remove
                             </button>
                           </td>
                         </tr>
@@ -236,7 +237,7 @@
                 </div>
               {:else}
                 <div class="text-center py-8 text-surface-600-400-token">
-                  <div class="text-4xl mb-2">📝</div>
+                  <div class="text-4xl mb-2"><Icon icon="solar:document-bold" width="2em" height="2em" /></div>
                   <p>No adjustments added yet.</p>
                 </div>
               {/if}

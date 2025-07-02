@@ -1,6 +1,7 @@
 <script>
   import { employees, attendance, currentPeriod } from '../lib/stores.js';
   import { DAY_TYPES, validateAttendance } from '../lib/core.js';
+  import Icon from '@iconify/svelte';
   
   let selectedEmployee = '';
   let selectedDate = '';
@@ -101,12 +102,12 @@
   <!-- Record Attendance Form -->
   <div class="card p-6 bg-gradient-to-br from-success-50-900-token to-surface-50-900-token border border-success-200-700-token">
     <header class="card-header mb-6">
-      <h3 class="h3 text-success-500">📝 Record Attendance</h3>
+      <h3 class="h3 text-success-500"><Icon icon="solar:document-add-bold" width="1.2em" height="1.2em" /> Record Attendance</h3>
     </header>
     <section class="card-body">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <label class="label">
-          <span class="text-surface-700-300-token font-medium">👤 Employee</span>
+          <span class="text-surface-700-300-token font-medium"><Icon icon="solar:user-bold" width="1em" height="1em" /> Employee</span>
           <select class="select" bind:value={selectedEmployee}>
             <option value="">Select Employee</option>
             {#each $employees as employee}
@@ -116,7 +117,7 @@
         </label>
         
         <label class="label">
-          <span class="text-surface-700-300-token font-medium">📅 Date</span>
+          <span class="text-surface-700-300-token font-medium"><Icon icon="solar:calendar-bold" width="1em" height="1em" /> Date</span>
           <input 
             class="input"
             type="date"
@@ -126,7 +127,7 @@
         </label>
         
         <label class="label">
-          <span class="text-surface-700-300-token font-medium">🏷️ Day Type</span>
+          <span class="text-surface-700-300-token font-medium"><Icon icon="solar:tag-bold" width="1em" height="1em" /> Day Type</span>
           <select class="select" bind:value={selectedType}>
             {#each Object.entries(DAY_TYPES) as [key, value]}
               <option value={value}>{getDayTypeLabel(value)}</option>
@@ -136,7 +137,7 @@
         
         {#if selectedType === 'regular'}
           <label class="label">
-            <span class="text-surface-700-300-token font-medium">⏰ Entry Time</span>
+            <span class="text-surface-700-300-token font-medium"><Icon icon="solar:clock-circle-bold" width="1em" height="1em" /> Entry Time</span>
             <input 
               class="input"
               type="time"
@@ -146,7 +147,7 @@
           </label>
           
           <label class="label">
-            <span class="text-surface-700-300-token font-medium">⏰ Exit Time</span>
+            <span class="text-surface-700-300-token font-medium"><Icon icon="solar:clock-circle-bold" width="1em" height="1em" /> Exit Time</span>
             <input 
               class="input"
               type="time"
@@ -159,7 +160,7 @@
       
       <div class="flex gap-3 mt-6">
         <button class="btn variant-filled-success" on:click={recordAttendance}>
-          <span class="mr-2">💾</span> Record Attendance
+          <span class="mr-2"><Icon icon="solar:floppy-disk-bold" width="1.2em" height="1.2em" /></span> Record Attendance
         </button>
       </div>
     </section>
@@ -168,13 +169,13 @@
   <!-- Attendance Records -->
   <div class="card p-6">
     <header class="card-header mb-6">
-      <h3 class="h3 text-primary-500">📊 Attendance Records</h3>
+      <h3 class="h3 text-primary-500"><Icon icon="solar:chart-bold" width="1.2em" height="1.2em" /> Attendance Records</h3>
       <p class="text-surface-600-400-token">Current month: {$currentPeriod.month}/{$currentPeriod.year}</p>
     </header>
     <section class="card-body">
       {#if $employees.length === 0}
         <div class="text-center py-8">
-          <div class="text-6xl mb-4 text-surface-400-600-token">👥</div>
+          <div class="text-6xl mb-4 text-surface-400-600-token"><Icon icon="solar:users-group-rounded-bold" width="2.5em" height="2.5em" /></div>
           <h4 class="h4 text-surface-600-400-token mb-2">No employees added yet</h4>
           <p class="text-surface-500-500-token">Add employees first to record attendance</p>
         </div>
@@ -202,7 +203,7 @@
               <section class="card-body">
                 {#if attendanceDates.length === 0}
                   <div class="text-center py-6">
-                    <div class="text-4xl mb-2 text-surface-400-600-token">📅</div>
+                    <div class="text-4xl mb-2 text-surface-400-600-token"><Icon icon="solar:calendar-bold" width="2em" height="2em" /></div>
                     <p class="text-surface-600-400-token">No attendance records for this month</p>
                   </div>
                 {:else}
@@ -235,7 +236,7 @@
                                   class="btn btn-sm variant-filled-error"
                                   on:click={() => deleteAttendance(employee.id, date)}
                                 >
-                                  🗑️ Delete
+                                  <Icon icon="solar:trash-bin-trash-bold" width="1.1em" height="1.1em" /> Delete
                                 </button>
                               </div>
                             </td>

@@ -1,6 +1,7 @@
 <script>
   import { employees, formatDate } from '../lib/stores.js'
   import { validateEmployee, EMPLOYEE_ATTRIBUTES, formatCurrency } from '../lib/core.js'
+  import Icon from '@iconify/svelte';
   
   let showAddForm = false
   let editingEmployee = null
@@ -90,7 +91,7 @@
       <p class="text-surface-600-400-token mt-1">Manage your workforce and employee information</p>
     </div>
     <button class="btn variant-filled-primary" on:click={() => showAddForm = true}>
-      <span class="mr-2">➕</span> Add Employee
+      <span class="mr-2"><Icon icon="solar:user-plus-bold" width="1.2em" height="1.2em" /></span> Add Employee
     </button>
   </div>
 
@@ -145,7 +146,7 @@
         
         <div class="flex gap-3 mt-6">
           <button class="btn variant-filled-primary" on:click={editingEmployee ? updateEmployee : addEmployee}>
-            <span class="mr-2">{editingEmployee ? '🔄' : '➕'}</span>
+            <span class="mr-2"><Icon icon={editingEmployee ? 'solar:refresh-bold' : 'solar:user-plus-bold'} width="1.2em" height="1.2em" /></span>
             {editingEmployee ? 'Update' : 'Add'} Employee
           </button>
           <button class="btn variant-ghost" on:click={cancelForm}>
@@ -165,11 +166,11 @@
     <section class="card-body">
       {#if $employees.length === 0}
         <div class="text-center py-12">
-          <div class="text-6xl mb-4 text-surface-400-600-token">👥</div>
+          <div class="text-6xl mb-4 text-surface-400-600-token"><Icon icon="solar:users-group-rounded-bold" width="2.5em" height="2.5em" /></div>
           <h4 class="h4 text-surface-600-400-token mb-2">No employees yet</h4>
           <p class="text-surface-500-500-token mb-4">Get started by adding your first employee</p>
           <button class="btn variant-filled-primary" on:click={() => showAddForm = true}>
-            <span class="mr-2">➕</span> Add First Employee
+            <span class="mr-2"><Icon icon="solar:user-plus-bold" width="1.2em" height="1.2em" /></span> Add First Employee
           </button>
         </div>
       {:else}
@@ -202,10 +203,10 @@
                   <td>
                     <div class="flex gap-2 justify-center">
                       <button class="btn btn-sm variant-filled-secondary" on:click={() => editEmployee(employee)}>
-                        ✏️ Edit
+                        <Icon icon="solar:edit-bold" width="1.1em" height="1.1em" /> Edit
                       </button>
                       <button class="btn btn-sm variant-filled-error" on:click={() => deleteEmployee(employee.id)}>
-                        🗑️ Delete
+                        <Icon icon="solar:trash-bin-trash-bold" width="1.1em" height="1.1em" /> Delete
                       </button>
                     </div>
                   </td>
