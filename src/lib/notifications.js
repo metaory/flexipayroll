@@ -1,37 +1,33 @@
 /**
- * Notification system using Skeleton's toast
+ * Simple notification system using browser alerts
  */
-
-import { Toaster, toast } from '@skeletonlabs/skeleton-svelte';
 
 export const notify = {
   success(message, options = {}) {
-    toast.push(message, {
-      background: 'variant-filled-success',
-      ...options
-    });
+    console.log('✅ Success:', message);
+    if (options.showAlert !== false) {
+      alert(`✅ ${message}`);
+    }
   },
   
   error(message, options = {}) {
-    toast.push(message, {
-      background: 'variant-filled-error',
-      ...options
-    });
+    console.error('❌ Error:', message);
+    if (options.showAlert !== false) {
+      alert(`❌ ${message}`);
+    }
   },
   
   warning(message, options = {}) {
-    toast.push(message, {
-      background: 'variant-filled-warning',
-      ...options
-    });
+    console.warn('⚠️ Warning:', message);
+    if (options.showAlert !== false) {
+      alert(`⚠️ ${message}`);
+    }
   },
   
   info(message, options = {}) {
-    toast.push(message, {
-      background: 'variant-filled-primary',
-      ...options
-    });
+    console.info('ℹ️ Info:', message);
+    if (options.showAlert !== false) {
+      alert(`ℹ️ ${message}`);
+    }
   }
-};
-
-export { Toaster }; 
+}; 

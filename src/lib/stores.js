@@ -42,7 +42,7 @@ export const config = createPersistentStore(STORAGE_KEYS.CONFIG, DEFAULT_CONFIG)
 // Theme management
 export const theme = createPersistentStore(STORAGE_KEYS.THEME, {
   mode: 'light',
-  name: 'modern'
+  name: 'cerberus'
 })
 
 // ============================================================================

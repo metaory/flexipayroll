@@ -67,24 +67,24 @@
   }
 </script>
 
-<div class="space-y-6">
+<div class="config-container">
   <!-- Header Section -->
   <div>
-    <h2 class="h2 text-primary-500">System Configuration</h2>
-    <p class="text-surface-600-400-token mt-1">Configure payroll settings and system parameters</p>
+    <h2 class="section-title">System Configuration</h2>
+    <p class="section-desc">Configure payroll settings and system parameters</p>
   </div>
   
   <!-- Working Time Configuration -->
-  <div class="card p-6 transition-all duration-300">
-    <header class="card-header">
-      <h3 class="h3">Working Time Settings</h3>
+  <div class="config-card">
+    <header class="config-header">
+      <h3 class="config-title">Working Time Settings</h3>
     </header>
-    <section class="card-body">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <label class="label">
-          <span>Working Days per Month</span>
+    <section class="config-body">
+      <div class="config-grid">
+        <label class="form-label">
+          <span class="label-text">Working Days per Month</span>
           <input 
-            class="input"
+            class="form-input"
             type="number"
             bind:value={$config.workingDaysPerMonth}
             onchange={() => updateConfig('workingDaysPerMonth', $config.workingDaysPerMonth)}
@@ -93,10 +93,10 @@
           />
         </label>
         
-        <label class="label">
-          <span>Workday Hours</span>
+        <label class="form-label">
+          <span class="label-text">Workday Hours</span>
           <input 
-            class="input"
+            class="form-input"
             type="number"
             bind:value={$config.workdayHours}
             onchange={() => updateConfig('workdayHours', $config.workdayHours)}
@@ -110,16 +110,16 @@
   </div>
   
   <!-- Bonus Configuration -->
-  <div class="card p-6 transition-all duration-300">
-    <header class="card-header">
-      <h3 class="h3">Bonus Settings</h3>
+  <div class="config-card">
+    <header class="config-header">
+      <h3 class="config-title">Bonus Settings</h3>
     </header>
-    <section class="card-body">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <label class="label">
-          <span>Bonus E (Days × Daily Rate)</span>
+    <section class="config-body">
+      <div class="config-grid">
+        <label class="form-label">
+          <span class="label-text">Bonus E (Days × Daily Rate)</span>
           <input 
-            class="input"
+            class="form-input"
             type="number"
             bind:value={$config.bonuses.E.value}
             onchange={() => updateConfig('bonuses.E.value', $config.bonuses.E.value)}
@@ -128,10 +128,10 @@
           />
         </label>
         
-        <label class="label">
-          <span>Bonus S (Days × Daily Rate)</span>
+        <label class="form-label">
+          <span class="label-text">Bonus S (Days × Daily Rate)</span>
           <input 
-            class="input"
+            class="form-input"
             type="number"
             bind:value={$config.bonuses.S.value}
             onchange={() => updateConfig('bonuses.S.value', $config.bonuses.S.value)}
@@ -140,10 +140,10 @@
           />
         </label>
         
-        <label class="label">
-          <span>Bonus K (Fixed Amount - IDR)</span>
+        <label class="form-label">
+          <span class="label-text">Bonus K (Fixed Amount - IDR)</span>
           <input 
-            class="input"
+            class="form-input"
             type="number"
             bind:value={$config.bonuses.K.value}
             onchange={() => updateConfig('bonuses.K.value', $config.bonuses.K.value)}
@@ -151,10 +151,10 @@
           />
         </label>
         
-        <label class="label">
-          <span>Bonus M (Fixed Amount - IDR)</span>
+        <label class="form-label">
+          <span class="label-text">Bonus M (Fixed Amount - IDR)</span>
           <input 
-            class="input"
+            class="form-input"
             type="number"
             bind:value={$config.bonuses.M.value}
             onchange={() => updateConfig('bonuses.M.value', $config.bonuses.M.value)}
@@ -162,32 +162,32 @@
           />
         </label>
         
-        <label class="label">
-          <span>Bonus T (Fixed Amount - IDR)</span>
+        <label class="form-label">
+          <span class="label-text">Bonus T (Fixed Amount - IDR)</span>
           <input 
-            class="input"
+            class="form-input"
             type="number"
             bind:value={$config.bonuses.T.value}
             onchange={() => updateConfig('bonuses.T.value', $config.bonuses.T.value)}
             min="0"
           />
-          <div class="text-sm text-surface-600-400-token">Married employees only</div>
+          <div class="input-help">Married employees only</div>
         </label>
       </div>
     </section>
   </div>
   
   <!-- Insurance Configuration -->
-  <div class="card p-6 transition-all duration-300">
-    <header class="card-header">
-      <h3 class="h3">Insurance Deduction</h3>
+  <div class="config-card">
+    <header class="config-header">
+      <h3 class="config-title">Insurance Deduction</h3>
     </header>
-    <section class="card-body">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <label class="label">
-          <span>Insurance Rate (%)</span>
+    <section class="config-body">
+      <div class="config-grid">
+        <label class="form-label">
+          <span class="label-text">Insurance Rate (%)</span>
           <input 
-            class="input"
+            class="form-input"
             type="number"
             value={$config.deductions.insurance.value * 100}
             onchange={(e) => updateConfig('deductions.insurance.value', Number(e.currentTarget.value) / 100)}
@@ -201,72 +201,285 @@
   </div>
   
   <!-- Data Management -->
-  <div class="card p-6 transition-all duration-300">
-    <header class="card-header">
-      <h3 class="h3">Data Management</h3>
+  <div class="config-card">
+    <header class="config-header">
+      <h3 class="config-title">Data Management</h3>
     </header>
-    <section class="card-body">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <button class="btn variant-filled-primary" onclick={exportData}>
+    <section class="config-body">
+      <div class="action-grid">
+        <button class="btn btn-primary" onclick={exportData}>
           Export Data
         </button>
         
-        <label class="btn variant-filled-secondary cursor-pointer">
+        <label class="btn btn-secondary file-input-wrapper">
           Import Data
           <input 
             type="file"
             accept=".json"
             onchange={importData}
-            class="hidden"
+            class="file-input"
           />
         </label>
         
-        <button class="btn variant-filled-warning" onclick={resetToDefaults}>
+        <button class="btn btn-warning" onclick={resetToDefaults}>
           Reset Config
         </button>
         
-        <button class="btn variant-filled-error" onclick={clearAllData}>
+        <button class="btn btn-danger" onclick={clearAllData}>
           Clear All Data
         </button>
       </div>
       
-      <div class="mt-6 p-6 bg-surface-50-900-token rounded-lg">
-        <h4 class="h4 mb-4 text-primary-500">Current Configuration Summary</h4>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-          <div class="p-3 bg-surface-100-800-token rounded-lg">
-            <div class="font-bold text-primary-500">Working Days</div>
-            <div class="text-surface-600-400-token">{$config.workingDaysPerMonth} days/month</div>
+      <div class="config-summary">
+        <h4 class="summary-title">Current Configuration Summary</h4>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <div class="summary-label">Working Days</div>
+            <div class="summary-value">{$config.workingDaysPerMonth} days/month</div>
           </div>
-          <div class="p-3 bg-surface-100-800-token rounded-lg">
-            <div class="font-bold text-primary-500">Workday Hours</div>
-            <div class="text-surface-600-400-token">{$config.workdayHours} hours/day</div>
+          <div class="summary-item">
+            <div class="summary-label">Workday Hours</div>
+            <div class="summary-value">{$config.workdayHours} hours/day</div>
           </div>
-          <div class="p-3 bg-surface-100-800-token rounded-lg">
-            <div class="font-bold text-success-500">Bonus E</div>
-            <div class="text-surface-600-400-token">{$config.bonuses.E.value} × daily rate</div>
+          <div class="summary-item">
+            <div class="summary-label bonus">Bonus E</div>
+            <div class="summary-value">{$config.bonuses.E.value} × daily rate</div>
           </div>
-          <div class="p-3 bg-surface-100-800-token rounded-lg">
-            <div class="font-bold text-success-500">Bonus S</div>
-            <div class="text-surface-600-400-token">{$config.bonuses.S.value} × daily rate</div>
+          <div class="summary-item">
+            <div class="summary-label bonus">Bonus S</div>
+            <div class="summary-value">{$config.bonuses.S.value} × daily rate</div>
           </div>
-          <div class="p-3 bg-surface-100-800-token rounded-lg">
-            <div class="font-bold text-success-500">Bonus K</div>
-            <div class="text-surface-600-400-token font-mono">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format($config.bonuses.K.value)}</div>
+          <div class="summary-item">
+            <div class="summary-label bonus">Bonus K</div>
+            <div class="summary-value currency">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format($config.bonuses.K.value)}</div>
           </div>
-          <div class="p-3 bg-surface-100-800-token rounded-lg">
-            <div class="font-bold text-success-500">Bonus M</div>
-            <div class="text-surface-600-400-token font-mono">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format($config.bonuses.M.value)}</div>
+          <div class="summary-item">
+            <div class="summary-label bonus">Bonus M</div>
+            <div class="summary-value currency">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format($config.bonuses.M.value)}</div>
           </div>
-          <div class="p-3 bg-surface-100-800-token rounded-lg">
-            <div class="font-bold text-success-500">Bonus T</div>
-            <div class="text-surface-600-400-token font-mono">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format($config.bonuses.T.value)} (married only)</div>
+          <div class="summary-item">
+            <div class="summary-label bonus">Bonus T</div>
+            <div class="summary-value currency">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format($config.bonuses.T.value)} (married only)</div>
           </div>
-          <div class="p-3 bg-surface-100-800-token rounded-lg">
-            <div class="font-bold text-error-500">Insurance</div>
-            <div class="text-surface-600-400-token">{($config.deductions.insurance.value * 100).toFixed(1)}%</div>
+          <div class="summary-item">
+            <div class="summary-label deduction">Insurance</div>
+            <div class="summary-value">{($config.deductions.insurance.value * 100).toFixed(1)}%</div>
           </div>
         </div>
       </div>
     </section>
   </div>
-</div> 
+</div>
+
+<style>
+.config-container {
+  padding: 1rem;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0 0 0.5rem 0;
+  color: #1976d2;
+}
+
+.section-desc {
+  color: #666;
+  margin: 0 0 2rem 0;
+}
+
+.config-card {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+  overflow: hidden;
+}
+
+.config-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+  background: #fafafa;
+}
+
+.config-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  color: #1976d2;
+}
+
+.config-body {
+  padding: 1.5rem;
+}
+
+.config-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.form-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label-text {
+  font-weight: 500;
+  color: #333;
+}
+
+.form-input {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+}
+
+.input-help {
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 0.25rem;
+}
+
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: #1976d2;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #1565c0;
+}
+
+.btn-secondary {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.btn-secondary:hover {
+  background: #e0e0e0;
+}
+
+.btn-warning {
+  background: #f57c00;
+  color: white;
+}
+
+.btn-warning:hover {
+  background: #ef6c00;
+}
+
+.btn-danger {
+  background: #d32f2f;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #c62828;
+}
+
+.file-input-wrapper {
+  position: relative;
+  cursor: pointer;
+}
+
+.file-input {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.config-summary {
+  background: #fafafa;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e0e0e0;
+}
+
+.summary-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+  color: #1976d2;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.summary-item {
+  background: #f5f5f5;
+  padding: 1rem;
+  border-radius: 0.375rem;
+}
+
+.summary-label {
+  font-weight: bold;
+  color: #1976d2;
+  margin-bottom: 0.25rem;
+}
+
+.summary-label.bonus {
+  color: #2e7d32;
+}
+
+.summary-label.deduction {
+  color: #d32f2f;
+}
+
+.summary-value {
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.summary-value.currency {
+  font-family: monospace;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .config-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style> 

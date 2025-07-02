@@ -1,123 +1,138 @@
 <script>
-  import './app.css';
-  import { AppBar, Avatar, Switch } from '@skeletonlabs/skeleton-svelte';
-  import { theme, toggleTheme } from './lib/stores.js';
   import Employees from './components/Employees.svelte';
   import Attendance from './components/Attendance.svelte';
   import Payroll from './components/Payroll.svelte';
   import Config from './components/Config.svelte';
+  import { theme, toggleTheme } from './lib/stores.js';
   import Icon from '@iconify/svelte';
-  
-  let activeTab = $state('employees');
-  
+  let activeTab = 'employees';
   const tabs = [
     { id: 'employees', label: 'Employees', icon: 'solar:users-group-rounded-bold', component: Employees },
     { id: 'attendance', label: 'Attendance', icon: 'solar:calendar-bold', component: Attendance },
     { id: 'payroll', label: 'Payroll', icon: 'solar:wallet-bold', component: Payroll },
     { id: 'config', label: 'Configuration', icon: 'solar:settings-bold', component: Config }
   ];
-  
-  // Apply theme to document with transition
-  $effect(() => {
-    document.documentElement.classList.toggle('dark', $theme.mode === 'dark');
-  });
-  
-  // Initialize theme on mount
-  import { onMount } from 'svelte';
-  onMount(() => {
-    // Ensure theme is properly set on initial load
-    document.documentElement.classList.toggle('dark', $theme.mode === 'dark');
-  });
-  
-
 </script>
 
-<div class="min-h-screen bg-surface-50-900-token transition-colors duration-300">
-  <!-- Header -->
-  <AppBar>
-    <svelte:fragment slot="lead">
-      <div class="flex items-center gap-3">
-        <Avatar src="/logo.svg" name="XPayroll" size="lg" />
-        <div>
-          <h1 class="text-xl font-bold text-primary-500">XPayroll</h1>
-          <p class="text-sm text-surface-600-400-token">Payroll Management System</p>
-        </div>
+<div class="app-root">
+  <header class="app-header">
+    <div class="header-left">
+      <img src="/logo.svg" alt="XPayroll" class="logo" />
+      <div>
+        <h1 class="app-title">XPayroll</h1>
+        <p class="app-desc">Payroll Management System</p>
       </div>
-    </svelte:fragment>
-    <svelte:fragment slot="trail">
-      <div class="flex items-center gap-3">
-        <div class="flex items-center gap-2">
-          <button 
-            class="btn variant-ghost p-2 rounded-full hover:bg-surface-200-700-token transition-colors"
-            onclick={() => toggleTheme()}
-            title="Toggle theme"
-          >
-            <Icon icon={$theme.mode === 'dark' ? 'solar:moon-bold' : 'solar:sun-bold'} width="1.2em" height="1.2em" />
-          </button>
-        </div>
-      </div>
-    </svelte:fragment>
-  </AppBar>
-  
-  <!-- Main Content -->
-  <main class="container mx-auto p-6 max-w-7xl">
-    <!-- Navigation Tabs -->
-    <div class="card p-0 mb-6 shadow-lg">
-      <header class="card-header bg-surface-100-800-token border-b border-surface-300-600-token">
-        <nav class="flex">
-          {#each tabs as tab}
-            <button 
-              class="flex-1 flex items-center justify-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200 border-b-2 {activeTab === tab.id 
-                ? 'text-primary-500 border-primary-500 bg-primary-50-900-token' 
-                : 'text-surface-600-400-token border-transparent hover:text-surface-900-50-token hover:bg-surface-200-700-token'}"
-              onclick={() => activeTab = tab.id}
-            >
-              <span class="text-lg">
-                <Icon icon={tab.icon} width="1.2em" height="1.2em" />
-              </span>
-              <span>{tab.label}</span>
-            </button>
-          {/each}
-        </nav>
-      </header>
-      
-      <!-- Tab Content -->
-      <section class="p-6">
-        {#if activeTab === 'employees'}
-          <div class="animate-fade-in">
-            <Employees />
-          </div>
-        {:else if activeTab === 'attendance'}
-          <div class="animate-fade-in">
-            <Attendance />
-          </div>
-        {:else if activeTab === 'payroll'}
-          <div class="animate-fade-in">
-            <Payroll />
-          </div>
-        {:else if activeTab === 'config'}
-          <div class="animate-fade-in">
-            <Config />
-          </div>
-        {/if}
-      </section>
     </div>
+    <button class="theme-toggle" onclick={() => toggleTheme()} title="Toggle theme">
+      {$theme.mode === 'dark' ? '🌙' : '☀️'}
+    </button>
+  </header>
+  <nav class="tab-nav">
+    {#each tabs as tab}
+      <button 
+        class="tab-btn {activeTab === tab.id ? 'active' : ''}"
+        onclick={() => activeTab = tab.id}
+      >
+        <span class="tab-icon"><Icon icon={tab.icon} width="1.2em" height="1.2em" /></span>
+        <span>{tab.label}</span>
+      </button>
+    {/each}
+  </nav>
+  <main class="main-content">
+    {#if activeTab === 'employees'}
+      <Employees />
+    {:else if activeTab === 'attendance'}
+      <Attendance />
+    {:else if activeTab === 'payroll'}
+      <Payroll />
+    {:else if activeTab === 'config'}
+      <Config />
+    {/if}
   </main>
 </div>
 
 <style>
-  .animate-fade-in {
-    animation: fadeIn 0.3s ease-in-out;
-  }
-  
-  @keyframes fadeIn {
-    from { 
-      opacity: 0; 
-      transform: translateY(10px); 
-    }
-    to { 
-      opacity: 1; 
-      transform: translateY(0); 
-    }
-  }
+.app-root {
+  min-height: 100vh;
+  background: #f9f9f9;
+  color: #222;
+  font-family: system-ui, sans-serif;
+}
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem 1rem 2rem;
+  background: #fff;
+  border-bottom: 1px solid #eee;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+}
+.app-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0;
+}
+.app-desc {
+  font-size: 0.95rem;
+  color: #888;
+  margin: 0;
+}
+.theme-toggle {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+.theme-toggle:hover {
+  background: #f0f0f0;
+}
+.tab-nav {
+  display: flex;
+  border-bottom: 1px solid #eee;
+  background: #fafafa;
+}
+.tab-btn {
+  flex: 1;
+  padding: 1rem 0;
+  background: none;
+  border: none;
+  font-size: 1rem;
+  color: #666;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.tab-btn.active {
+  color: #1976d2;
+  border-bottom: 2px solid #1976d2;
+  background: #e3f2fd;
+}
+.tab-btn:hover:not(.active) {
+  background: #f0f0f0;
+  color: #222;
+}
+.main-content {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px 0 #0001;
+}
 </style>
