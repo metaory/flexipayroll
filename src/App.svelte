@@ -39,7 +39,11 @@
         </div>
       </div>
       <button class="xpayroll-header__theme-toggle" onclick={toggleTheme} title="Toggle theme">
-        {$theme.mode === 'light' ? '🌙' : '☀️'}
+        {#if $theme.mode === 'light'}
+          <img src="/scheme/dark.svg" alt="Switch to dark mode" width="24" height="24" />
+        {:else}
+          <img src="/scheme/light.svg" alt="Switch to light mode" width="24" height="24" />
+        {/if}
       </button>
     </div>
   </header>
@@ -71,4 +75,62 @@
       {/if}
     </div>
   </main>
+  
+  <footer class="xpayroll-footer">
+    <div class="xpayroll-container">
+      <div class="xpayroll-footer__top">
+        <div class="xpayroll-footer__column">
+          <a class="xpayroll-footer__logo" href="#">
+            <img src="/logo.svg" alt="XPayroll" width="48" height="48" />
+          </a>
+          <p class="xpayroll-footer__description">
+            Modern payroll management system for efficient business operations.
+          </p>
+        </div>
+        <div class="xpayroll-footer__column">
+          <h3 class="xpayroll-footer__title" id="xpayroll-footer-title-01">Features</h3>
+          <ul class="xpayroll-footer__navigation" aria-labelledby="xpayroll-footer-title-01">
+            <li><a href="#">Employee Management</a></li>
+            <li><a href="#">Attendance Tracking</a></li>
+            <li><a href="#">Payroll Processing</a></li>
+            <li><a href="#">Reports & Analytics</a></li>
+          </ul>
+        </div>
+        <div class="xpayroll-footer__column">
+          <h3 class="xpayroll-footer__title" id="xpayroll-footer-title-02">Support</h3>
+          <ul class="xpayroll-footer__navigation" aria-labelledby="xpayroll-footer-title-02">
+            <li><a href="#">Documentation</a></li>
+            <li><a href="#">Help Center</a></li>
+            <li><a href="#">Contact Support</a></li>
+            <li><a href="#">API Reference</a></li>
+          </ul>
+        </div>
+        <div class="xpayroll-footer__column">
+          <h3 class="xpayroll-footer__title" id="xpayroll-footer-title-03">Company</h3>
+          <ul class="xpayroll-footer__navigation" aria-labelledby="xpayroll-footer-title-03">
+            <li><a href="#">About Us</a></li>
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">Terms of Service</a></li>
+            <li><a href="#">Careers</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="xpayroll-footer__bottom">
+        <p class="xpayroll-footer__copyright">
+          © 2025 XPayroll. All rights reserved.
+        </p>
+        <div class="xpayroll-footer__social">
+          <a href="#" aria-label="GitHub">
+            <Icon icon="solar:github-bold" width="1.25rem" height="1.25rem" />
+          </a>
+          <a href="#" aria-label="Twitter">
+            <Icon icon="solar:twitter-bold" width="1.25rem" height="1.25rem" />
+          </a>
+          <a href="#" aria-label="LinkedIn">
+            <Icon icon="solar:linkedin-bold" width="1.25rem" height="1.25rem" />
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
 </div>
