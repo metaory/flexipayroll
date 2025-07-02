@@ -2,7 +2,6 @@
   import { employees, attendance, currentPeriod } from '../lib/stores.js';
   import { DAY_TYPES, validateAttendance } from '../lib/core.js';
   import Icon from '@iconify/svelte';
-  import { effect } from 'svelte';
   
   let selectedEmployee = '';
   let selectedDate = '';
@@ -11,7 +10,7 @@
   let exitTime = '';
   
   // Initialize with current date
-  effect(() => {
+  $effect(() => {
     if (!selectedDate) {
       selectedDate = new Date().toISOString().split('T')[0];
     }
