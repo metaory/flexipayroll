@@ -1,11 +1,19 @@
 <script>
   import { config } from '../lib/stores.js';
   import { DEFAULT_CONFIG } from '../lib/core.js';
-  
+
+  // Local state for config
+  const localConfig = $state(config.get());
+
+  // Keep localConfig in sync with store
+  $effect(() => {
+    const unsub = config.subscribe(value => localConfig.set(value));
+    return unsub;
+  });
+
   function updateConfig(field, value) {
-    const currentConfig = $config;
+    const currentConfig = localConfig.get();
     const newConfig = { ...currentConfig };
-    
     if (field.includes('.')) {
       const [section, key] = field.split('.');
       if (!newConfig[section]) newConfig[section] = {};
@@ -13,7 +21,6 @@
     } else {
       newConfig[field] = value;
     }
-    
     config.set(newConfig);
   }
   
@@ -27,7 +34,7 @@
     const data = {
       employees: JSON.parse(localStorage.getItem('xpayroll_employees') || '[]'),
       attendance: JSON.parse(localStorage.getItem('xpayroll_attendance') || '{}'),
-      config: $config
+      config: localConfig.get()
     };
     
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -67,211 +74,130 @@
   }
 </script>
 
-<div>
-  <div class="xpayroll-card">
-    <div class="xpayroll-card__header">
-      <h2>System Configuration</h2>
-      <p>Configure payroll settings and system parameters</p>
-    </div>
-  </div>
+<h2>System Configuration</h2>
+<p>Configure payroll settings and system parameters</p>
+
+<section>
+  <h3>Working Time Settings</h3>
   
-  <div class="xpayroll-card" style="margin-top: 1rem;">
-    <div class="xpayroll-card__header">
-      <h3>Working Time Settings</h3>
-    </div>
-    <div class="xpayroll-card__body">
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-        <div class="xpayroll-form__group">
-          <label class="xpayroll-form__label" for="working-days">Working Days per Month</label>
-          <input 
-            id="working-days"
-            class="xpayroll-form__input"
-            type="number"
-            bind:value={$config.workingDaysPerMonth}
-            onchange={() => updateConfig('workingDaysPerMonth', $config.workingDaysPerMonth)}
-            min="1"
-            max="31"
-          />
-        </div>
-        
-        <div class="xpayroll-form__group">
-          <label class="xpayroll-form__label" for="workday-hours">Workday Hours</label>
-          <input 
-            id="workday-hours"
-            class="xpayroll-form__input"
-            type="number"
-            bind:value={$config.workdayHours}
-            onchange={() => updateConfig('workdayHours', $config.workdayHours)}
-            min="1"
-            max="24"
-            step="0.5"
-          />
-        </div>
-      </div>
-    </div>
-  </div>
+  <label for="working-days">Working Days per Month</label>
+  <input 
+    id="working-days"
+    type="number"
+    value={localConfig.get().workingDaysPerMonth}
+    on:change={e => updateConfig('workingDaysPerMonth', Number(e.currentTarget.value))}
+    min="1"
+    max="31"
+  />
   
-  <div class="xpayroll-card" style="margin-top: 1rem;">
-    <div class="xpayroll-card__header">
-      <h3>Bonus Settings</h3>
-    </div>
-    <div class="xpayroll-card__body">
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-        <div class="xpayroll-form__group">
-          <label class="xpayroll-form__label" for="bonus-e">Bonus E (Days × Daily Rate)</label>
-          <input 
-            id="bonus-e"
-            class="xpayroll-form__input"
-            type="number"
-            bind:value={$config.bonuses.E.value}
-            onchange={() => updateConfig('bonuses.E.value', $config.bonuses.E.value)}
-            min="0"
-            step="0.5"
-          />
-        </div>
-        
-        <div class="xpayroll-form__group">
-          <label class="xpayroll-form__label" for="bonus-s">Bonus S (Days × Daily Rate)</label>
-          <input 
-            id="bonus-s"
-            class="xpayroll-form__input"
-            type="number"
-            bind:value={$config.bonuses.S.value}
-            onchange={() => updateConfig('bonuses.S.value', $config.bonuses.S.value)}
-            min="0"
-            step="0.5"
-          />
-        </div>
-        
-        <div class="xpayroll-form__group">
-          <label class="xpayroll-form__label" for="bonus-k">Bonus K (Fixed Amount - IDR)</label>
-          <input 
-            id="bonus-k"
-            class="xpayroll-form__input"
-            type="number"
-            bind:value={$config.bonuses.K.value}
-            onchange={() => updateConfig('bonuses.K.value', $config.bonuses.K.value)}
-            min="0"
-          />
-        </div>
-        
-        <div class="xpayroll-form__group">
-          <label class="xpayroll-form__label" for="bonus-m">Bonus M (Fixed Amount - IDR)</label>
-          <input 
-            id="bonus-m"
-            class="xpayroll-form__input"
-            type="number"
-            bind:value={$config.bonuses.M.value}
-            onchange={() => updateConfig('bonuses.M.value', $config.bonuses.M.value)}
-            min="0"
-          />
-        </div>
-        
-        <div class="xpayroll-form__group">
-          <label class="xpayroll-form__label" for="bonus-t">Bonus T (Fixed Amount - IDR)</label>
-          <input 
-            id="bonus-t"
-            class="xpayroll-form__input"
-            type="number"
-            bind:value={$config.bonuses.T.value}
-            onchange={() => updateConfig('bonuses.T.value', $config.bonuses.T.value)}
-            min="0"
-          />
-          <div style="font-size: 0.875rem; color: color('text-muted', 'xpayroll'); margin-top: 0.25rem;">Married employees only</div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <label for="workday-hours">Workday Hours</label>
+  <input 
+    id="workday-hours"
+    type="number"
+    value={localConfig.get().workdayHours}
+    on:change={e => updateConfig('workdayHours', Number(e.currentTarget.value))}
+    min="1"
+    max="24"
+    step="0.5"
+  />
+</section>
+
+<section>
+  <h3>Bonus Settings</h3>
   
-  <div class="xpayroll-card" style="margin-top: 1rem;">
-    <div class="xpayroll-card__header">
-      <h3>Insurance Deduction</h3>
-    </div>
-    <div class="xpayroll-card__body">
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-        <div class="xpayroll-form__group">
-          <label class="xpayroll-form__label" for="insurance-rate">Insurance Rate (%)</label>
-          <input 
-            id="insurance-rate"
-            class="xpayroll-form__input"
-            type="number"
-            value={$config.deductions.insurance.value * 100}
-            onchange={(e) => updateConfig('deductions.insurance.value', Number(e.currentTarget.value) / 100)}
-            min="0"
-            max="100"
-            step="0.1"
-          />
-        </div>
-      </div>
-    </div>
-  </div>
+  <label for="bonus-e">Bonus E (Days × Daily Rate)</label>
+  <input 
+    id="bonus-e"
+    type="number"
+    value={localConfig.get().bonuses.E.value}
+    on:change={e => updateConfig('bonuses.E.value', Number(e.currentTarget.value))}
+    min="0"
+    step="0.5"
+  />
   
-  <div class="xpayroll-card" style="margin-top: 1rem;">
-    <div class="xpayroll-card__header">
-      <h3>Data Management</h3>
+  <label for="bonus-s">Bonus S (Days × Daily Rate)</label>
+  <input 
+    id="bonus-s"
+    type="number"
+    value={localConfig.get().bonuses.S.value}
+    on:change={e => updateConfig('bonuses.S.value', Number(e.currentTarget.value))}
+    min="0"
+    step="0.5"
+  />
+  
+  <label for="bonus-k">Bonus K (Fixed Amount - IDR)</label>
+  <input 
+    id="bonus-k"
+    type="number"
+    value={localConfig.get().bonuses.K.value}
+    on:change={e => updateConfig('bonuses.K.value', Number(e.currentTarget.value))}
+    min="0"
+  />
+  
+  <label for="bonus-m">Bonus M (Fixed Amount - IDR)</label>
+  <input 
+    id="bonus-m"
+    type="number"
+    value={localConfig.get().bonuses.M.value}
+    on:change={e => updateConfig('bonuses.M.value', Number(e.currentTarget.value))}
+    min="0"
+  />
+  
+  <label for="bonus-t">Bonus T (Fixed Amount - IDR)</label>
+  <input 
+    id="bonus-t"
+    type="number"
+    value={localConfig.get().bonuses.T.value}
+    on:change={e => updateConfig('bonuses.T.value', Number(e.currentTarget.value))}
+    min="0"
+  />
+  <p>Married employees only</p>
+</section>
+
+<section>
+  <h3>Insurance Deduction</h3>
+  
+  <label for="insurance-rate">Insurance Rate (%)</label>
+  <input 
+    id="insurance-rate"
+    type="number"
+    value={localConfig.get().deductions.insurance.value * 100}
+    on:change={e => updateConfig('deductions.insurance.value', Number(e.currentTarget.value) / 100)}
+    min="0"
+    max="100"
+    step="0.1"
+  />
+</section>
+
+<section>
+  <h3>Data Management</h3>
+  
+  <button on:click={exportData}>Export Data</button>
+  
+  <label>
+    Import Data
+    <input 
+      type="file"
+      accept=".json"
+      on:change={importData}
+    />
+  </label>
+  
+  <button on:click={resetToDefaults}>Reset Config</button>
+  
+  <button on:click={clearAllData}>Clear All Data</button>
+  
+  <section>
+    <h4>Current Configuration Summary</h4>
+    <div>
+      <div>Working Days: {localConfig.get().workingDaysPerMonth} days/month</div>
+      <div>Workday Hours: {localConfig.get().workdayHours} hours/day</div>
+      <div>Bonus E: {localConfig.get().bonuses.E.value} × daily rate</div>
+      <div>Bonus S: {localConfig.get().bonuses.S.value} × daily rate</div>
+      <div>Bonus K: {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(localConfig.get().bonuses.K.value)}</div>
+      <div>Bonus M: {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(localConfig.get().bonuses.M.value)}</div>
+      <div>Bonus T: {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(localConfig.get().bonuses.T.value)} (married only)</div>
+      <div>Insurance: {(localConfig.get().deductions.insurance.value * 100).toFixed(1)}%</div>
     </div>
-    <div class="xpayroll-card__body">
-      <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
-        <button class="xpayroll-btn xpayroll-btn--primary" onclick={exportData}>
-          Export Data
-        </button>
-        
-        <label class="xpayroll-btn xpayroll-btn--secondary" style="cursor: pointer;">
-          Import Data
-          <input 
-            type="file"
-            accept=".json"
-            onchange={importData}
-            style="display: none;"
-          />
-        </label>
-        
-        <button class="xpayroll-btn xpayroll-btn--secondary" onclick={resetToDefaults}>
-          Reset Config
-        </button>
-        
-        <button class="xpayroll-btn xpayroll-btn--danger" onclick={clearAllData}>
-          Clear All Data
-        </button>
-      </div>
-      
-      <div>
-        <h4>Current Configuration Summary</h4>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
-          <div style="padding: 1rem; background: color('surface-alt', 'xpayroll'); border-radius: 0.5rem;">
-            <div style="font-weight: 500; color: color('text-muted', 'xpayroll');">Working Days</div>
-            <div style="font-size: 1.25rem; font-weight: bold; color: color('text', 'xpayroll');">{$config.workingDaysPerMonth} days/month</div>
-          </div>
-          <div style="padding: 1rem; background: color('surface-alt', 'xpayroll'); border-radius: 0.5rem;">
-            <div style="font-weight: 500; color: color('text-muted', 'xpayroll');">Workday Hours</div>
-            <div style="font-size: 1.25rem; font-weight: bold; color: color('text', 'xpayroll');">{$config.workdayHours} hours/day</div>
-          </div>
-          <div style="padding: 1rem; background: color('surface-alt', 'xpayroll'); border-radius: 0.5rem;">
-            <div style="font-weight: 500; color: color('text-muted', 'xpayroll');">Bonus E</div>
-            <div style="font-size: 1.25rem; font-weight: bold; color: color('text', 'xpayroll');">{$config.bonuses.E.value} × daily rate</div>
-          </div>
-          <div style="padding: 1rem; background: color('surface-alt', 'xpayroll'); border-radius: 0.5rem;">
-            <div style="font-weight: 500; color: color('text-muted', 'xpayroll');">Bonus S</div>
-            <div style="font-size: 1.25rem; font-weight: bold; color: color('text', 'xpayroll');">{$config.bonuses.S.value} × daily rate</div>
-          </div>
-          <div style="padding: 1rem; background: color('surface-alt', 'xpayroll'); border-radius: 0.5rem;">
-            <div style="font-weight: 500; color: color('text-muted', 'xpayroll');">Bonus K</div>
-            <div style="font-size: 1.25rem; font-weight: bold; color: color('text', 'xpayroll');">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format($config.bonuses.K.value)}</div>
-          </div>
-          <div style="padding: 1rem; background: color('surface-alt', 'xpayroll'); border-radius: 0.5rem;">
-            <div style="font-weight: 500; color: color('text-muted', 'xpayroll');">Bonus M</div>
-            <div style="font-size: 1.25rem; font-weight: bold; color: color('text', 'xpayroll');">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format($config.bonuses.M.value)}</div>
-          </div>
-          <div style="padding: 1rem; background: color('surface-alt', 'xpayroll'); border-radius: 0.5rem;">
-            <div style="font-weight: 500; color: color('text-muted', 'xpayroll');">Bonus T</div>
-            <div style="font-size: 1.25rem; font-weight: bold; color: color('text', 'xpayroll');">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format($config.bonuses.T.value)} (married only)</div>
-          </div>
-          <div style="padding: 1rem; background: color('surface-alt', 'xpayroll'); border-radius: 0.5rem;">
-            <div style="font-weight: 500; color: color('text-muted', 'xpayroll');">Insurance</div>
-            <div style="font-size: 1.25rem; font-weight: bold; color: color('text', 'xpayroll');">{($config.deductions.insurance.value * 100).toFixed(1)}%</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div> 
+  </section>
+</section> 

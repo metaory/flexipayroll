@@ -17,7 +17,6 @@
   "dependencies": {
     "@fontsource/baloo-2": "^5.2.6",
     "@fontsource/bungee": "^5.2.6",
-    "@iconify/svelte": "^5.0.0",
-    "sprucecss": "^2.3.4"
+    "@iconify/svelte": "^5.0.0"
   }
 }
