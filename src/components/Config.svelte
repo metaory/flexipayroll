@@ -3,16 +3,15 @@
   import { DEFAULT_CONFIG } from '../lib/core.js';
 
   // Local state for config
-  const localConfig = $state(config.get());
+  const localConfig = $state($config);
 
   // Keep localConfig in sync with store
   $effect(() => {
-    const unsub = config.subscribe(value => localConfig.set(value));
-    return unsub;
+    localConfig.set($config);
   });
 
   function updateConfig(field, value) {
-    const currentConfig = localConfig.get();
+    const currentConfig = localConfig;
     const newConfig = { ...currentConfig };
     if (field.includes('.')) {
       const [section, key] = field.split('.');
@@ -34,7 +33,7 @@
     const data = {
       employees: JSON.parse(localStorage.getItem('xpayroll_employees') || '[]'),
       attendance: JSON.parse(localStorage.getItem('xpayroll_attendance') || '{}'),
-      config: localConfig.get()
+      config: localConfig
     };
     
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -84,8 +83,8 @@
   <input 
     id="working-days"
     type="number"
-    value={localConfig.get().workingDaysPerMonth}
-    on:change={e => updateConfig('workingDaysPerMonth', Number(e.currentTarget.value))}
+    value={localConfig.workingDaysPerMonth}
+    onchange={e => updateConfig('workingDaysPerMonth', Number(e.currentTarget.value))}
     min="1"
     max="31"
   />
@@ -94,8 +93,8 @@
   <input 
     id="workday-hours"
     type="number"
-    value={localConfig.get().workdayHours}
-    on:change={e => updateConfig('workdayHours', Number(e.currentTarget.value))}
+    value={localConfig.workdayHours}
+    onchange={e => updateConfig('workdayHours', Number(e.currentTarget.value))}
     min="1"
     max="24"
     step="0.5"
@@ -109,8 +108,8 @@
   <input 
     id="bonus-e"
     type="number"
-    value={localConfig.get().bonuses.E.value}
-    on:change={e => updateConfig('bonuses.E.value', Number(e.currentTarget.value))}
+    value={localConfig.bonuses.E.value}
+    onchange={e => updateConfig('bonuses.E.value', Number(e.currentTarget.value))}
     min="0"
     step="0.5"
   />
@@ -119,8 +118,8 @@
   <input 
     id="bonus-s"
     type="number"
-    value={localConfig.get().bonuses.S.value}
-    on:change={e => updateConfig('bonuses.S.value', Number(e.currentTarget.value))}
+    value={localConfig.bonuses.S.value}
+    onchange={e => updateConfig('bonuses.S.value', Number(e.currentTarget.value))}
     min="0"
     step="0.5"
   />
@@ -129,8 +128,8 @@
   <input 
     id="bonus-k"
     type="number"
-    value={localConfig.get().bonuses.K.value}
-    on:change={e => updateConfig('bonuses.K.value', Number(e.currentTarget.value))}
+    value={localConfig.bonuses.K.value}
+    onchange={e => updateConfig('bonuses.K.value', Number(e.currentTarget.value))}
     min="0"
   />
   
@@ -138,7 +137,7 @@
   <input 
     id="bonus-m"
     type="number"
-    value={localConfig.get().bonuses.M.value}
+    value={localConfig.bonuses.M.value}
     on:change={e => updateConfig('bonuses.M.value', Number(e.currentTarget.value))}
     min="0"
   />
@@ -147,7 +146,7 @@
   <input 
     id="bonus-t"
     type="number"
-    value={localConfig.get().bonuses.T.value}
+    value={localConfig.bonuses.T.value}
     on:change={e => updateConfig('bonuses.T.value', Number(e.currentTarget.value))}
     min="0"
   />
@@ -161,7 +160,7 @@
   <input 
     id="insurance-rate"
     type="number"
-    value={localConfig.get().deductions.insurance.value * 100}
+    value={localConfig.deductions.insurance.value * 100}
     on:change={e => updateConfig('deductions.insurance.value', Number(e.currentTarget.value) / 100)}
     min="0"
     max="100"
@@ -190,14 +189,14 @@
   <section>
     <h4>Current Configuration Summary</h4>
     <div>
-      <div>Working Days: {localConfig.get().workingDaysPerMonth} days/month</div>
-      <div>Workday Hours: {localConfig.get().workdayHours} hours/day</div>
-      <div>Bonus E: {localConfig.get().bonuses.E.value} × daily rate</div>
-      <div>Bonus S: {localConfig.get().bonuses.S.value} × daily rate</div>
-      <div>Bonus K: {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(localConfig.get().bonuses.K.value)}</div>
-      <div>Bonus M: {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(localConfig.get().bonuses.M.value)}</div>
-      <div>Bonus T: {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(localConfig.get().bonuses.T.value)} (married only)</div>
-      <div>Insurance: {(localConfig.get().deductions.insurance.value * 100).toFixed(1)}%</div>
+      <div>Working Days: {localConfig.workingDaysPerMonth} days/month</div>
+      <div>Workday Hours: {localConfig.workdayHours} hours/day</div>
+      <div>Bonus E: {localConfig.bonuses.E.value} × daily rate</div>
+      <div>Bonus S: {localConfig.bonuses.S.value} × daily rate</div>
+      <div>Bonus K: {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(localConfig.bonuses.K.value)}</div>
+      <div>Bonus M: {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(localConfig.bonuses.M.value)}</div>
+      <div>Bonus T: {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(localConfig.bonuses.T.value)} (married only)</div>
+      <div>Insurance: {(localConfig.deductions.insurance.value * 100).toFixed(1)}%</div>
     </div>
   </section>
 </section> 
