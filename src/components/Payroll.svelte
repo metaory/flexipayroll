@@ -78,77 +78,64 @@
       <h3>{employee.name}</h3>
       <p>Final Salary: {formatCurrency(salaryBreakdown.total)}</p>
       
-      <section>
-        <h4>Salary Components</h4>
-        <div>
-          <span>Basic Salary:</span>
-          <span>{formatCurrency(salaryBreakdown.components.basicSalary)}</span>
-        </div>
-        <div>
-          <span>Bonus E:</span>
-          <span>{formatCurrency(salaryBreakdown.components.bonusE)}</span>
-        </div>
-        <div>
-          <span>Bonus S:</span>
-          <span>{formatCurrency(salaryBreakdown.components.bonusS)}</span>
-        </div>
-        <div>
-          <span>Bonus K:</span>
-          <span>{formatCurrency(salaryBreakdown.components.bonusK)}</span>
-        </div>
-        <div>
-          <span>Bonus M:</span>
-          <span>{formatCurrency(salaryBreakdown.components.bonusM)}</span>
-        </div>
+      <h4>Salary Components</h4>
+      <dl>
+        <dt>Basic Salary:</dt>
+        <dd>{formatCurrency(salaryBreakdown.components.basicSalary)}</dd>
+        <dt>Bonus E:</dt>
+        <dd>{formatCurrency(salaryBreakdown.components.bonusE)}</dd>
+        <dt>Bonus S:</dt>
+        <dd>{formatCurrency(salaryBreakdown.components.bonusS)}</dd>
+        <dt>Bonus K:</dt>
+        <dd>{formatCurrency(salaryBreakdown.components.bonusK)}</dd>
+        <dt>Bonus M:</dt>
+        <dd>{formatCurrency(salaryBreakdown.components.bonusM)}</dd>
         {#if employee.maritalStatus === 'married'}
-          <div>
-            <span>Bonus T:</span>
-            <span>{formatCurrency(salaryBreakdown.components.bonusT)}</span>
-          </div>
+          <dt>Bonus T:</dt>
+          <dd>{formatCurrency(salaryBreakdown.components.bonusT)}</dd>
         {/if}
-        <hr />
-        <div>
-          <span>Subtotal:</span>
-          <span>{formatCurrency(salaryBreakdown.subtotal)}</span>
-        </div>
-        <div>
-          <span>Insurance (7%):</span>
-          <span>-{formatCurrency(salaryBreakdown.components.insuranceDeduction)}</span>
-        </div>
-      </section>
+      </dl>
+      <hr />
+      <dl>
+        <dt>Subtotal:</dt>
+        <dd>{formatCurrency(salaryBreakdown.subtotal)}</dd>
+        <dt>Insurance (7%):</dt>
+        <dd>-{formatCurrency(salaryBreakdown.components.insuranceDeduction)}</dd>
+      </dl>
       
-      <section>
-        <h4>Work Summary</h4>
-        <div>
-          <div>Total Days: {salaryBreakdown.period.workdays}</div>
-          <div>Total Hours: {salaryBreakdown.period.hours}</div>
-          <div>Regular Days: {salaryBreakdown.period['byType']?.['regular'] || 0}</div>
-          <div>Holidays: {salaryBreakdown.period['byType']?.['holiday'] || 0}</div>
-        </div>
-      </section>
+      <h4>Work Summary</h4>
+      <dl>
+        <dt>Total Days:</dt>
+        <dd>{salaryBreakdown.period.workdays}</dd>
+        <dt>Total Hours:</dt>
+        <dd>{salaryBreakdown.period.hours}</dd>
+        <dt>Regular Days:</dt>
+        <dd>{salaryBreakdown.period['byType']?.['regular'] || 0}</dd>
+        <dt>Holidays:</dt>
+        <dd>{salaryBreakdown.period['byType']?.['holiday'] || 0}</dd>
+      </dl>
       
-      <section>
-        <h4>Adjustments</h4>
-        
-        <label for="adjustment-amount">Amount (IDR)</label>
-        <input 
-          id="adjustment-amount"
-          type="number"
-          bind:value={adjustmentAmount}
-          placeholder="Positive or negative amount"
-        />
-        
-        <label for="adjustment-comment">Comment</label>
-        <input 
-          id="adjustment-comment"
-          type="text"
-          bind:value={adjustmentComment}
-          placeholder="Reason for adjustment"
-        />
-        
-        <button onclick={() => addAdjustment(employee.id)}>
-          <Icon icon="solar:document-add-bold" width="1.1em" height="1.1em" /> Add Adjustment
-        </button>
+      <h4>Adjustments</h4>
+      
+      <label for="adjustment-amount">Amount (IDR)</label>
+      <input 
+        id="adjustment-amount"
+        type="number"
+        bind:value={adjustmentAmount}
+        placeholder="Positive or negative amount"
+      />
+      
+      <label for="adjustment-comment">Comment</label>
+      <input 
+        id="adjustment-comment"
+        type="text"
+        bind:value={adjustmentComment}
+        placeholder="Reason for adjustment"
+      />
+      
+      <button onclick={() => addAdjustment(employee.id)}>
+        <Icon icon="solar:document-add-bold" width="1.1em" height="1.2em" /> Add Adjustment
+      </button>
         
         {#if adjustments[employee.id] && adjustments[employee.id].length > 0}
           <table>
@@ -185,7 +172,6 @@
             <p>No adjustments added yet.</p>
           </div>
         {/if}
-      </section>
     </section>
   {/each}
 {/if}

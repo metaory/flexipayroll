@@ -138,7 +138,7 @@
     id="bonus-m"
     type="number"
     value={localConfig.bonuses.M.value}
-    on:change={e => updateConfig('bonuses.M.value', Number(e.currentTarget.value))}
+    onchange={e => updateConfig('bonuses.M.value', Number(e.currentTarget.value))}
     min="0"
   />
   
@@ -147,7 +147,7 @@
     id="bonus-t"
     type="number"
     value={localConfig.bonuses.T.value}
-    on:change={e => updateConfig('bonuses.T.value', Number(e.currentTarget.value))}
+    onchange={e => updateConfig('bonuses.T.value', Number(e.currentTarget.value))}
     min="0"
   />
   <p>Married employees only</p>
@@ -161,7 +161,7 @@
     id="insurance-rate"
     type="number"
     value={localConfig.deductions.insurance.value * 100}
-    on:change={e => updateConfig('deductions.insurance.value', Number(e.currentTarget.value) / 100)}
+    onchange={e => updateConfig('deductions.insurance.value', Number(e.currentTarget.value) / 100)}
     min="0"
     max="100"
     step="0.1"
@@ -171,32 +171,38 @@
 <section>
   <h3>Data Management</h3>
   
-  <button on:click={exportData}>Export Data</button>
+  <button onclick={exportData}>Export Data</button>
   
   <label>
     Import Data
     <input 
       type="file"
       accept=".json"
-      on:change={importData}
+      onchange={importData}
     />
   </label>
   
-  <button on:click={resetToDefaults}>Reset Config</button>
+  <button onclick={resetToDefaults}>Reset Config</button>
   
-  <button on:click={clearAllData}>Clear All Data</button>
+  <button onclick={clearAllData}>Clear All Data</button>
   
-  <section>
-    <h4>Current Configuration Summary</h4>
-    <div>
-      <div>Working Days: {localConfig.workingDaysPerMonth} days/month</div>
-      <div>Workday Hours: {localConfig.workdayHours} hours/day</div>
-      <div>Bonus E: {localConfig.bonuses.E.value} × daily rate</div>
-      <div>Bonus S: {localConfig.bonuses.S.value} × daily rate</div>
-      <div>Bonus K: {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(localConfig.bonuses.K.value)}</div>
-      <div>Bonus M: {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(localConfig.bonuses.M.value)}</div>
-      <div>Bonus T: {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(localConfig.bonuses.T.value)} (married only)</div>
-      <div>Insurance: {(localConfig.deductions.insurance.value * 100).toFixed(1)}%</div>
-    </div>
-  </section>
+  <h4>Current Configuration Summary</h4>
+  <dl>
+    <dt>Working Days:</dt>
+    <dd>{localConfig.workingDaysPerMonth} days/month</dd>
+    <dt>Workday Hours:</dt>
+    <dd>{localConfig.workdayHours} hours/day</dd>
+    <dt>Bonus E:</dt>
+    <dd>{localConfig.bonuses.E.value} × daily rate</dd>
+    <dt>Bonus S:</dt>
+    <dd>{localConfig.bonuses.S.value} × daily rate</dd>
+    <dt>Bonus K:</dt>
+    <dd>{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(localConfig.bonuses.K.value)}</dd>
+    <dt>Bonus M:</dt>
+    <dd>{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(localConfig.bonuses.M.value)}</dd>
+    <dt>Bonus T:</dt>
+    <dd>{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(localConfig.bonuses.T.value)} (married only)</dd>
+    <dt>Insurance:</dt>
+    <dd>{(localConfig.deductions.insurance.value * 100).toFixed(1)}%</dd>
+  </dl>
 </section> 

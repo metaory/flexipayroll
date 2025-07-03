@@ -77,7 +77,7 @@
   
   <p>© 2025 XPayroll. All rights reserved.</p>
   
-  <div>
+  <nav>
     <button aria-label="GitHub">
       <Icon icon="solar:github-bold" width="1.25rem" height="1.25rem" />
     </button>
@@ -87,5 +87,5 @@
     <button aria-label="LinkedIn">
       <Icon icon="solar:linkedin-bold" width="1.25rem" height="1.25rem" />
     </button>
-  </div>
+  </nav>
 </footer>
