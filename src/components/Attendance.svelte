@@ -67,11 +67,9 @@
     }
   }
   
-  const getMonthString = () => `${$currentPeriod.year}-${$currentPeriod.month.toString().padStart(2, '0')}`
-  
   const getAttendanceForEmployee = (employeeId) => {
     const empAttendance = $attendance[employeeId] || {};
-    const monthStr = getMonthString();
+    const monthStr = `${$currentPeriod.year}-${$currentPeriod.month.toString().padStart(2, '0')}`;
     
     return Object.entries(empAttendance)
       .filter(([date]) => date.startsWith(monthStr))
@@ -162,7 +160,7 @@
 
 <section>
   <h3><Icon icon="solar:chart-bold" width="1.2em" height="1.2em" /> Attendance Records</h3>
-  <p class="text-muted">Current month: {$currentPeriod.month}/{$currentPeriod.year}</p>
+  <p style="color: var(--fg-muted);">Current month: {$currentPeriod.month}/{$currentPeriod.year}</p>
   
   {#if !hasEmployees}
     <div>
@@ -177,7 +175,7 @@
       
       <section>
         <h4>{employee.name}</h4>
-        <p class="text-muted">{attendanceDates.length} days recorded this month</p>
+        <p style="color: var(--fg-muted);">{attendanceDates.length} days recorded this month</p>
         
         {#if attendanceDates.length === 0}
           <div>

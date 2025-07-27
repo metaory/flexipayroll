@@ -134,7 +134,7 @@
           required
         />
         {#if formErrors['name']}
-          <small class="text-muted">{formErrors['name']}</small>
+          <small style="color: var(--error);">{formErrors['name']}</small>
         {/if}
       </div>
       
@@ -168,7 +168,7 @@
           required
         />
         {#if formErrors['monthlySalary']}
-          <small class="text-muted">{formErrors['monthlySalary']}</small>
+          <small style="color: var(--error);">{formErrors['monthlySalary']}</small>
         {/if}
       </div>
       
@@ -191,7 +191,7 @@
 
 <section class="fade-in">
   <h3>Employee Directory</h3>
-  <p class="text-muted">Total: {$employees.length} employees</p>
+  <p style="color: var(--fg-muted);">Total: {$employees.length} employees</p>
   
   {#if $employees.length === 0}
     <div>
@@ -249,7 +249,6 @@
   
   small {
     grid-column: 2;
-    color: var(--error);
     font-size: 0.75rem;
     margin-top: 0.25rem;
   }

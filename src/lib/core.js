@@ -124,29 +124,40 @@ export const calculateSalaryBreakdown = (employee, attendanceData, adjustments =
 // PURE FUNCTIONS - VALIDATION
 // ============================================================================
 
-const validations = {
-  employee: [
-    { test: emp => emp.name?.trim().length >= 2, message: 'Name must be at least 2 characters' },
-    { test: emp => ['male', 'female'].includes(emp.gender), message: 'Invalid gender' },
-    { test: emp => ['single', 'married'].includes(emp.maritalStatus), message: 'Invalid marital status' },
-    { test: emp => emp.monthlySalary > 0, message: 'Monthly salary must be greater than 0' }
-  ],
-  attendance: (config) => [
-    { test: att => Object.keys(config.dayTypes).includes(att.type), message: 'Invalid day type' },
-    { test: att => att.type !== 'regular' || (att.entryTime && att.exitTime), message: 'Entry and exit times required for regular days' },
-    { test: att => att.type !== 'regular' || calculateWorkingHours(att.entryTime, att.exitTime) >= 0, message: 'Exit time must be after entry time' }
-  ]
-}
-
-const runValidations = (validations, data) => {
-  const errors = validations.filter(v => !v.test(data)).map(v => v.message)
+export const validateEmployee = (employee) => {
+  const errors = []
+  
+  if (!employee.name?.trim() || employee.name.trim().length < 2) {
+    errors.push('Name must be at least 2 characters')
+  }
+  if (!['male', 'female'].includes(employee.gender)) {
+    errors.push('Invalid gender')
+  }
+  if (!['single', 'married'].includes(employee.maritalStatus)) {
+    errors.push('Invalid marital status')
+  }
+  if (!employee.monthlySalary || employee.monthlySalary <= 0) {
+    errors.push('Monthly salary must be greater than 0')
+  }
+  
   return { isValid: errors.length === 0, errors }
 }
 
-export const validateEmployee = (employee) => runValidations(validations.employee, employee)
-
-export const validateAttendance = (attendance, config = DEFAULT_CONFIG) => 
-  runValidations(validations.attendance(config), attendance)
+export const validateAttendance = (attendance, config = DEFAULT_CONFIG) => {
+  const errors = []
+  
+  if (!Object.keys(config.dayTypes).includes(attendance.type)) {
+    errors.push('Invalid day type')
+  }
+  if (attendance.type === 'regular' && (!attendance.entryTime || !attendance.exitTime)) {
+    errors.push('Entry and exit times required for regular days')
+  }
+  if (attendance.type === 'regular' && calculateWorkingHours(attendance.entryTime, attendance.exitTime) < 0) {
+    errors.push('Exit time must be after entry time')
+  }
+  
+  return { isValid: errors.length === 0, errors }
+}
 
 // ============================================================================
 // CONSUMER-FRIENDLY EXPORTS
@@ -172,7 +183,5 @@ export const formatCurrency = (amount) =>
     maximumFractionDigits: 0
   }).format(amount)
 
-export const calculateSalary = (employee, attendanceData, adjustments = [], configOverride = null) => {
-  const finalConfig = configOverride || DEFAULT_CONFIG
-  return calculateSalaryBreakdown(employee, attendanceData, adjustments, finalConfig)
-} 
+export const calculateSalary = (employee, attendanceData, adjustments = [], config = DEFAULT_CONFIG) => 
+  calculateSalaryBreakdown(employee, attendanceData, adjustments, config) 

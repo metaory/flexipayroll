@@ -9,15 +9,6 @@
   
   const getMonthString = () => `${$currentPeriod.year}-${$currentPeriod.month.toString().padStart(2, '0')}`
   
-  const getMonthAttendance = (employeeId) => {
-    const monthStr = getMonthString()
-    const empAttendance = $attendance[employeeId] || {}
-    
-    return Object.entries(empAttendance)
-      .filter(([date]) => date.startsWith(monthStr))
-      .reduce((acc, [date, data]) => ({ ...acc, [date]: data }), {})
-  }
-  
   const createAdjustment = (employeeId) => ({
     id: Date.now().toString(),
     amount: Number(adjustmentAmount),
@@ -68,8 +59,8 @@
 {#if !hasEmployees}
   <div>
     <Icon icon="solar:wallet-bold" width="2.5em" height="2.5em" />
-    <p>No employees added yet.</p>
-    <p>Add employees first to calculate payroll.</p>
+    <p style="color: var(--fg-muted);">No employees added yet.</p>
+    <p style="color: var(--fg-muted);">Add employees first to calculate payroll.</p>
   </div>
 {:else}
   {#each $employees as employee}
@@ -78,9 +69,9 @@
     
     <section>
       <h3>{employee.name}</h3>
-      <p class="text-muted">Final Salary: <strong>{formatCurrency(salaryBreakdown.total)}</strong></p>
+      <p style="color: var(--fg-muted);">Final Salary: <strong>{formatCurrency(salaryBreakdown.total)}</strong></p>
       
-      <div class="grid-2">
+      <div class="grid" style="grid-template-columns: 1fr 1fr;">
         <div>
           <h4>Salary Components</h4>
           <dl>
@@ -183,7 +174,7 @@
           </tbody>
         </table>
         
-        <div class="text-center">
+        <div style="text-align: center;">
           <strong>Adjustment Total: {adjustmentTotal >= 0 ? '+' : ''}{formatCurrency(adjustmentTotal)}</strong>
         </div>
       {:else}

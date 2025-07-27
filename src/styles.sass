@@ -186,12 +186,6 @@ body
   font-size: $font
   min-height: $min-height
 
-%padding-standard
-  padding: 0.75rem 1rem
-
-%padding-small
-  padding: 0.5rem
-
 %font-weight-bold
   font-weight: 600
 
@@ -212,7 +206,7 @@ body
 %button-base
   @extend %flex, %transition, %focus
   gap: 0.5rem
-  @extend %padding-standard
+  padding: 0.75rem 1rem
   border: none
   border-radius: var(--radius)
   cursor: pointer
@@ -244,7 +238,7 @@ body
 
 %button-small
   @extend %button-secondary
-  @extend %padding-small
+  padding: 0.5rem
   font-size: 0.75rem
 
 %input-base
@@ -378,7 +372,7 @@ footer
         justify-content: flex-start
         background: transparent
         border: none
-        @extend %padding-small
+        padding: 0.5rem
         text-align: left
         @extend %opacity-muted
         &:hover
@@ -450,7 +444,7 @@ input, select, textarea
   @extend %input-base
 
 input[type="file"]
-  @extend %padding-small
+  padding: 0.5rem
   cursor: pointer
   &:hover, &:focus
     @extend %border-primary
@@ -495,7 +489,7 @@ table
   overflow: hidden
 
   th, td
-    @extend %padding-standard
+    padding: 0.75rem 1rem
     text-align: left
     @extend %border-muted
 
@@ -545,17 +539,7 @@ div:has(> h4)
   &:hover svg, &:hover .icon
     @extend %hover-opacity, %hover-scale
 
-// Grid Layouts
-.grid-2
-  @extend %grid-2
-
-.grid-3
-  @extend %grid-3
-
 // Utilities
-.text-muted
-  @extend %text-muted
-
 .mb-0
   margin-bottom: 0
 

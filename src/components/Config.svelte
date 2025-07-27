@@ -1,6 +1,6 @@
 <script>
   import { config } from '../lib/stores.js';
-  import { DEFAULT_CONFIG } from '../lib/core.js';
+  import { DEFAULT_CONFIG, formatCurrency } from '../lib/core.js';
 
   let localConfig = $state($config);
 
@@ -68,11 +68,6 @@
       location.reload();
     }
   }
-  
-  const formatCurrency = (amount) => new Intl.NumberFormat('id-ID', { 
-    style: 'currency', 
-    currency: 'IDR' 
-  }).format(amount)
 </script>
 
 <h2>System Configuration</h2>

@@ -64,13 +64,6 @@ export const theme = createPersistentStore('xpayroll_theme', {
   name: 'default'
 })
 
-// Form store for centralized form state
-export const formState = writable({
-  isSubmitting: false,
-  errors: {},
-  message: ''
-})
-
 // ============================================================================
 // DERIVED STORES
 // ============================================================================
@@ -104,23 +97,6 @@ export const toggleTheme = () => {
     ...current,
     mode: current.mode === 'dark' ? 'light' : 'dark'
   }))
-}
-
-// Form utility functions
-export const setFormError = (errors) => {
-  formState.update(state => ({ ...state, errors, message: '' }))
-}
-
-export const setFormMessage = (message) => {
-  formState.update(state => ({ ...state, message, errors: {} }))
-}
-
-export const setSubmitting = (isSubmitting) => {
-  formState.update(state => ({ ...state, isSubmitting }))
-}
-
-export const resetFormState = () => {
-  formState.set({ isSubmitting: false, errors: {}, message: '' })
 }
 
  
