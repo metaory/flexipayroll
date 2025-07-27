@@ -2,15 +2,13 @@
   import { config } from '../lib/stores.js';
   import { DEFAULT_CONFIG } from '../lib/core.js';
 
-  // Local state for config
   let localConfig = $state($config);
 
-  // Keep localConfig in sync with store
   $effect(() => {
     localConfig = $config;
   });
 
-  function updateConfig(field, value) {
+  const updateConfig = (field, value) => {
     const newConfig = { ...localConfig };
     if (field.includes('.')) {
       const [section, key] = field.split('.');
@@ -22,13 +20,13 @@
     config.set(newConfig);
   }
   
-  function resetToDefaults() {
+  const resetToDefaults = () => {
     if (confirm('Are you sure you want to reset all configuration to defaults? This will affect all calculations.')) {
       config.set(DEFAULT_CONFIG);
     }
   }
   
-  function exportData() {
+  const exportData = () => {
     const data = {
       employees: JSON.parse(localStorage.getItem('xpayroll_employees') || '[]'),
       attendance: JSON.parse(localStorage.getItem('xpayroll_attendance') || '{}'),
@@ -44,7 +42,7 @@
     URL.revokeObjectURL(url);
   }
   
-  function importData(event) {
+  const importData = (event) => {
     const file = event.target.files[0];
     if (!file) return;
     
@@ -64,12 +62,17 @@
     reader.readAsText(file);
   }
   
-  function clearAllData() {
+  const clearAllData = () => {
     if (confirm('Are you sure you want to clear ALL data? This will delete all employees, attendance records, and reset configuration. This action cannot be undone.')) {
       localStorage.clear();
       location.reload();
     }
   }
+  
+  const formatCurrency = (amount) => new Intl.NumberFormat('id-ID', { 
+    style: 'currency', 
+    currency: 'IDR' 
+  }).format(amount)
 </script>
 
 <h2>System Configuration</h2>
@@ -224,11 +227,11 @@
     <dt>Bonus S:</dt>
     <dd>{localConfig.bonuses.S.value} × daily rate</dd>
     <dt>Bonus K:</dt>
-    <dd>{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(localConfig.bonuses.K.value)}</dd>
+    <dd>{formatCurrency(localConfig.bonuses.K.value)}</dd>
     <dt>Bonus M:</dt>
-    <dd>{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(localConfig.bonuses.M.value)}</dd>
+    <dd>{formatCurrency(localConfig.bonuses.M.value)}</dd>
     <dt>Bonus T:</dt>
-    <dd>{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(localConfig.bonuses.T.value)} (married only)</dd>
+    <dd>{formatCurrency(localConfig.bonuses.T.value)} (married only)</dd>
     <dt>Insurance:</dt>
     <dd>{(localConfig.deductions.insurance.value * 100).toFixed(1)}%</dd>
   </dl>

@@ -15,19 +15,30 @@
     }
   });
   
-  function recordAttendance() {
+  const dayTypeLabels = {
+    regular: 'Regular Work Day',
+    holiday: 'Holiday',
+    paid_leave: 'Paid Leave',
+    unpaid_leave: 'Unpaid Leave'
+  }
+  
+  const getDayTypeLabel = (type) => dayTypeLabels[type] || type
+  
+  const createAttendanceData = () => ({
+    type: selectedType,
+    entryTime: selectedType === 'regular' ? entryTime : null,
+    exitTime: selectedType === 'regular' ? exitTime : null
+  })
+  
+  const recordAttendance = () => {
     if (!selectedEmployee || !selectedDate) {
       alert('Please select an employee and date');
       return;
     }
     
-    const attendanceData = {
-      type: selectedType,
-      entryTime: selectedType === 'regular' ? entryTime : null,
-      exitTime: selectedType === 'regular' ? exitTime : null
-    };
-    
+    const attendanceData = createAttendanceData();
     const validation = validateAttendance(attendanceData);
+    
     if (!validation.isValid) {
       alert(`Validation errors:\n${validation.errors.join('\n')}`);
       return;
@@ -46,7 +57,7 @@
     alert('Attendance recorded successfully!');
   }
   
-  function deleteAttendance(employeeId, date) {
+  const deleteAttendance = (employeeId, date) => {
     if (confirm('Are you sure you want to delete this attendance record?')) {
       let currentAttendance = $attendance;
       if (currentAttendance[employeeId]?.[date]) {
@@ -56,28 +67,19 @@
     }
   }
   
-  function getDayTypeLabel(type) {
-    const labels = {
-      regular: 'Regular Work Day',
-      holiday: 'Holiday',
-      paid_leave: 'Paid Leave',
-      unpaid_leave: 'Unpaid Leave'
-    };
-    return labels[type] || type;
+  const getMonthString = () => `${$currentPeriod.year}-${$currentPeriod.month.toString().padStart(2, '0')}`
+  
+  const getAttendanceForEmployee = (employeeId) => {
+    const empAttendance = $attendance[employeeId] || {};
+    const monthStr = getMonthString();
+    
+    return Object.entries(empAttendance)
+      .filter(([date]) => date.startsWith(monthStr))
+      .reduce((acc, [date, data]) => ({ ...acc, [date]: data }), {});
   }
   
-  function getAttendanceForEmployee(employeeId) {
-    const empAttendance = $attendance[employeeId] || {};
-    const monthStr = `${$currentPeriod.year}-${$currentPeriod.month.toString().padStart(2, '0')}`;
-    const results = {};
-    
-    for (const [date, data] of Object.entries(empAttendance)) {
-      if (date.startsWith(monthStr)) {
-        results[date] = data;
-      }
-    }
-    return results;
-  }
+  const isRegularDay = $derived(selectedType === 'regular')
+  const hasEmployees = $derived($employees.length > 0)
 </script>
 
 <h2>Attendance Management</h2>
@@ -118,7 +120,7 @@
       </div>
     </div>
     
-    {#if selectedType === 'regular'}
+    {#if isRegularDay}
       <div class="form-group-horizontal">
         <div class="form-group-stacked">
           <label for="entry-time"><Icon icon="solar:clock-circle-bold" width="1em" height="1em" /> Entry Time</label>
@@ -162,7 +164,7 @@
   <h3><Icon icon="solar:chart-bold" width="1.2em" height="1.2em" /> Attendance Records</h3>
   <p class="text-muted">Current month: {$currentPeriod.month}/{$currentPeriod.year}</p>
   
-  {#if $employees.length === 0}
+  {#if !hasEmployees}
     <div>
       <Icon icon="solar:users-group-rounded-bold" width="2.5em" height="2.5em" />
       <h4>No employees added yet</h4>
@@ -194,7 +196,7 @@
               </tr>
             </thead>
             <tbody>
-              {#each attendanceDates as date, index}
+              {#each attendanceDates as date}
                 {@const record = empAttendance[date]}
                 <tr>
                   <td>{new Date(date).toLocaleDateString()}</td>

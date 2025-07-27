@@ -7,63 +7,65 @@
   let adjustmentAmount = $state('')
   let adjustmentComment = $state('')
   
-  function getMonthAttendance(employeeId, year, month) {
-    const monthStr = `${year}-${month.toString().padStart(2, '0')}`
+  const getMonthString = () => `${$currentPeriod.year}-${$currentPeriod.month.toString().padStart(2, '0')}`
+  
+  const getMonthAttendance = (employeeId) => {
+    const monthStr = getMonthString()
     const empAttendance = $attendance[employeeId] || {}
-    const results = {}
     
-    for (const [date, data] of Object.entries(empAttendance)) {
-      if (date.startsWith(monthStr)) {
-        results[date] = data
-      }
-    }
-    return results
+    return Object.entries(empAttendance)
+      .filter(([date]) => date.startsWith(monthStr))
+      .reduce((acc, [date, data]) => ({ ...acc, [date]: data }), {})
   }
   
-  function addAdjustment(employeeId) {
+  const createAdjustment = (employeeId) => ({
+    id: Date.now().toString(),
+    amount: Number(adjustmentAmount),
+    comment: adjustmentComment,
+    date: new Date().toISOString().split('T')[0]
+  })
+  
+  const addAdjustment = (employeeId) => {
     if (!adjustmentAmount || adjustmentAmount === '0') {
       alert('Please enter a valid adjustment amount')
       return
     }
     
-    const amount = Number(adjustmentAmount)
     if (!adjustments[employeeId]) {
       adjustments[employeeId] = []
     }
     
-    adjustments[employeeId].push({
-      id: Date.now().toString(),
-      amount,
-      comment: adjustmentComment,
-      date: new Date().toISOString().split('T')[0]
-    })
+    adjustments[employeeId].push(createAdjustment(employeeId))
     
     adjustmentAmount = ''
     adjustmentComment = ''
   }
   
-  function removeAdjustment(employeeId, adjustmentId) {
+  const removeAdjustment = (employeeId, adjustmentId) => {
     if (confirm('Are you sure you want to remove this adjustment?')) {
       adjustments[employeeId] = adjustments[employeeId].filter(adj => adj.id !== adjustmentId)
     }
   }
   
-  function getEmployeeSalary(employee) {
+  const getEmployeeSalary = (employee) => {
     const empAttendance = $attendance[employee.id] || {}
     const empAdjustments = adjustments[employee.id] || []
     return calculateSalary(employee, empAttendance, empAdjustments, $config)
   }
   
-  function getAdjustmentTotal(employeeId) {
+  const getAdjustmentTotal = (employeeId) => {
     const empAdjustments = adjustments[employeeId] || []
     return empAdjustments.reduce((sum, adj) => sum + adj.amount, 0)
   }
+  
+  const hasEmployees = $derived($employees.length > 0)
+  const isMarried = (employee) => employee.maritalStatus === 'married'
 </script>
 
 <h2>Payroll Management</h2>
 <p>Calculate and manage employee salaries</p>
 
-{#if $employees.length === 0}
+{#if !hasEmployees}
   <div>
     <Icon icon="solar:wallet-bold" width="2.5em" height="2.5em" />
     <p>No employees added yet.</p>
@@ -85,16 +87,16 @@
             <dt>Basic Salary:</dt>
             <dd>{formatCurrency(salaryBreakdown.components.basicSalary)}</dd>
             <dt>Bonus E:</dt>
-            <dd>{formatCurrency(salaryBreakdown.components.bonusE)}</dd>
+            <dd>{formatCurrency(salaryBreakdown.components['bonusE'])}</dd>
             <dt>Bonus S:</dt>
-            <dd>{formatCurrency(salaryBreakdown.components.bonusS)}</dd>
+            <dd>{formatCurrency(salaryBreakdown.components['bonusS'])}</dd>
             <dt>Bonus K:</dt>
-            <dd>{formatCurrency(salaryBreakdown.components.bonusK)}</dd>
+            <dd>{formatCurrency(salaryBreakdown.components['bonusK'])}</dd>
             <dt>Bonus M:</dt>
-            <dd>{formatCurrency(salaryBreakdown.components.bonusM)}</dd>
-            {#if employee.maritalStatus === 'married'}
+            <dd>{formatCurrency(salaryBreakdown.components['bonusM'])}</dd>
+            {#if isMarried(employee)}
               <dt>Bonus T:</dt>
-              <dd>{formatCurrency(salaryBreakdown.components.bonusT)}</dd>
+              <dd>{formatCurrency(salaryBreakdown.components['bonusT'])}</dd>
             {/if}
           </dl>
           <hr />

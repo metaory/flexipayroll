@@ -157,9 +157,6 @@ body
   padding: 0
   border-radius: 50%
 
-%text-center
-  text-align: center
-
 %opacity-muted
   opacity: 0.8
 
@@ -200,9 +197,6 @@ body
 
 %font-weight-medium
   font-weight: 500
-
-%text-left
-  text-align: left
 
 %margin-bottom
   margin-bottom: 1rem
@@ -360,7 +354,8 @@ footer
 
   > p:first-of-type
     grid-column: 1 / -1
-    @extend %text-muted, %text-center
+    @extend %text-muted
+    text-align: center
     margin-bottom: 0
     @extend %opacity-muted
 
@@ -384,7 +379,7 @@ footer
         background: transparent
         border: none
         @extend %padding-small
-        @extend %text-left
+        text-align: left
         @extend %opacity-muted
         &:hover
           color: var(--primary)
@@ -393,7 +388,8 @@ footer
 
   > p:last-of-type
     grid-column: 1 / -1
-    @extend %text-muted, %text-center
+    @extend %text-muted
+    text-align: center
     font-size: $font
     margin-top: 0
     @extend %opacity-subtle
@@ -500,7 +496,7 @@ table
 
   th, td
     @extend %padding-standard
-    @extend %text-left
+    text-align: left
     @extend %border-muted
 
   th
@@ -539,7 +535,8 @@ dl.horizontal
 div:has(> h4)
   @extend %grid
   place-items: center
-  @extend %text-muted, %text-center
+  @extend %text-muted
+  text-align: center
   gap: 1.5rem
   padding: 5rem 1rem
 
@@ -556,9 +553,6 @@ div:has(> h4)
   @extend %grid-3
 
 // Utilities
-.text-center
-  @extend %text-center
-
 .text-muted
   @extend %text-muted
 

@@ -13,26 +13,27 @@
   })
   let formErrors = $state({})
   let isSubmitting = $state(false)
+  let submitError = $state('')
   
-  function resetForm() {
-    formData = {
-      name: '',
-      gender: 'male',
-      maritalStatus: 'single',
-      monthlySalary: ''
-    }
+  const defaultFormData = {
+    name: '',
+    gender: 'male',
+    maritalStatus: 'single',
+    monthlySalary: ''
+  }
+  
+  const resetForm = () => {
+    formData = { ...defaultFormData }
     formErrors = {}
+    submitError = ''
     editingEmployee = null
   }
   
-  function validateForm() {
+  const validateForm = () => {
     const errors = {}
     
-    if (!formData.name.trim()) {
-      errors.name = 'Name is required'
-    } else if (formData.name.trim().length < 2) {
-      errors.name = 'Name must be at least 2 characters'
-    }
+    if (!formData.name.trim()) errors.name = 'Name is required'
+    else if (formData.name.trim().length < 2) errors.name = 'Name must be at least 2 characters'
     
     if (!formData.monthlySalary || Number(formData.monthlySalary) <= 0) {
       errors.monthlySalary = 'Valid salary is required'
@@ -42,34 +43,38 @@
     return Object.keys(errors).length === 0
   }
   
-  async function addEmployee() {
+  const createEmployee = () => ({
+    ...formData,
+    id: Date.now().toString(),
+    monthlySalary: Number(formData.monthlySalary)
+  })
+  
+  const handleSubmit = () => {
     if (!validateForm()) return
     
     isSubmitting = true
+    submitError = ''
     
-    const employee = {
-      ...formData,
-      id: Date.now().toString(),
-      monthlySalary: Number(formData.monthlySalary)
-    }
-    
+    const employee = createEmployee()
     const validation = validateEmployee(employee)
+    
     if (!validation.isValid) {
-      alert(`Validation errors:\n${validation.errors.join('\n')}`)
+      submitError = validation.errors.join(', ')
       isSubmitting = false
       return
     }
     
-    // Simulate async operation
-    await new Promise(resolve => setTimeout(resolve, 500))
+    employees.update(list => editingEmployee 
+      ? list.map(emp => emp.id === editingEmployee.id ? employee : emp)
+      : [...list, employee]
+    )
     
-    employees.update(list => [...list, employee])
     resetForm()
     showAddForm = false
     isSubmitting = false
   }
   
-  function editEmployee(employee) {
+  const editEmployee = (employee) => {
     editingEmployee = employee
     formData = {
       name: employee.name,
@@ -78,48 +83,26 @@
       monthlySalary: employee.monthlySalary.toString()
     }
     formErrors = {}
+    submitError = ''
     showAddForm = true
   }
   
-  async function updateEmployee() {
-    if (!validateForm()) return
-    
-    isSubmitting = true
-    
-    const updatedEmployee = {
-      ...editingEmployee,
-      ...formData,
-      monthlySalary: Number(formData.monthlySalary)
-    }
-    
-    const validation = validateEmployee(updatedEmployee)
-    if (!validation.isValid) {
-      alert(`Validation errors:\n${validation.errors.join('\n')}`)
-      isSubmitting = false
-      return
-    }
-    
-    // Simulate async operation
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
-    employees.update(list => 
-      list.map(emp => emp.id === editingEmployee.id ? updatedEmployee : emp)
-    )
-    resetForm()
-    showAddForm = false
-    isSubmitting = false
-  }
-  
-  function deleteEmployee(id) {
+  const deleteEmployee = (id) => {
     if (confirm('Are you sure you want to delete this employee?')) {
       employees.update(list => list.filter(emp => emp.id !== id))
     }
   }
   
-  function cancelForm() {
+  const cancelForm = () => {
     resetForm()
     showAddForm = false
   }
+  
+    const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1)
+  
+  const buttonText = $derived(editingEmployee ? 'Update' : 'Add')
+  const buttonIcon = $derived(isSubmitting ? 'solar:refresh-bold' : (editingEmployee ? 'solar:refresh-bold' : 'solar:user-plus-bold'))
+  const loadingText = $derived(isSubmitting ? (editingEmployee ? 'Updating...' : 'Adding...') : `${buttonText} Employee`)
 </script>
 
 <h2>Employee Management</h2>
@@ -132,6 +115,13 @@
 {#if showAddForm}
   <section class="slide-up">
     <h3>{editingEmployee ? 'Edit Employee' : 'Add New Employee'}</h3>
+    
+    {#if submitError}
+      <div class="error-message">
+        <Icon icon="solar:info-circle-bold" width="1em" height="1em" />
+        {submitError}
+      </div>
+    {/if}
     
     <form>
       <div class="form-group">
@@ -152,7 +142,7 @@
         <label for="employee-gender">Gender</label>
         <select id="employee-gender" bind:value={formData.gender}>
           {#each EMPLOYEE_ATTRIBUTES.GENDER as gender}
-            <option value={gender}>{gender.charAt(0).toUpperCase() + gender.slice(1)}</option>
+            <option value={gender}>{capitalize(gender)}</option>
           {/each}
         </select>
       </div>
@@ -161,7 +151,7 @@
         <label for="employee-marital">Marital Status</label>
         <select id="employee-marital" bind:value={formData.maritalStatus}>
           {#each EMPLOYEE_ATTRIBUTES.MARITAL_STATUS as status}
-            <option value={status}>{status.charAt(0).toUpperCase() + status.slice(1)}</option>
+            <option value={status}>{capitalize(status)}</option>
           {/each}
         </select>
       </div>
@@ -183,22 +173,15 @@
       </div>
       
       <div class="button-group">
-        <button 
-          onclick={editingEmployee ? updateEmployee : addEmployee}
-          disabled={isSubmitting}
-        >
+        <button onclick={handleSubmit} disabled={isSubmitting}>
           <Icon 
-            icon={isSubmitting ? 'solar:refresh-bold' : (editingEmployee ? 'solar:refresh-bold' : 'solar:user-plus-bold')} 
+            icon={buttonIcon}
             width="1.2em" 
             height="1.2em" 
             class="spinning" 
             style={isSubmitting ? '' : 'animation: none;'} 
           />
-          {#if isSubmitting}
-            {editingEmployee ? 'Updating...' : 'Adding...'}
-          {:else}
-            {editingEmployee ? 'Update' : 'Add'} Employee
-          {/if}
+          {loadingText}
         </button>
         <button class="secondary" onclick={cancelForm} disabled={isSubmitting}>Cancel</button>
       </div>
@@ -231,11 +214,11 @@
         </tr>
       </thead>
       <tbody>
-        {#each $employees as employee, index}
+        {#each $employees as employee}
           <tr>
             <td><strong>{employee.name}</strong></td>
-            <td>{employee.gender.charAt(0).toUpperCase() + employee.gender.slice(1)}</td>
-            <td>{employee.maritalStatus.charAt(0).toUpperCase() + employee.maritalStatus.slice(1)}</td>
+            <td>{capitalize(employee.gender)}</td>
+            <td>{capitalize(employee.maritalStatus)}</td>
             <td><strong>{formatCurrency(employee.monthlySalary)}</strong></td>
             <td>
               <div class="button-group">
@@ -269,6 +252,18 @@
     color: var(--error);
     font-size: 0.75rem;
     margin-top: 0.25rem;
+  }
+  
+  .error-message {
+    background: var(--error);
+    border: 1px solid var(--error);
+    padding: 1rem;
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: white;
   }
 </style>
 

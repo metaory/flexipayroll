@@ -50,15 +50,20 @@ export const calculateWorkingHours = (entryTime, exitTime) => {
 // PURE FUNCTIONS - ATTENDANCE & SALARY CALCULATIONS
 // ============================================================================
 
+const processDay = (dayData, config) => {
+  const dayType = config.dayTypes[dayData.type]
+  const hours = dayType?.hours === 'calculated' 
+    ? calculateWorkingHours(dayData.entryTime, dayData.exitTime)
+    : dayType?.hours || 0
+  
+  return { type: dayData.type, hours }
+}
+
 export const calculateAttendanceSummary = (attendanceData, config = DEFAULT_CONFIG) => {
-  const processedDays = Object.entries(attendanceData).map(([date, dayData]) => {
-    const dayType = config.dayTypes[dayData.type]
-    const hours = dayType?.hours === 'calculated' 
-      ? calculateWorkingHours(dayData.entryTime, dayData.exitTime)
-      : dayType?.hours || 0
-    
-    return { date, type: dayData.type, hours }
-  })
+  const processedDays = Object.entries(attendanceData).map(([date, dayData]) => ({
+    date,
+    ...processDay(dayData, config)
+  }))
   
   return processedDays.reduce((summary, day) => ({
     hours: summary.hours + day.hours,
@@ -67,28 +72,40 @@ export const calculateAttendanceSummary = (attendanceData, config = DEFAULT_CONF
   }), { hours: 0, days: 0, byType: {} })
 }
 
+const calculateBonus = (bonus, employee, dailyRate) => {
+  const isEligible = bonus.condition ? bonus.condition(employee) : true
+  if (!isEligible) return 0
+  
+  return bonus.type === 'daily_rate_multiplier' 
+    ? dailyRate * bonus.value 
+    : bonus.value
+}
+
 export const calculateSalaryBreakdown = (employee, attendanceData, adjustments = [], config = DEFAULT_CONFIG) => {
   const attendanceSummary = calculateAttendanceSummary(attendanceData, config)
   const basicSalary = calculateHourlyRate(employee.monthlySalary, config) * attendanceSummary.hours
   const dailyRate = calculateDailyRate(employee.monthlySalary, config.workingDaysPerMonth)
   
-  // Calculate bonuses
-  const bonusE = config.bonuses.E.condition?.(employee) !== false ? (config.bonuses.E.type === 'daily_rate_multiplier' ? dailyRate * config.bonuses.E.value : config.bonuses.E.value) : 0
-  const bonusS = config.bonuses.S.condition?.(employee) !== false ? (config.bonuses.S.type === 'daily_rate_multiplier' ? dailyRate * config.bonuses.S.value : config.bonuses.S.value) : 0
-  const bonusK = config.bonuses.K.condition?.(employee) !== false ? (config.bonuses.K.type === 'daily_rate_multiplier' ? dailyRate * config.bonuses.K.value : config.bonuses.K.value) : 0
-  const bonusM = config.bonuses.M.condition?.(employee) !== false ? (config.bonuses.M.type === 'daily_rate_multiplier' ? dailyRate * config.bonuses.M.value : config.bonuses.M.value) : 0
-  const bonusT = config.bonuses.T.condition?.(employee) !== false ? (config.bonuses.T.type === 'daily_rate_multiplier' ? dailyRate * config.bonuses.T.value : config.bonuses.T.value) : 0
+  const bonuses = Object.entries(config.bonuses).map(([key, bonus]) => ({
+    key,
+    amount: calculateBonus(bonus, employee, dailyRate)
+  }))
   
-  const bonusTotal = bonusE + bonusS + bonusK + bonusM + bonusT
+  const bonusTotal = bonuses.reduce((sum, { amount }) => sum + amount, 0)
   const adjustmentTotal = adjustments.reduce((sum, adj) => sum + adj.amount, 0)
   const subtotal = basicSalary + bonusTotal + adjustmentTotal
   const insuranceDeduction = subtotal * config.deductions.insurance.value
   const total = subtotal - insuranceDeduction
   
+  const bonusComponents = bonuses.reduce((acc, { key, amount }) => ({
+    ...acc,
+    [`bonus${key}`]: amount
+  }), {})
+  
   return {
     components: {
       basicSalary,
-      bonusE, bonusS, bonusK, bonusM, bonusT,
+      ...bonusComponents,
       adjustments,
       adjustmentTotal,
       insuranceDeduction
@@ -107,28 +124,29 @@ export const calculateSalaryBreakdown = (employee, attendanceData, adjustments =
 // PURE FUNCTIONS - VALIDATION
 // ============================================================================
 
-export const validateEmployee = (employee) => {
-  const validations = [
-    { test: () => employee.name?.trim().length >= 2, message: 'Name must be at least 2 characters' },
-    { test: () => ['male', 'female'].includes(employee.gender), message: 'Invalid gender' },
-    { test: () => ['single', 'married'].includes(employee.maritalStatus), message: 'Invalid marital status' },
-    { test: () => employee.monthlySalary > 0, message: 'Monthly salary must be greater than 0' }
+const validations = {
+  employee: [
+    { test: emp => emp.name?.trim().length >= 2, message: 'Name must be at least 2 characters' },
+    { test: emp => ['male', 'female'].includes(emp.gender), message: 'Invalid gender' },
+    { test: emp => ['single', 'married'].includes(emp.maritalStatus), message: 'Invalid marital status' },
+    { test: emp => emp.monthlySalary > 0, message: 'Monthly salary must be greater than 0' }
+  ],
+  attendance: (config) => [
+    { test: att => Object.keys(config.dayTypes).includes(att.type), message: 'Invalid day type' },
+    { test: att => att.type !== 'regular' || (att.entryTime && att.exitTime), message: 'Entry and exit times required for regular days' },
+    { test: att => att.type !== 'regular' || calculateWorkingHours(att.entryTime, att.exitTime) >= 0, message: 'Exit time must be after entry time' }
   ]
-  
-  const errors = validations.filter(v => !v.test()).map(v => v.message)
+}
+
+const runValidations = (validations, data) => {
+  const errors = validations.filter(v => !v.test(data)).map(v => v.message)
   return { isValid: errors.length === 0, errors }
 }
 
-export const validateAttendance = (attendance, config = DEFAULT_CONFIG) => {
-  const validations = [
-    { test: () => Object.keys(config.dayTypes).includes(attendance.type), message: 'Invalid day type' },
-    { test: () => attendance.type !== 'regular' || (attendance.entryTime && attendance.exitTime), message: 'Entry and exit times required for regular days' },
-    { test: () => attendance.type !== 'regular' || calculateWorkingHours(attendance.entryTime, attendance.exitTime) >= 0, message: 'Exit time must be after entry time' }
-  ]
-  
-  const errors = validations.filter(v => !v.test()).map(v => v.message)
-  return { isValid: errors.length === 0, errors }
-}
+export const validateEmployee = (employee) => runValidations(validations.employee, employee)
+
+export const validateAttendance = (attendance, config = DEFAULT_CONFIG) => 
+  runValidations(validations.attendance(config), attendance)
 
 // ============================================================================
 // CONSUMER-FRIENDLY EXPORTS

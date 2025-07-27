@@ -16,15 +16,35 @@ const STORAGE_KEYS = {
   CONFIG: 'xpayroll_config'
 }
 
-// Helper to create persistent stores
+// Helper to safely parse JSON with fallback
+const safeParse = (data, fallback) => {
+  try {
+    return data ? JSON.parse(data) : fallback
+  } catch {
+    return fallback
+  }
+}
+
+// Helper to create persistent stores with error handling
 const createPersistentStore = (key, defaultValue) => {
-  const stored = localStorage.getItem(key)
-  const initialValue = stored ? JSON.parse(stored) : defaultValue
+  let stored
+  try {
+    stored = localStorage.getItem(key)
+  } catch {
+    console.warn(`Failed to read from localStorage for key: ${key}`)
+    stored = null
+  }
+  
+  const initialValue = safeParse(stored, defaultValue)
   
   const store = writable(initialValue)
   
   store.subscribe(value => {
-    localStorage.setItem(key, JSON.stringify(value))
+    try {
+      localStorage.setItem(key, JSON.stringify(value))
+    } catch (error) {
+      console.error(`Failed to save to localStorage for key: ${key}`, error)
+    }
   })
   
   return store
@@ -44,7 +64,12 @@ export const theme = createPersistentStore('xpayroll_theme', {
   name: 'default'
 })
 
-
+// Form store for centralized form state
+export const formState = writable({
+  isSubmitting: false,
+  errors: {},
+  message: ''
+})
 
 // ============================================================================
 // DERIVED STORES
@@ -63,10 +88,14 @@ export const currentPeriod = writable({
 // ============================================================================
 
 export const clearAllData = () => {
-  localStorage.removeItem(STORAGE_KEYS.EMPLOYEES)
-  localStorage.removeItem(STORAGE_KEYS.ATTENDANCE)
-  localStorage.removeItem(STORAGE_KEYS.CONFIG)
-  location.reload()
+  try {
+    localStorage.removeItem(STORAGE_KEYS.EMPLOYEES)
+    localStorage.removeItem(STORAGE_KEYS.ATTENDANCE)
+    localStorage.removeItem(STORAGE_KEYS.CONFIG)
+    location.reload()
+  } catch (error) {
+    console.error('Failed to clear data:', error)
+  }
 }
 
 // Theme management functions
@@ -75,6 +104,23 @@ export const toggleTheme = () => {
     ...current,
     mode: current.mode === 'dark' ? 'light' : 'dark'
   }))
+}
+
+// Form utility functions
+export const setFormError = (errors) => {
+  formState.update(state => ({ ...state, errors, message: '' }))
+}
+
+export const setFormMessage = (message) => {
+  formState.update(state => ({ ...state, message, errors: {} }))
+}
+
+export const setSubmitting = (isSubmitting) => {
+  formState.update(state => ({ ...state, isSubmitting }))
+}
+
+export const resetFormState = () => {
+  formState.set({ isSubmitting: false, errors: {}, message: '' })
 }
 
  
