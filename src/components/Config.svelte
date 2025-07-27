@@ -103,26 +103,26 @@
       <h2><Icon icon="solar:settings-bold" width="1.5em" height="1.5em" /> System Configuration</h2>
       <p>Configure payroll settings and system parameters that affect all salary calculations</p>
     </div>
-    
-    {#if hasUnsavedChanges}
-      <div class="save-banner">
-        <div class="save-banner-content">
-          <Icon icon="solar:info-circle-bold" width="1.2em" height="1.2em" />
-          <span><strong>Unsaved Changes:</strong> You have configuration changes that need to be saved</span>
-        </div>
-        <div class="save-actions">
-          <button class="secondary" onclick={cancelChanges}>
-            <Icon icon="solar:close-circle-bold" width="1.2em" height="1.2em" />
-            Cancel
-          </button>
-          <button class="primary" onclick={saveConfig}>
-            <Icon icon="solar:floppy-disk-bold" width="1.2em" height="1.2em" />
-            Save Configuration
-          </button>
-        </div>
-      </div>
-    {/if}
   </header>
+
+  {#if hasUnsavedChanges}
+    <div class="save-banner-fixed">
+      <div class="save-banner-content">
+        <Icon icon="solar:info-circle-bold" width="1.2em" height="1.2em" />
+        <span><strong>Unsaved Changes:</strong> You have configuration changes that need to be saved</span>
+      </div>
+      <div class="save-actions">
+        <button class="secondary" onclick={cancelChanges}>
+          <Icon icon="solar:close-circle-bold" width="1.2em" height="1.2em" />
+          Cancel
+        </button>
+        <button class="primary" onclick={saveConfig}>
+          <Icon icon="solar:floppy-disk-bold" width="1.2em" height="1.2em" />
+          Save Configuration
+        </button>
+      </div>
+    </div>
+  {/if}
 
   {#if saveStatus}
     <div class="save-status" class:success={saveStatus.includes('saved')} class:warning={saveStatus.includes('cancelled') || saveStatus.includes('reset')}>
@@ -146,7 +146,7 @@
             id="working-days"
             type="number"
             value={localConfig.workingDaysPerMonth}
-            onchange={e => updateLocalConfig('workingDaysPerMonth', Number(e.currentTarget.value))}
+            oninput={e => updateLocalConfig('workingDaysPerMonth', Number(e.currentTarget.value))}
             min="1"
             max="31"
           />
@@ -162,7 +162,7 @@
             id="workday-hours"
             type="number"
             value={localConfig.workdayHours}
-            onchange={e => updateLocalConfig('workdayHours', Number(e.currentTarget.value))}
+            oninput={e => updateLocalConfig('workdayHours', Number(e.currentTarget.value))}
             min="1"
             max="24"
             step="0.5"
@@ -186,7 +186,7 @@
             id="bonus-e"
             type="number"
             value={localConfig.bonuses.E.value}
-            onchange={e => updateLocalConfig('bonuses.E.value', Number(e.currentTarget.value))}
+            oninput={e => updateLocalConfig('bonuses.E.value', Number(e.currentTarget.value))}
             min="0"
             step="0.5"
           />
@@ -202,7 +202,7 @@
             id="bonus-s"
             type="number"
             value={localConfig.bonuses.S.value}
-            onchange={e => updateLocalConfig('bonuses.S.value', Number(e.currentTarget.value))}
+            oninput={e => updateLocalConfig('bonuses.S.value', Number(e.currentTarget.value))}
             min="0"
             step="0.5"
           />
@@ -218,7 +218,7 @@
             id="bonus-k"
             type="number"
             value={localConfig.bonuses.K.value}
-            onchange={e => updateLocalConfig('bonuses.K.value', Number(e.currentTarget.value))}
+            oninput={e => updateLocalConfig('bonuses.K.value', Number(e.currentTarget.value))}
             min="0"
           />
           <small style="color: var(--fg-muted);">Fixed amount: {formatCurrency(localConfig.bonuses.K.value)}</small>
@@ -233,7 +233,7 @@
             id="bonus-m"
             type="number"
             value={localConfig.bonuses.M.value}
-            onchange={e => updateLocalConfig('bonuses.M.value', Number(e.currentTarget.value))}
+            oninput={e => updateLocalConfig('bonuses.M.value', Number(e.currentTarget.value))}
             min="0"
           />
           <small style="color: var(--fg-muted);">Fixed amount: {formatCurrency(localConfig.bonuses.M.value)}</small>
@@ -248,7 +248,7 @@
             id="bonus-t"
             type="number"
             value={localConfig.bonuses.T.value}
-            onchange={e => updateLocalConfig('bonuses.T.value', Number(e.currentTarget.value))}
+            oninput={e => updateLocalConfig('bonuses.T.value', Number(e.currentTarget.value))}
             min="0"
           />
           <small style="color: var(--fg-muted);">Fixed amount: {formatCurrency(localConfig.bonuses.T.value)} (married employees only)</small>
@@ -269,7 +269,7 @@
           id="insurance-rate"
           type="number"
           value={localConfig.deductions.insurance.value * 100}
-          onchange={e => updateLocalConfig('deductions.insurance.value', Number(e.currentTarget.value) / 100)}
+          oninput={e => updateLocalConfig('deductions.insurance.value', Number(e.currentTarget.value) / 100)}
           min="0"
           max="100"
           step="0.1"
@@ -349,9 +349,6 @@
   }
   
   .config-header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
     background: var(--bg);
     border-bottom: 1px solid var(--border-muted);
     margin: -2.5rem -2.5rem 2rem -2.5rem;
@@ -370,21 +367,33 @@
     gap: 0.5rem;
   }
   
-  .save-banner {
-    background: var(--warning);
-    color: white;
-    border-radius: var(--radius);
-    padding: 1rem 1.5rem;
-    margin-top: 1rem;
+  .save-banner-fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: rgba(255, 193, 7, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #000;
+    border-radius: 0 0 1rem 1rem;
+    padding: 1rem 2rem;
+    margin: 0 1rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 193, 7, 0.3);
     
     @media (max-width: 768px) {
       flex-direction: column;
       align-items: stretch;
       gap: 1rem;
+      margin: 0 0.5rem;
+      padding: 1rem;
+      border-radius: 0 0 0.75rem 0.75rem;
     }
   }
   
@@ -393,6 +402,7 @@
     align-items: center;
     gap: 0.5rem;
     flex: 1;
+    font-weight: 500;
   }
   
   .save-actions {
@@ -404,22 +414,40 @@
   .save-actions button {
     padding: 0.5rem 1rem;
     font-size: 0.875rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
   }
   
   .save-actions button.primary {
-    background: white;
-    color: var(--warning);
-    font-weight: 600;
+    background: #000;
+    color: #fff;
+    border: 1px solid #000;
   }
   
   .save-actions button.primary:hover {
-    background: #f8f9fa;
+    background: #333;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  .save-actions button.secondary {
+    background: rgba(255, 255, 255, 0.9);
+    color: #000;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+  
+  .save-actions button.secondary:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
   
   .config-form {
     display: flex;
     flex-direction: column;
     gap: 2rem;
+    margin-top: 1rem;
   }
   
   .config-section {
