@@ -88,7 +88,7 @@
   }
   
   const deleteEmployee = (id) => {
-    if (confirm('Are you sure you want to delete this employee?')) {
+    if (confirm('Are you sure you want to delete this employee? This will also remove all their attendance records.')) {
       employees.update(list => list.filter(emp => emp.id !== id))
     }
   }
@@ -98,15 +98,42 @@
     showAddForm = false
   }
   
-    const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1)
+  const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1)
   
   const buttonText = $derived(editingEmployee ? 'Update' : 'Add')
   const buttonIcon = $derived(isSubmitting ? 'solar:refresh-bold' : (editingEmployee ? 'solar:refresh-bold' : 'solar:user-plus-bold'))
   const loadingText = $derived(isSubmitting ? (editingEmployee ? 'Updating...' : 'Adding...') : `${buttonText} Employee`)
+  
+  const totalSalary = $derived($employees.reduce((sum, emp) => sum + emp.monthlySalary, 0))
+  const marriedCount = $derived($employees.filter(emp => emp.maritalStatus === 'married').length)
 </script>
 
 <h2>Employee Management</h2>
-<p>Manage your workforce and employee information</p>
+<p>Manage your workforce and employee information. Employee data can be updated monthly and affects salary calculations.</p>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <Icon icon="solar:users-group-rounded-bold" width="2em" height="2em" />
+    <div>
+      <strong>{$employees.length}</strong>
+      <span>Total Employees</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <Icon icon="solar:heart-bold" width="2em" height="2em" />
+    <div>
+      <strong>{marriedCount}</strong>
+      <span>Married Employees</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <Icon icon="solar:wallet-bold" width="2em" height="2em" />
+    <div>
+      <strong>{formatCurrency(totalSalary)}</strong>
+      <span>Total Monthly Salary</span>
+    </div>
+  </div>
+</div>
 
 <button onclick={() => showAddForm = true} class="slide-up">
   <Icon icon="solar:user-plus-bold" width="1.2em" height="1.2em" /> Add Employee
@@ -114,7 +141,8 @@
 
 {#if showAddForm}
   <section class="slide-up">
-    <h3>{editingEmployee ? 'Edit Employee' : 'Add New Employee'}</h3>
+    <h3><Icon icon={editingEmployee ? 'solar:edit-bold' : 'solar:user-plus-bold'} width="1.2em" height="1.2em" /> {editingEmployee ? 'Edit Employee' : 'Add New Employee'}</h3>
+    <p style="color: var(--fg-muted);">Employee information affects salary calculations including bonuses and deductions</p>
     
     {#if submitError}
       <div class="error-message">
@@ -125,12 +153,15 @@
     
     <form>
       <div class="form-group">
-        <label for="employee-name">Full Name</label>
+        <label for="employee-name">
+          <Icon icon="solar:user-bold" width="1em" height="1em" />
+          Full Name
+        </label>
         <input 
           id="employee-name"
           class={formErrors['name'] ? 'error' : ''}
           bind:value={formData.name}
-          placeholder="Enter employee name"
+          placeholder="Enter employee full name"
           required
         />
         {#if formErrors['name']}
@@ -139,37 +170,49 @@
       </div>
       
       <div class="form-group">
-        <label for="employee-gender">Gender</label>
+        <label for="employee-gender">
+          <Icon icon="solar:user-id-bold" width="1em" height="1em" />
+          Gender
+        </label>
         <select id="employee-gender" bind:value={formData.gender}>
           {#each EMPLOYEE_ATTRIBUTES.GENDER as gender}
             <option value={gender}>{capitalize(gender)}</option>
           {/each}
         </select>
+        <small style="color: var(--fg-muted);">Used for reporting and identification</small>
       </div>
       
       <div class="form-group">
-        <label for="employee-marital">Marital Status</label>
+        <label for="employee-marital">
+          <Icon icon="solar:heart-bold" width="1em" height="1em" />
+          Marital Status
+        </label>
         <select id="employee-marital" bind:value={formData.maritalStatus}>
           {#each EMPLOYEE_ATTRIBUTES.MARITAL_STATUS as status}
             <option value={status}>{capitalize(status)}</option>
           {/each}
         </select>
+        <small style="color: var(--fg-muted);">Married employees receive Bonus T automatically</small>
       </div>
       
       <div class="form-group">
-        <label for="employee-salary">Monthly Salary (IDR)</label>
+        <label for="employee-salary">
+          <Icon icon="solar:wallet-bold" width="1em" height="1em" />
+          Monthly Base Salary (IDR)
+        </label>
         <input 
           id="employee-salary"
           type="number"
           class={formErrors['monthlySalary'] ? 'error' : ''}
           bind:value={formData.monthlySalary}
-          placeholder="Enter monthly salary"
+          placeholder="Enter monthly base salary"
           min="0"
           required
         />
         {#if formErrors['monthlySalary']}
           <small style="color: var(--error);">{formErrors['monthlySalary']}</small>
         {/if}
+        <small style="color: var(--fg-muted);">Used to calculate daily and hourly rates for salary calculations</small>
       </div>
       
       <div class="button-group">
@@ -190,14 +233,14 @@
 {/if}
 
 <section class="fade-in">
-  <h3>Employee Directory</h3>
-  <p style="color: var(--fg-muted);">Total: {$employees.length} employees</p>
+  <h3><Icon icon="solar:users-group-rounded-bold" width="1.2em" height="1.2em" /> Employee Directory</h3>
+  <p style="color: var(--fg-muted);">Manage your workforce. Employee data can be updated monthly and affects all salary calculations.</p>
   
   {#if $employees.length === 0}
     <div>
       <Icon icon="solar:users-group-rounded-bold" width="2.5em" height="2.5em" />
       <h4>No employees yet</h4>
-      <p>Get started by adding your first employee</p>
+      <p>Get started by adding your first employee to begin payroll management</p>
       <button onclick={() => showAddForm = true}>
         <Icon icon="solar:user-plus-bold" width="1.2em" height="1.2em" /> Add First Employee
       </button>
@@ -206,11 +249,11 @@
     <table>
       <thead>
         <tr>
-          <th>Name</th>
-          <th>Gender</th>
-          <th>Marital Status</th>
-          <th>Monthly Salary</th>
-          <th>Actions</th>
+          <th><Icon icon="solar:user-bold" width="1em" height="1em" /> Name</th>
+          <th><Icon icon="solar:user-id-bold" width="1em" height="1em" /> Gender</th>
+          <th><Icon icon="solar:heart-bold" width="1em" height="1em" /> Marital Status</th>
+          <th><Icon icon="solar:wallet-bold" width="1em" height="1em" /> Monthly Salary</th>
+          <th><Icon icon="solar:settings-bold" width="1em" height="1em" /> Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -218,7 +261,11 @@
           <tr>
             <td><strong>{employee.name}</strong></td>
             <td>{capitalize(employee.gender)}</td>
-            <td>{capitalize(employee.maritalStatus)}</td>
+            <td>
+              <span class="status-badge" class:married={employee.maritalStatus === 'married'}>
+                {capitalize(employee.maritalStatus)}
+              </span>
+            </td>
             <td><strong>{formatCurrency(employee.monthlySalary)}</strong></td>
             <td>
               <div class="button-group">
@@ -262,6 +309,47 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    color: white;
+  }
+  
+  /* Using global .stats-grid class */
+  
+  .stat-card {
+    background: var(--bg-muted);
+    border: 1px solid var(--border-muted);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .stat-card > div {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .stat-card strong {
+    font-size: 1.5rem;
+    color: var(--primary);
+  }
+  
+  .stat-card span {
+    font-size: 0.875rem;
+    color: var(--fg-muted);
+  }
+  
+  .status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: var(--bg-muted);
+    color: var(--fg-muted);
+  }
+  
+  .status-badge.married {
+    background: var(--success);
     color: white;
   }
 </style>

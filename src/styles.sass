@@ -8,6 +8,10 @@ $font: 0.875rem
 $spacing: 2rem
 $min-height: 2.5rem
 
+// Breakpoints
+$mobile: 768px
+$tablet: 1024px
+
 // Colors
 $base: #4411ee
 $primary: $base
@@ -47,6 +51,10 @@ $error: color.adjust($base, $hue: 348deg)
   margin: 0
   padding: 0
 
+html, body
+  overflow-x: hidden
+  max-width: 100vw
+
 body
   font-family: 'Baloo 2', sans-serif
   line-height: 1.6
@@ -57,6 +65,11 @@ body
   margin: 0 auto
   padding: 0 $padding
   padding-top: 3rem
+  overflow-x: hidden
+  
+  @media (max-width: $mobile)
+    padding: 0 1rem
+    padding-top: 2rem
 
 // Core Layout
 %flex
@@ -88,9 +101,37 @@ body
   @extend %grid
   grid-template-columns: repeat(4, 1fr)
 
+// Responsive Grid Layouts
+%grid-responsive
+  @extend %grid
+  grid-template-columns: 1fr
+  
+  @media (min-width: $mobile)
+    grid-template-columns: repeat(2, 1fr)
+  
+  @media (min-width: $tablet)
+    grid-template-columns: repeat(4, 1fr)
+
+%grid-responsive-2
+  @extend %grid
+  grid-template-columns: 1fr
+  
+  @media (min-width: $mobile)
+    grid-template-columns: repeat(2, 1fr)
+
+%grid-responsive-3
+  @extend %grid
+  grid-template-columns: 1fr
+  
+  @media (min-width: $mobile)
+    grid-template-columns: repeat(2, 1fr)
+  
+  @media (min-width: $tablet)
+    grid-template-columns: repeat(3, 1fr)
+
 // Form Layouts
 %form-horizontal
-  @extend %grid-4
+  @extend %grid-responsive
   align-items: end
 
 %form-stacked
@@ -185,6 +226,8 @@ body
   font-family: inherit
   font-size: $font
   min-height: $min-height
+  width: 100%
+  max-width: 100%
 
 %font-weight-bold
   font-weight: 600
@@ -202,6 +245,10 @@ body
 %card
   @extend %bg-subtle, %border-muted, %glass, %transition, %shadow-card
   padding: 2.5rem
+  overflow: hidden
+  
+  @media (max-width: $mobile)
+    padding: 1.5rem
 
 %button-base
   @extend %flex, %transition, %focus
@@ -214,6 +261,11 @@ body
   font-size: $font
   @extend %font-weight-medium
   min-height: $min-height
+  white-space: nowrap
+  
+  @media (max-width: $mobile)
+    padding: 0.5rem 0.75rem
+    font-size: 0.8rem
 
 %button-primary
   @extend %button-base, %bg-primary, %glass
@@ -274,12 +326,21 @@ body
 
 %heading-size-large
   font-size: 2rem
+  
+  @media (max-width: $mobile)
+    font-size: 1.5rem
 
 %heading-size-medium
   font-size: 1.5rem
+  
+  @media (max-width: $mobile)
+    font-size: 1.25rem
 
 %heading-size-small
   font-size: 1.25rem
+  
+  @media (max-width: $mobile)
+    font-size: 1.1rem
 
 %heading-size-xs
   font-size: 1rem
@@ -294,6 +355,7 @@ body
   background: var(--bg)
   border-bottom: 1px solid var(--bg-muted)
   box-shadow: var(--shadow)
+  overflow: hidden
 
   .header-content
     @extend %flex-between
@@ -301,6 +363,11 @@ body
     margin: 0 auto
     padding: 0 $padding
     height: 4rem
+    overflow: hidden
+    
+    @media (max-width: $mobile)
+      padding: 0 1rem
+      height: 3.5rem
 
     .logo-link
       @extend %flex
@@ -311,6 +378,9 @@ body
       font-size: 1.25rem
       &:hover
         @extend %hover-lift
+      
+      @media (max-width: $mobile)
+        font-size: 1rem
 
       img
         @extend %interactive
@@ -320,6 +390,10 @@ body
 
     .main-nav
       @extend %flex-wrap
+      overflow: hidden
+      
+      @media (max-width: $mobile)
+        gap: 0.25rem
 
       button
         @extend %button-secondary
@@ -333,13 +407,18 @@ main
   @extend %spacing
   min-height: 60vh
   @extend %margin-top
+  overflow: hidden
 
 footer
   @extend %spacing
   @extend %margin-top
   padding: 3rem 0
   @extend %border-muted, %bg-subtle, %glass
-  @extend %grid-3
+  @extend %grid-responsive-3
+  overflow: hidden
+  
+  @media (max-width: $mobile)
+    padding: 2rem 0
 
   > img
     grid-column: 1 / -1
@@ -452,15 +531,26 @@ input[type="file"]
 // Form Groups
 .form-group
   @extend %grid
-  grid-template-columns: 200px 1fr
+  grid-template-columns: 1fr
   align-items: center
+  gap: 0.5rem
+  
+  @media (min-width: $mobile)
+    grid-template-columns: 200px 1fr
+    gap: 1rem
 
   label
     grid-column: 1
-    justify-self: end
+    justify-self: start
+    
+    @media (min-width: $mobile)
+      justify-self: end
 
   input, select, textarea
-    grid-column: 2
+    grid-column: 1
+    
+    @media (min-width: $mobile)
+      grid-column: 2
 
 .form-group-stacked
   @extend %form-stacked
@@ -471,6 +561,7 @@ input[type="file"]
 // Button Groups
 .button-group
   @extend %flex-wrap
+  gap: 0.5rem
 
 button
   @extend %button-primary
@@ -492,6 +583,12 @@ table
     padding: 0.75rem 1rem
     text-align: left
     @extend %border-muted
+    word-wrap: break-word
+    overflow-wrap: break-word
+    
+    @media (max-width: $mobile)
+      padding: 0.5rem 0.75rem
+      font-size: 0.8rem
 
   th
     @extend %bg-muted, %glass
@@ -512,8 +609,12 @@ table
 // Description Lists
 dl
   display: grid
-  grid-template-columns: 200px 1fr
-  gap: 0.5rem 1rem
+  grid-template-columns: 1fr
+  gap: 0.5rem
+  
+  @media (min-width: $mobile)
+    grid-template-columns: 200px 1fr
+    gap: 0.5rem 1rem
 
   dt
     @extend %font-weight-bold
@@ -521,6 +622,8 @@ dl
 
   dd
     color: var(--fg)
+    word-wrap: break-word
+    overflow-wrap: break-word
 
 dl.horizontal
   @extend %form-horizontal
@@ -545,6 +648,25 @@ div:has(> h4)
 
 .mt-0
   margin-top: 0
+
+// Responsive Utilities
+.stats-grid
+  display: grid
+  grid-template-columns: 1fr
+  gap: 1rem
+  margin-bottom: 2rem
+  
+  @media (min-width: $mobile)
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr))
+
+.salary-grid
+  display: grid
+  grid-template-columns: 1fr
+  gap: 2rem
+  margin: 1.5rem 0
+  
+  @media (min-width: $tablet)
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr))
 
 // Animations
 @keyframes fadeIn

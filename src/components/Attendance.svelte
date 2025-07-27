@@ -22,6 +22,13 @@
     unpaid_leave: 'Unpaid Leave'
   }
   
+  const dayTypeDescriptions = {
+    regular: 'Enter entry and exit times for hourly calculation',
+    holiday: 'Automatically credited 8 hours',
+    paid_leave: 'Automatically credited 8 hours',
+    unpaid_leave: 'No hours credited, no pay'
+  }
+  
   const getDayTypeLabel = (type) => dayTypeLabels[type] || type
   
   const createAttendanceData = () => ({
@@ -78,20 +85,68 @@
   
   const isRegularDay = $derived(selectedType === 'regular')
   const hasEmployees = $derived($employees.length > 0)
+  
+  const totalDaysRecorded = $derived(
+    $employees.reduce((total, emp) => {
+      const empAttendance = getAttendanceForEmployee(emp.id);
+      return total + Object.keys(empAttendance).length;
+    }, 0)
+  )
+  
+  const getEmployeeStats = (employeeId) => {
+    const empAttendance = getAttendanceForEmployee(employeeId);
+    const days = Object.values(empAttendance);
+    
+    return {
+      totalDays: days.length,
+      regularDays: days.filter(d => d.type === 'regular').length,
+      holidays: days.filter(d => d.type === 'holiday').length,
+      paidLeave: days.filter(d => d.type === 'paid_leave').length,
+      unpaidLeave: days.filter(d => d.type === 'unpaid_leave').length
+    }
+  }
 </script>
 
 <h2>Attendance Management</h2>
-<p>Track employee attendance and work hours</p>
+<p>Track employee attendance and work hours. Daily attendance records are used to calculate basic salary based on hours worked.</p>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <Icon icon="solar:calendar-bold" width="2em" height="2em" />
+    <div>
+      <strong>{$currentPeriod.month}/{$currentPeriod.year}</strong>
+      <span>Current Period</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <Icon icon="solar:document-bold" width="2em" height="2em" />
+    <div>
+      <strong>{totalDaysRecorded}</strong>
+      <span>Total Days Recorded</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <Icon icon="solar:users-group-rounded-bold" width="2em" height="2em" />
+    <div>
+      <strong>{$employees.length}</strong>
+      <span>Active Employees</span>
+    </div>
+  </div>
+</div>
 
 <section>
-  <h3><Icon icon="solar:document-add-bold" width="1.2em" height="1.2em" /> Record Attendance</h3>
+  <h3><Icon icon="solar:document-add-bold" width="1.2em" height="1.2em" /> Record Daily Attendance</h3>
+  <p style="color: var(--fg-muted);">Record attendance for each employee. Different day types affect salary calculations differently.</p>
   
   <form>
     <div class="form-group-horizontal">
       <div class="form-group-stacked">
-        <label for="employee-select"><Icon icon="solar:user-bold" width="1em" height="1em" /> Employee</label>
+        <label for="employee-select">
+          <Icon icon="solar:user-bold" width="1em" height="1em" />
+          Select Employee
+        </label>
         <select id="employee-select" bind:value={selectedEmployee}>
-          <option value="">Select Employee</option>
+          <option value="">Choose an employee...</option>
           {#each $employees as employee}
             <option value={employee.id}>{employee.name}</option>
           {/each}
@@ -99,7 +154,10 @@
       </div>
       
       <div class="form-group-stacked">
-        <label for="date-select"><Icon icon="solar:calendar-bold" width="1em" height="1em" /> Date</label>
+        <label for="date-select">
+          <Icon icon="solar:calendar-bold" width="1em" height="1em" />
+          Date
+        </label>
         <input 
           id="date-select"
           type="date"
@@ -109,35 +167,47 @@
       </div>
       
       <div class="form-group-stacked">
-        <label for="type-select"><Icon icon="solar:tag-bold" width="1em" height="1em" /> Day Type</label>
+        <label for="type-select">
+          <Icon icon="solar:tag-bold" width="1em" height="1em" />
+          Day Type
+        </label>
         <select id="type-select" bind:value={selectedType}>
           {#each Object.entries(DAY_TYPES) as [key, value]}
             <option value={value}>{getDayTypeLabel(value)}</option>
           {/each}
         </select>
+        <small style="color: var(--fg-muted);">{dayTypeDescriptions[selectedType]}</small>
       </div>
     </div>
     
     {#if isRegularDay}
       <div class="form-group-horizontal">
         <div class="form-group-stacked">
-          <label for="entry-time"><Icon icon="solar:clock-circle-bold" width="1em" height="1em" /> Entry Time</label>
+          <label for="entry-time">
+            <Icon icon="solar:clock-circle-bold" width="1em" height="1em" />
+            Entry Time
+          </label>
           <input 
             id="entry-time"
             type="time"
             bind:value={entryTime}
             required
           />
+          <small style="color: var(--fg-muted);">When employee started work</small>
         </div>
         
         <div class="form-group-stacked">
-          <label for="exit-time"><Icon icon="solar:clock-circle-bold" width="1em" height="1em" /> Exit Time</label>
+          <label for="exit-time">
+            <Icon icon="solar:clock-circle-bold" width="1em" height="1em" />
+            Exit Time
+          </label>
           <input 
             id="exit-time"
             type="time"
             bind:value={exitTime}
             required
           />
+          <small style="color: var(--fg-muted);">When employee finished work</small>
         </div>
         
         <div class="form-group-stacked">
@@ -159,7 +229,7 @@
 </section>
 
 <section>
-  <h3><Icon icon="solar:chart-bold" width="1.2em" height="1.2em" /> Attendance Records</h3>
+  <h3><Icon icon="solar:chart-bold" width="1.2em" height="1.2em" /> Monthly Attendance Records</h3>
   <p style="color: var(--fg-muted);">Current month: {$currentPeriod.month}/{$currentPeriod.year}</p>
   
   {#if !hasEmployees}
@@ -172,10 +242,32 @@
     {#each $employees as employee}
       {@const empAttendance = getAttendanceForEmployee(employee.id)}
       {@const attendanceDates = Object.keys(empAttendance).sort()}
+      {@const stats = getEmployeeStats(employee.id)}
       
       <section>
-        <h4>{employee.name}</h4>
-        <p style="color: var(--fg-muted);">{attendanceDates.length} days recorded this month</p>
+        <h4><Icon icon="solar:user-bold" width="1em" height="1em" /> {employee.name}</h4>
+        <div class="employee-stats">
+          <div class="stat-item">
+            <Icon icon="solar:calendar-bold" width="1em" height="1em" />
+            <span><strong>{stats.totalDays}</strong> days recorded</span>
+          </div>
+          <div class="stat-item">
+            <Icon icon="solar:clock-circle-bold" width="1em" height="1em" />
+            <span><strong>{stats.regularDays}</strong> regular days</span>
+          </div>
+          <div class="stat-item">
+            <Icon icon="solar:star-bold" width="1em" height="1em" />
+            <span><strong>{stats.holidays}</strong> holidays</span>
+          </div>
+          <div class="stat-item">
+            <Icon icon="solar:heart-bold" width="1em" height="1em" />
+            <span><strong>{stats.paidLeave}</strong> paid leave</span>
+          </div>
+          <div class="stat-item">
+            <Icon icon="solar:close-circle-bold" width="1em" height="1em" />
+            <span><strong>{stats.unpaidLeave}</strong> unpaid leave</span>
+          </div>
+        </div>
         
         {#if attendanceDates.length === 0}
           <div>
@@ -186,11 +278,11 @@
           <table>
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Type</th>
-                <th>Entry Time</th>
-                <th>Exit Time</th>
-                <th>Actions</th>
+                <th><Icon icon="solar:calendar-bold" width="1em" height="1em" /> Date</th>
+                <th><Icon icon="solar:tag-bold" width="1em" height="1em" /> Type</th>
+                <th><Icon icon="solar:clock-circle-bold" width="1em" height="1em" /> Entry Time</th>
+                <th><Icon icon="solar:clock-circle-bold" width="1em" height="1em" /> Exit Time</th>
+                <th><Icon icon="solar:settings-bold" width="1em" height="1em" /> Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -198,7 +290,11 @@
                 {@const record = empAttendance[date]}
                 <tr>
                   <td>{new Date(date).toLocaleDateString()}</td>
-                  <td>{getDayTypeLabel(record.type)}</td>
+                  <td>
+                    <span class="day-type-badge" class:regular={record.type === 'regular'} class:holiday={record.type === 'holiday'} class:paid={record.type === 'paid_leave'} class:unpaid={record.type === 'unpaid_leave'}>
+                      {getDayTypeLabel(record.type)}
+                    </span>
+                  </td>
                   <td>{record.entryTime || '-'}</td>
                   <td>{record.exitTime || '-'}</td>
                   <td>
@@ -216,4 +312,80 @@
       </section>
     {/each}
   {/if}
-</section> 
+</section>
+
+<style>
+  /* Using global .stats-grid class */
+  
+  .stat-card {
+    background: var(--bg-muted);
+    border: 1px solid var(--border-muted);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .stat-card > div {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .stat-card strong {
+    font-size: 1.5rem;
+    color: var(--primary);
+  }
+  
+  .stat-card span {
+    font-size: 0.875rem;
+    color: var(--fg-muted);
+  }
+  
+  .employee-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--fg-muted);
+  }
+  
+  .day-type-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  
+  .day-type-badge.regular {
+    background: var(--primary);
+    color: white;
+  }
+  
+  .day-type-badge.holiday {
+    background: var(--warning);
+    color: white;
+  }
+  
+  .day-type-badge.paid {
+    background: var(--success);
+    color: white;
+  }
+  
+  .day-type-badge.unpaid {
+    background: var(--error);
+    color: white;
+  }
+  
+  small {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+  }
+</style> 
