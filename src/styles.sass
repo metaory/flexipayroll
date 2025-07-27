@@ -1,0 +1,591 @@
+@use "sass:color"
+
+// Core Values
+$gap: 1rem
+$padding: 1.5rem
+$radius: 0.5rem
+$font: 0.875rem
+$spacing: 2rem
+$min-height: 2.5rem
+
+// Colors
+$base: #4411ee
+$primary: $base
+$secondary: color.adjust($base, $hue: 180deg)
+$success: color.adjust($base, $hue: 140deg)
+$warning: color.adjust($base, $hue: 45deg)
+$error: color.adjust($base, $hue: 348deg)
+
+// CSS Variables
+:root
+  --bg: #{color.adjust($base, $hue: 45deg, $saturation: -60%, $lightness: 45%, $alpha: 20%)}
+  --bg-muted: #{color.adjust($base, $hue: 45deg, $saturation: -50%, $lightness: 40%)}
+  --fg: #{color.adjust($base, $lightness: -40%)}
+  --fg-muted: #{color.adjust($base, $lightness: -20%)}
+  --primary: #{$primary}
+  --secondary: #{$secondary}
+  --success: #{$success}
+  --warning: #{$warning}
+  --error: #{$error}
+  --radius: #{$radius}
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1)
+
+.dark
+  --bg: #{color.adjust($base, $hue: 25deg, $saturation: -50%, $lightness: -35%, $alpha: -0.08%)}
+  --bg-muted: #{color.adjust($base, $hue: 25deg, $saturation: -40%, $lightness: -30%)}
+  --fg: #{color.adjust($base, $lightness: 40%)}
+  --fg-muted: #{color.adjust($base, $lightness: 20%)}
+  --primary: #{color.adjust($primary, $lightness: 15%)}
+  --secondary: #{color.adjust($secondary, $lightness: 15%)}
+  --success: #{color.adjust($success, $lightness: 15%)}
+  --warning: #{color.adjust($warning, $lightness: 15%)}
+  --error: #{color.adjust($error, $lightness: 15%)}
+
+// Reset & Base
+*
+  box-sizing: border-box
+  margin: 0
+  padding: 0
+
+body
+  font-family: 'Baloo 2', sans-serif
+  line-height: 1.6
+  background: var(--bg)
+  color: var(--fg)
+  min-height: 100vh
+  max-width: 1200px
+  margin: 0 auto
+  padding: 0 $padding
+  padding-top: 3rem
+
+// Core Layout
+%flex
+  display: flex
+  align-items: center
+
+%flex-between
+  @extend %flex
+  justify-content: space-between
+
+%flex-wrap
+  @extend %flex
+  flex-wrap: wrap
+  gap: $gap
+
+%grid
+  display: grid
+  gap: $gap
+
+%grid-2
+  @extend %grid
+  grid-template-columns: 1fr 1fr
+
+%grid-3
+  @extend %grid
+  grid-template-columns: repeat(3, 1fr)
+
+%grid-4
+  @extend %grid
+  grid-template-columns: repeat(4, 1fr)
+
+// Form Layouts
+%form-horizontal
+  @extend %grid-4
+  align-items: end
+
+%form-stacked
+  @extend %grid
+  grid-template-columns: 1fr
+
+// Spacing
+%spacing
+  > * + *
+    margin-top: $spacing
+
+// Transitions & Effects
+%transition
+  transition: all 0.2s ease
+
+%glass
+  backdrop-filter: blur(10px)
+
+%focus
+  &:focus
+    outline: none
+    box-shadow: 0 0 0 3px rgba(68, 17, 238, 0.3)
+
+// Colors & Backgrounds
+%bg-subtle
+  background: color-mix(in oklab, var(--bg-muted) 80%, transparent)
+
+%bg-muted
+  background: color-mix(in oklab, var(--bg-muted) 60%, transparent)
+
+%bg-primary
+  background: color-mix(in oklab, var(--primary) 90%, transparent)
+
+%bg-error
+  background: color-mix(in oklab, var(--error) 90%, transparent)
+
+%border-muted
+  border: 1px solid color-mix(in oklab, var(--bg-muted) 40%, transparent)
+
+%border-primary
+  border: 1px solid color-mix(in oklab, var(--primary) 70%, transparent)
+
+%border-error
+  border: 1px solid color-mix(in oklab, var(--error) 70%, transparent)
+
+// Hover Effects
+%hover-lift
+  &:hover
+    transform: translateY(-2px)
+    box-shadow: var(--shadow)
+
+%hover-opacity
+  &:hover
+    opacity: 1
+
+%hover-scale
+  &:hover
+    transform: scale(1.05)
+
+// Common Patterns
+%circular
+  width: $min-height
+  height: $min-height
+  padding: 0
+  border-radius: 50%
+
+%text-center
+  text-align: center
+
+%opacity-muted
+  opacity: 0.8
+
+%opacity-subtle
+  opacity: 0.6
+
+%shadow-card
+  border-radius: var(--radius)
+  box-shadow: var(--shadow)
+
+%no-border
+  border: none
+  padding: 0
+  margin: 0
+
+%interactive
+  @extend %transition, %shadow-card
+  &:hover
+    @extend %hover-lift
+
+%form-field
+  padding: 0.75rem 1rem
+  @extend %border-muted, %bg-subtle, %glass, %transition, %focus
+  border-radius: var(--radius)
+  color: var(--fg)
+  font-family: inherit
+  font-size: $font
+  min-height: $min-height
+
+%padding-standard
+  padding: 0.75rem 1rem
+
+%padding-small
+  padding: 0.5rem
+
+%font-weight-bold
+  font-weight: 600
+
+%font-weight-medium
+  font-weight: 500
+
+%text-left
+  text-align: left
+
+%margin-bottom
+  margin-bottom: 1rem
+
+%margin-top
+  margin-top: $spacing
+
+// Components
+%card
+  @extend %bg-subtle, %border-muted, %glass, %transition, %shadow-card
+  padding: 2.5rem
+
+%button-base
+  @extend %flex, %transition, %focus
+  gap: 0.5rem
+  @extend %padding-standard
+  border: none
+  border-radius: var(--radius)
+  cursor: pointer
+  font-family: inherit
+  font-size: $font
+  @extend %font-weight-medium
+  min-height: $min-height
+
+%button-primary
+  @extend %button-base, %bg-primary, %glass
+  color: white
+  &:hover
+    @extend %hover-lift
+
+%button-secondary
+  @extend %button-base, %bg-subtle, %border-muted, %glass
+  color: var(--fg)
+  &:hover
+    @extend %hover-lift
+
+%button-danger
+  @extend %button-base, %bg-error, %glass
+  color: white
+  &:hover
+    @extend %hover-lift
+
+%button-circular
+  @extend %button-secondary, %circular
+
+%button-small
+  @extend %button-secondary
+  @extend %padding-small
+  font-size: 0.75rem
+
+%input-base
+  @extend %form-field
+  &:focus
+    @extend %border-primary
+  &.error
+    @extend %border-error
+
+// Typography
+%heading
+  font-family: 'Bungee', monospace
+  line-height: 1.2
+  @extend %font-weight-bold
+
+%heading-primary
+  @extend %heading
+  color: var(--primary)
+
+%text-muted
+  color: var(--fg-muted)
+
+%logo-text
+  font-family: 'Bungee', monospace
+  color: var(--primary)
+
+%label-text
+  @extend %flex
+  gap: 0.5rem
+  @extend %font-weight-bold
+  font-size: $font
+  @extend %text-muted
+
+%heading-size-large
+  font-size: 2rem
+
+%heading-size-medium
+  font-size: 1.5rem
+
+%heading-size-small
+  font-size: 1.25rem
+
+%heading-size-xs
+  font-size: 1rem
+
+// Layout Components
+.header-fixed
+  position: fixed
+  top: 0
+  left: 0
+  right: 0
+  z-index: 1000
+  background: var(--bg)
+  border-bottom: 1px solid var(--bg-muted)
+  box-shadow: var(--shadow)
+
+  .header-content
+    @extend %flex-between
+    max-width: 1200px
+    margin: 0 auto
+    padding: 0 $padding
+    height: 4rem
+
+    .logo-link
+      @extend %flex
+      gap: 0.5rem
+      text-decoration: none
+      color: var(--fg)
+      @extend %font-weight-bold
+      font-size: 1.25rem
+      &:hover
+        @extend %hover-lift
+
+      img
+        @extend %interactive
+
+      .logo-text
+        @extend %logo-text
+
+    .main-nav
+      @extend %flex-wrap
+
+      button
+        @extend %button-secondary
+
+    .theme-toggle
+      @extend %button-circular
+      &:hover
+        transform: translateY(-2px) rotate(15deg)
+
+main
+  @extend %spacing
+  min-height: 60vh
+  @extend %margin-top
+
+footer
+  @extend %spacing
+  @extend %margin-top
+  padding: 3rem 0
+  @extend %border-muted, %bg-subtle, %glass
+  @extend %grid-3
+
+  > img
+    grid-column: 1 / -1
+    justify-self: center
+    @extend %interactive
+
+  > p:first-of-type
+    grid-column: 1 / -1
+    @extend %text-muted, %text-center
+    margin-bottom: 0
+    @extend %opacity-muted
+
+  > section
+    @extend %spacing, %no-border
+
+    h3
+      @extend %heading-primary
+      @extend %margin-bottom
+      @extend %heading-size-xs
+      @extend %opacity-muted
+
+    ul
+      list-style: none
+      @extend %spacing
+
+      button
+        @extend %button-secondary
+        width: 100%
+        justify-content: flex-start
+        background: transparent
+        border: none
+        @extend %padding-small
+        @extend %text-left
+        @extend %opacity-muted
+        &:hover
+          color: var(--primary)
+          @extend %hover-opacity
+          transform: translateX(4px)
+
+  > p:last-of-type
+    grid-column: 1 / -1
+    @extend %text-muted, %text-center
+    font-size: $font
+    margin-top: 0
+    @extend %opacity-subtle
+
+  > nav
+    grid-column: 1 / -1
+    @extend %flex
+    justify-content: center
+    gap: 0.5rem
+    margin-top: 0
+
+    button
+      @extend %button-circular, %opacity-muted
+      &:hover
+        @extend %hover-opacity, %hover-lift
+
+// Components
+section
+  @extend %card, %spacing
+
+h1, h2, h3, h4, h5, h6
+  @extend %heading
+
+h1
+  @extend %heading-size-large
+  @extend %heading-primary
+
+h2
+  @extend %heading-size-medium
+  @extend %heading-primary
+  @extend %margin-bottom
+
+h3
+  @extend %heading-size-small
+  @extend %heading-primary
+  @extend %margin-bottom
+
+h4
+  @extend %heading-size-xs
+  color: var(--fg)
+  margin: 1.5rem 0 0.5rem
+
+p
+  @extend %text-muted
+  margin-bottom: 1.5rem
+
+// Form Elements
+form
+  @extend %form-stacked
+
+fieldset
+  @extend %no-border
+
+label
+  @extend %label-text
+
+input, select, textarea
+  @extend %input-base
+
+input[type="file"]
+  @extend %padding-small
+  cursor: pointer
+  &:hover, &:focus
+    @extend %border-primary
+
+// Form Groups
+.form-group
+  @extend %grid
+  grid-template-columns: 200px 1fr
+  align-items: center
+
+  label
+    grid-column: 1
+    justify-self: end
+
+  input, select, textarea
+    grid-column: 2
+
+.form-group-stacked
+  @extend %form-stacked
+
+.form-group-horizontal
+  @extend %form-horizontal
+
+// Button Groups
+.button-group
+  @extend %flex-wrap
+
+button
+  @extend %button-primary
+
+  &.secondary
+    @extend %button-secondary
+
+  &.danger
+    @extend %button-danger
+
+// Tables
+table
+  width: 100%
+  border-collapse: collapse
+  @extend %bg-subtle, %glass, %border-muted, %shadow-card
+  overflow: hidden
+
+  th, td
+    @extend %padding-standard
+    @extend %text-left
+    @extend %border-muted
+
+  th
+    @extend %bg-muted, %glass
+    @extend %font-weight-bold
+    font-size: $font
+    position: sticky
+    top: 0
+    z-index: 10
+
+  tr
+    @extend %transition
+    &:hover
+      @extend %bg-muted
+
+  td button
+    @extend %button-small
+
+// Description Lists
+dl
+  display: grid
+  grid-template-columns: 200px 1fr
+  gap: 0.5rem 1rem
+
+  dt
+    @extend %font-weight-bold
+    @extend %text-muted
+
+  dd
+    color: var(--fg)
+
+dl.horizontal
+  @extend %form-horizontal
+
+// Empty States
+div:has(> h4)
+  @extend %grid
+  place-items: center
+  @extend %text-muted, %text-center
+  gap: 1.5rem
+  padding: 5rem 1rem
+
+  svg, .icon
+    @extend %opacity-subtle, %transition
+  &:hover svg, &:hover .icon
+    @extend %hover-opacity, %hover-scale
+
+// Grid Layouts
+.grid-2
+  @extend %grid-2
+
+.grid-3
+  @extend %grid-3
+
+// Utilities
+.text-center
+  @extend %text-center
+
+.text-muted
+  @extend %text-muted
+
+.mb-0
+  margin-bottom: 0
+
+.mt-0
+  margin-top: 0
+
+// Animations
+@keyframes fadeIn
+  from
+    opacity: 0
+  to
+    opacity: 1
+
+@keyframes slideUp
+  from
+    opacity: 0
+    transform: translateY(20px)
+  to
+    opacity: 1
+    transform: translateY(0)
+
+.fade-in
+  animation: fadeIn 0.3s ease-in
+
+.slide-up
+  animation: slideUp 0.3s ease-out
+
