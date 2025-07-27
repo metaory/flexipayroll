@@ -116,7 +116,7 @@ export const calculateSalaryBreakdown = (employee, attendanceData, adjustments =
       ...attendanceSummary.byType
     },
     subtotal,
-    total
+    finalSalary: total
   }
 }
 
