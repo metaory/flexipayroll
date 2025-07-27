@@ -16,9 +16,19 @@
   const updateLocalConfig = (field, value) => {
     const newConfig = { ...localConfig };
     if (field.includes('.')) {
-      const [section, key] = field.split('.');
-      if (!newConfig[section]) newConfig[section] = {};
-      newConfig[section][key] = value;
+      const parts = field.split('.');
+      if (parts.length === 3) {
+        // Handle nested objects like bonuses.E.value
+        const [section, subsection, key] = parts;
+        if (!newConfig[section]) newConfig[section] = {};
+        if (!newConfig[section][subsection]) newConfig[section][subsection] = {};
+        newConfig[section][subsection][key] = value;
+      } else if (parts.length === 2) {
+        // Handle simple nested objects like deductions.insurance.value
+        const [section, key] = parts;
+        if (!newConfig[section]) newConfig[section] = {};
+        newConfig[section][key] = value;
+      }
     } else {
       newConfig[field] = value;
     }
@@ -373,7 +383,7 @@
     left: 0;
     right: 0;
     z-index: 1000;
-    background: rgba(255, 193, 7, 0.95);
+    background: rgba(255, 193, 7, 0.85);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     color: #000;
