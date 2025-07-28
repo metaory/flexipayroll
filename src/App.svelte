@@ -2,6 +2,7 @@
   import Employees from './components/Employees.svelte';
   import Attendance from './components/Attendance.svelte';
   import Payroll from './components/Payroll.svelte';
+  import Payslips from './components/Payslips.svelte';
   import Config from './components/Config.svelte';
   import Icon from '@iconify/svelte';
   import { theme, toggleTheme } from './lib/stores.js';
@@ -11,8 +12,9 @@
   
   const tabs = [
     { id: 'employees', label: 'Employees', icon: ICONS.navEmployees, component: Employees },
-    { id: 'attendance', label: 'Attendance', icon: ICONS.attendance, component: Attendance },
-    { id: 'payroll', label: 'Payroll', icon: ICONS.payroll, component: Payroll },
+    { id: 'attendance', label: 'Attendance', icon: ICONS.navAttendance, component: Attendance },
+    { id: 'payroll', label: 'Payroll', icon: ICONS.navPayroll, component: Payroll },
+    { id: 'payslips', label: 'Payslips', icon: ICONS.navPayslips, component: Payslips },
     { id: 'config', label: 'Configuration', icon: ICONS.navConfig, component: Config }
   ];
 
@@ -37,9 +39,9 @@
           class={activeTab === tab.id ? 'active' : ''}
           onclick={() => activeTab = tab.id}
           aria-label={`Switch to ${tab.label} tab`}
+          title={tab.label}
         >
-          <Icon icon={tab.icon} width="1.2em" height="1.2em" />
-          <span>{tab.label}</span>
+          <Icon icon={tab.icon} width="1.5em" height="1.5em" />
         </button>
       {/each}
     </nav>

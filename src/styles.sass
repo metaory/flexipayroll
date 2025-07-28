@@ -1007,11 +1007,11 @@ input, select, textarea
       gap: 0.5rem
 
     @media (max-width: 480px)
-      grid-template-columns: 1fr auto
-      grid-template-areas: "logo theme" "nav nav"
-      height: auto
-      min-height: 3.5rem
+      grid-template-columns: auto 1fr auto
+      grid-template-areas: "logo nav theme"
+      height: 3.5rem
       padding: 0.5rem 1rem
+      gap: 0.25rem
 
     .logo-link
       grid-area: logo
@@ -1029,6 +1029,10 @@ input, select, textarea
         font-size: 1rem
         gap: 0.25rem
 
+      @media (max-width: 480px)
+        font-size: 0.9rem
+        gap: 0.2rem
+
       img
         @extend %interactive
 
@@ -1038,33 +1042,29 @@ input, select, textarea
     .main-nav
       grid-area: nav
       display: grid
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr))
+      grid-template-columns: repeat(auto-fit, minmax(60px, 1fr))
       gap: 0.5rem
       justify-items: center
       align-items: center
 
       @media (max-width: $mobile)
-        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr))
+        grid-template-columns: repeat(auto-fit, minmax(50px, 1fr))
         gap: 0.25rem
 
       @media (max-width: 480px)
-        grid-template-columns: repeat(2, 1fr)
+        grid-template-columns: repeat(5, 1fr)
         gap: 0.25rem
-        margin-top: 0.5rem
 
       button
         @extend %flex
-        gap: 0.5rem
-        padding: 0.75rem 1rem
+        padding: 0.75rem
         @extend %color-secondary
         color: var(--fg-muted)
-        font-size: $font
-        @extend %font-weight-medium
         border-radius: 0.75rem
         @extend %transition
-        white-space: nowrap
         width: 100%
         justify-content: center
+        align-items: center
         @extend %shadow-sm
 
         &:hover
@@ -1080,14 +1080,10 @@ input, select, textarea
           border-bottom: solid 4px var(--primary)
 
         @media (max-width: $mobile)
-          padding: 0.5rem 0.5rem
-          font-size: 0.75rem
-          gap: 0.25rem
+          padding: 0.5rem
 
         @media (max-width: 480px)
-          padding: 0.5rem 0.25rem
-          font-size: 0.7rem
-          gap: 0.2rem
+          padding: 0.4rem
 
     .theme-toggle
       grid-area: theme
@@ -1101,6 +1097,11 @@ input, select, textarea
       @media (max-width: $mobile)
         width: 2rem
         height: 2rem
+        padding: 0
+
+      @media (max-width: 480px)
+        width: 1.75rem
+        height: 1.75rem
         padding: 0
 
 main
@@ -1538,4 +1539,49 @@ div:has(> h4)
 
 .slide-in-top
   animation: slideInTop 0.3s ease-out
+
+// Print Styles
+@media print
+  // Hide non-essential elements
+  .header-fixed,
+  .main-nav,
+  .theme-toggle,
+  .button-group,
+  .payslip-actions,
+  .modal-actions,
+  .config-section,
+  .stats-grid
+    display: none !important
+  
+  // Reset backgrounds and colors for print
+  body
+    background: white !important
+    color: black !important
+    padding: 0 !important
+    margin: 0 !important
+  
+  // Ensure content is visible
+  .payslip-card,
+  .payslip-detail,
+  .modal-content
+    background: white !important
+    color: black !important
+    border: 1px solid #ccc !important
+    box-shadow: none !important
+    margin: 0 !important
+    padding: 20px !important
+  
+  // Optimize text for print
+  h1, h2, h3, h4, h5, h6
+    color: black !important
+    page-break-after: avoid
+  
+  // Prevent page breaks in tables
+  table
+    page-break-inside: avoid
+  
+  // Ensure proper spacing
+  .payslip-detail-grid
+    grid-template-columns: 1fr !important
+    gap: 1rem !important
 

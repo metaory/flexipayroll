@@ -148,8 +148,9 @@ export const ICONS = {
   
   // Navigation Icons
   navEmployees: 'solar:users-group-rounded-bold',
-  navAttendance: 'solar:document-add-bold',
-  navPayroll: 'solar:chart-bold',
+  navAttendance: 'solar:clock-circle-bold',
+  navPayroll: 'solar:calculator-bold',
+  navPayslips: 'solar:document-text-bold',
   navConfig: 'solar:settings-bold',
   
   // Theme & UI

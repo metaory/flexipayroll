@@ -164,7 +164,7 @@
   };
 </script>
 
-<h2>Payroll Calculation</h2>
+<h2><Icon icon={ICONS.navPayroll} width="1.5em" height="1.5em" /> Payroll Calculation</h2>
 <p>Calculate and review employee salaries for the selected period. Salaries include basic pay, bonuses, adjustments, and deductions.</p>
 
 <!-- Period Selection -->

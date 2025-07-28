@@ -139,7 +139,7 @@
 <div class="config-container">
   <header class="config-header">
     <div class="header-content">
-      <h2><Icon icon={ICONS.settings} width="1.5em" height="1.5em" /> System Configuration</h2>
+      <h2><Icon icon={ICONS.navConfig} width="1.5em" height="1.5em" /> System Configuration</h2>
       <p>Configure payroll settings and system parameters that affect all salary calculations</p>
     </div>
   </header>

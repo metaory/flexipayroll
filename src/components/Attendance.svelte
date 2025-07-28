@@ -5,6 +5,7 @@
   import Modal from './Modal.svelte';
   import ToastContainer from './ToastContainer.svelte';
   import Icon from '@iconify/svelte';
+  import { ICONS } from '../lib/icons.js';
   
   let selectedEmployee = $state('');
   let selectedDate = $state('');
@@ -121,7 +122,7 @@
   }
 </script>
 
-<h2>Attendance Management</h2>
+<h2><Icon icon={ICONS.navAttendance} width="1.5em" height="1.5em" /> Attendance Management</h2>
 <p>Track employee attendance and work hours. Daily attendance records are used to calculate basic salary based on hours worked.</p>
 
 <div class="stats-grid">

@@ -118,7 +118,7 @@
   const marriedCount = $derived($employees.filter(emp => emp.maritalStatus === 'married').length)
 </script>
 
-<h2>Employee Management</h2>
+<h2><Icon icon={ICONS.navEmployees} width="1.5em" height="1.5em" /> Employee Management</h2>
 <p>Manage your workforce and employee information. Employee data can be updated monthly and affects salary calculations.</p>
 
 <div class="stats-grid">
