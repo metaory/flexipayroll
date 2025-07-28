@@ -1056,6 +1056,33 @@ input, select, textarea
         gap: 0.25rem
 
       button
+        position: relative
+
+        &::after
+          content: attr(data-tooltip)
+          position: absolute
+          bottom: -2.5rem
+          left: 50%
+          transform: translateX(-50%)
+          background: color-mix(in oklab, var(--primary) 90%, transparent)
+          color: white
+          padding: 0.5rem 0.75rem
+          border-radius: 0.5rem
+          font-size: 0.75rem
+          font-weight: 500
+          white-space: nowrap
+          opacity: 0
+          visibility: hidden
+          transition: all 0.2s ease
+          z-index: 1000
+          box-shadow: 0 4px 16px color-mix(in oklab, var(--primary) 30%, transparent)
+
+        &:hover::after
+          opacity: 1
+          visibility: visible
+          transform: translateX(-50%) translateY(-2px)
+
+      button
         @extend %flex
         padding: 0.75rem
         @extend %color-secondary
@@ -1386,7 +1413,11 @@ div:has(> h4)
   margin: 1.5rem 0
 
   @media (min-width: $tablet)
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr))
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr))
+
+  @media (max-width: $mobile)
+    gap: 1rem
+    margin: 1rem 0
 
 // Toast Notifications
 %toast-base

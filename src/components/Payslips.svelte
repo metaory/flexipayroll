@@ -1,6 +1,8 @@
 <script>
   import { employees, attendance, config, currentPeriod, salaryRecords } from '../lib/stores.js';
+  import { settings } from '../lib/settings.js';
   import { calculateSalaryRecord, calculateAttendanceSummary, formatCurrency } from '../lib/core.js';
+  import { t } from '../lib/i18n.js';
   import { storage, getSalaryRecord, getPeriodSalaryRecords } from '../lib/stores.js';
   import { toasts } from '../lib/toast.js';
   import ToastContainer from './ToastContainer.svelte';
@@ -108,7 +110,7 @@
                 </div>
                 <div>
                   <strong>Period:</strong> ${payslip.periodLabel}<br>
-                  <strong>Base Salary:</strong> ${formatCurrency(payslip.employee.monthlySalary)}<br>
+                  <strong>Base Salary:</strong> ${formatCurrency(payslip.employee.monthlySalary, $settings.currency)}<br>
                   <strong>Calculated:</strong> ${formatConfigTimestamp(payslip.configSnapshot.timestamp)}
                 </div>
               </div>
@@ -117,41 +119,41 @@
                 <h3>Salary Breakdown</h3>
                 <div class="row">
                   <span>Basic Salary:</span>
-                  <span>${formatCurrency(payslip.components.basicSalary)}</span>
+                  <span>${formatCurrency(payslip.components.basicSalary, $settings.currency)}</span>
                 </div>
                 <div class="row">
-                  <span>Bonus E (${payslip.configSummary.bonusE}×):</span>
-                  <span>${formatCurrency(payslip.components.bonusE || 0)}</span>
+                  <span>${t.bonusE} (${payslip.configSummary.bonusE}×):</span>
+                  <span>${formatCurrency(payslip.components.bonusE || 0, $settings.currency)}</span>
                 </div>
                 <div class="row">
-                  <span>Bonus S (${payslip.configSummary.bonusS}×):</span>
-                  <span>${formatCurrency(payslip.components.bonusS || 0)}</span>
+                  <span>${t.bonusS} (${payslip.configSummary.bonusS}×):</span>
+                  <span>${formatCurrency(payslip.components.bonusS || 0, $settings.currency)}</span>
                 </div>
                 <div class="row">
-                  <span>Bonus K:</span>
-                  <span>${formatCurrency(payslip.components.bonusK || 0)}</span>
+                  <span>${t.bonusK}:</span>
+                  <span>${formatCurrency(payslip.components.bonusK || 0, $settings.currency)}</span>
                 </div>
                 <div class="row">
-                  <span>Bonus M:</span>
-                  <span>${formatCurrency(payslip.components.bonusM || 0)}</span>
+                  <span>${t.bonusM}:</span>
+                  <span>${formatCurrency(payslip.components.bonusM || 0, $settings.currency)}</span>
                 </div>
                 ${payslip.employee.maritalStatus === 'married' ? `
                 <div class="row">
-                  <span>Bonus T:</span>
-                  <span>${formatCurrency(payslip.components.bonusT || 0)}</span>
+                  <span>${t.bonusT}:</span>
+                  <span>${formatCurrency(payslip.components.bonusT || 0, $settings.currency)}</span>
                 </div>
                 ` : ''}
                 <div class="row">
                   <span>Adjustments:</span>
-                  <span>${formatCurrency(payslip.adjustmentTotal)}</span>
+                  <span>${formatCurrency(payslip.adjustmentTotal, $settings.currency)}</span>
                 </div>
                 <div class="row">
                   <span>Insurance Deduction (${payslip.configSummary.insuranceRate}%):</span>
-                  <span>-${formatCurrency(payslip.components.insuranceDeduction)}</span>
+                  <span>-${formatCurrency(payslip.components.insuranceDeduction, $settings.currency)}</span>
                 </div>
                 <div class="row total">
                   <span><strong>Final Salary:</strong></span>
-                  <span><strong>${formatCurrency(payslip.finalSalary)}</strong></span>
+                  <span><strong>${formatCurrency(payslip.finalSalary, $settings.currency)}</strong></span>
                 </div>
               </div>
               
@@ -212,7 +214,13 @@
     
     <div class="payslips-grid">
       {#each payslips as payslip}
-        <div class="payslip-card" onclick={() => selectedPayslip = payslip}>
+        <div 
+          class="payslip-card" 
+          role="button"
+          tabindex="0"
+          onclick={() => selectedPayslip = payslip} 
+          onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), selectedPayslip = payslip)}
+        >
           <div class="payslip-header">
             <Icon icon="solar:user-bold" width="1.5em" height="1.5em" />
             <div>
@@ -222,26 +230,26 @@
           </div>
           
           <div class="payslip-amount">
-            <strong>{formatCurrency(payslip.finalSalary)}</strong>
+            <strong>{formatCurrency(payslip.finalSalary, $settings.currency)}</strong>
             <span class="text-muted">Final Salary</span>
           </div>
           
           <div class="payslip-details">
             <div class="detail-row">
               <span>Base:</span>
-              <span>{formatCurrency(payslip.employee.monthlySalary)}</span>
+              <span>{formatCurrency(payslip.employee.monthlySalary, $settings.currency)}</span>
             </div>
             <div class="detail-row">
               <span>Bonuses:</span>
-              <span>{formatCurrency((payslip.components.bonusE || 0) + (payslip.components.bonusS || 0) + (payslip.components.bonusK || 0) + (payslip.components.bonusM || 0) + (payslip.components.bonusT || 0))}</span>
+              <span>{formatCurrency((payslip.components.bonusE || 0) + (payslip.components.bonusS || 0) + (payslip.components.bonusK || 0) + (payslip.components.bonusM || 0) + (payslip.components.bonusT || 0), $config.currency)}</span>
             </div>
             <div class="detail-row">
               <span>Adjustments:</span>
-              <span>{formatCurrency(payslip.adjustmentTotal)}</span>
+              <span>{formatCurrency(payslip.adjustmentTotal, $config.currency)}</span>
             </div>
             <div class="detail-row">
               <span>Deductions:</span>
-              <span>-{formatCurrency(payslip.components.insuranceDeduction)}</span>
+              <span>-{formatCurrency(payslip.components.insuranceDeduction, $config.currency)}</span>
             </div>
           </div>
           
@@ -263,8 +271,15 @@
 
 <!-- Detailed Payslip Modal -->
 {#if selectedPayslip}
-  <div class="modal-overlay show" onclick={() => selectedPayslip = null}>
-    <div class="modal-content" onclick={(e) => e.stopPropagation()}>
+  <div 
+    class="modal-overlay show" 
+    role="dialog"
+    aria-modal="true"
+    tabindex="0"
+    onclick={() => selectedPayslip = null}
+    onkeydown={(e) => e.key === 'Escape' && (selectedPayslip = null)}
+  >
+    <div class="modal-content" role="button" tabindex="0" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()}>
       <div class="modal-header">
         <h3><Icon icon="solar:document-text-bold" width="1.2em" height="1.2em" /> Payslip Details</h3>
         <button class="secondary" onclick={() => selectedPayslip = null}>
@@ -279,7 +294,7 @@
             <p class="text-muted">{formatPeriodLabel(selectedPayslip.year, selectedPayslip.month)}</p>
           </div>
           <div class="payslip-detail-amount">
-            <strong>{formatCurrency(selectedPayslip.finalSalary)}</strong>
+            <strong>{formatCurrency(selectedPayslip.finalSalary, $config.currency)}</strong>
             <span>Final Salary</span>
           </div>
         </div>
@@ -304,7 +319,7 @@
               <dt>Marital Status:</dt>
               <dd>{selectedPayslip.employee.maritalStatus}</dd>
               <dt>Base Salary:</dt>
-              <dd>{formatCurrency(selectedPayslip.employee.monthlySalary)}/month</dd>
+              <dd>{formatCurrency(selectedPayslip.employee.monthlySalary, $config.currency)}/month</dd>
             </dl>
           </div>
           
@@ -312,31 +327,31 @@
             <h5><Icon icon="solar:calculator-bold" width="1em" height="1em" /> Salary Components</h5>
             <dl>
               <dt>Basic Salary:</dt>
-              <dd>{formatCurrency(selectedPayslip.components.basicSalary)}</dd>
-              <dt>Bonus E ({selectedPayslip.configSummary.bonusE}×):</dt>
-              <dd>{formatCurrency(selectedPayslip.components.bonusE || 0)}</dd>
-              <dt>Bonus S ({selectedPayslip.configSummary.bonusS}×):</dt>
-              <dd>{formatCurrency(selectedPayslip.components.bonusS || 0)}</dd>
-              <dt>Bonus K:</dt>
-              <dd>{formatCurrency(selectedPayslip.components.bonusK || 0)}</dd>
-              <dt>Bonus M:</dt>
-              <dd>{formatCurrency(selectedPayslip.components.bonusM || 0)}</dd>
+              <dd>{formatCurrency(selectedPayslip.components.basicSalary, $config.currency)}</dd>
+                            <dt>{t.bonusE} ({selectedPayslip.configSummary.bonusE}×):</dt>
+              <dd>{formatCurrency(selectedPayslip.components.bonusE || 0, $config.currency)}</dd>
+              <dt>{t.bonusS} ({selectedPayslip.configSummary.bonusS}×):</dt>
+              <dd>{formatCurrency(selectedPayslip.components.bonusS || 0, $config.currency)}</dd>
+              <dt>{t.bonusK}:</dt>
+              <dd>{formatCurrency(selectedPayslip.components.bonusK || 0, $config.currency)}</dd>
+              <dt>{t.bonusM}:</dt>
+              <dd>{formatCurrency(selectedPayslip.components.bonusM || 0, $config.currency)}</dd>
               {#if selectedPayslip.employee.maritalStatus === 'married'}
-                <dt>Bonus T:</dt>
-                <dd>{formatCurrency(selectedPayslip.components.bonusT || 0)}</dd>
-              {/if}
-            </dl>
-          </div>
-          
-          <div class="payslip-detail-section">
-            <h5><Icon icon="solar:chart-bold" width="1em" height="1em" /> Adjustments & Deductions</h5>
-            <dl>
-              <dt>Adjustments:</dt>
-              <dd>{formatCurrency(selectedPayslip.adjustmentTotal)}</dd>
-              <dt>Insurance Deduction ({selectedPayslip.configSummary.insuranceRate}%):</dt>
-              <dd>-{formatCurrency(selectedPayslip.components.insuranceDeduction)}</dd>
-              <dt><strong>Final Salary:</strong></dt>
-              <dd><strong>{formatCurrency(selectedPayslip.finalSalary)}</strong></dd>
+                <dt>{t.bonusT}:</dt>
+                  <dd>{formatCurrency(selectedPayslip.components.bonusT || 0, $config.currency)}</dd>
+                {/if}
+              </dl>
+            </div>
+            
+            <div class="payslip-detail-section">
+              <h5><Icon icon="solar:chart-bold" width="1em" height="1em" /> Adjustments & Deductions</h5>
+              <dl>
+                <dt>Adjustments:</dt>
+                <dd>{formatCurrency(selectedPayslip.adjustmentTotal, $config.currency)}</dd>
+                <dt>Insurance Deduction ({selectedPayslip.configSummary.insuranceRate}%):</dt>
+                <dd>-{formatCurrency(selectedPayslip.components.insuranceDeduction, $config.currency)}</dd>
+                <dt><strong>Final Salary:</strong></dt>
+                <dd><strong>{formatCurrency(selectedPayslip.finalSalary, $config.currency)}</strong></dd>
             </dl>
           </div>
           
@@ -347,8 +362,8 @@
               <dd>{selectedPayslip.configSummary.workdayHours} hours/day</dd>
               <dt>Working Days:</dt>
               <dd>{selectedPayslip.configSummary.workingDaysPerMonth} days/month</dd>
-              <dt>Daily Rate:</dt>
-              <dd>{formatCurrency(selectedPayslip.components.basicSalary / selectedPayslip.configSummary.workingDaysPerMonth)}/day</dd>
+                              <dt>Daily Rate:</dt>
+                <dd>{formatCurrency(selectedPayslip.components.basicSalary / selectedPayslip.configSummary.workingDaysPerMonth, $config.currency)}/day</dd>
               <dt>Insurance Rate:</dt>
               <dd>{selectedPayslip.configSummary.insuranceRate}%</dd>
               <dt>Calculated On:</dt>
@@ -393,13 +408,20 @@
     padding: 1.5rem;
     cursor: pointer;
     transition: all 0.2s ease;
+    outline: none;
     @extend %glass, %shadow-sm;
   }
 
-  .payslip-card:hover {
+  .payslip-card:hover,
+  .payslip-card:focus {
     transform: translateY(-2px);
     @extend %shadow-md;
     border-color: color-mix(in oklab, var(--primary) 15%, transparent);
+  }
+
+  .payslip-card:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
   }
 
   .payslip-header {

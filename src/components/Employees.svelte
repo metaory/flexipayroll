@@ -1,5 +1,6 @@
 <script>
   import { employees } from '../lib/stores.js'
+  import { settings } from '../lib/settings.js'
   import { validateEmployee, EMPLOYEE_ATTRIBUTES, formatCurrency } from '../lib/core.js'
   import { toasts } from '../lib/toast.js'
   import Modal from './Modal.svelte'
@@ -139,7 +140,7 @@
   <div class="stat-card">
     <Icon icon="solar:wallet-bold" width="2em" height="2em" />
     <div>
-      <strong>{formatCurrency(totalSalary)}</strong>
+              <strong>{formatCurrency(totalSalary, $settings.currency)}</strong>
       <span>Total Monthly Salary</span>
     </div>
   </div>
@@ -275,7 +276,7 @@
                 {capitalize(employee.maritalStatus)}
               </span>
             </td>
-            <td><strong>{formatCurrency(employee.monthlySalary)}</strong></td>
+                            <td><strong>{formatCurrency(employee.monthlySalary, $settings.currency)}</strong></td>
             <td>
               <div class="button-group">
                 <button class="secondary" onclick={() => editEmployee(employee)}>
@@ -307,14 +308,6 @@
 <ToastContainer />
 
 <style>
-  .spinning {
-    animation: spin 1s linear infinite;
-  }
-  
-  @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
   
   small {
     grid-column: 2;

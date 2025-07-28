@@ -1,6 +1,8 @@
 <script>
   import { employees, attendance, config, currentPeriod, salaryRecords } from '../lib/stores.js';
+  import { settings } from '../lib/settings.js';
   import { calculateSalaryRecord, calculateAttendanceSummary, formatCurrency } from '../lib/core.js';
+  import { t } from '../lib/i18n.js';
   import { storage, storeSalaryRecord, getSalaryRecord, clearPeriodSalaryRecords, getPeriodSalaryRecords } from '../lib/stores.js';
   import { toasts } from '../lib/toast.js';
   import ToastContainer from './ToastContainer.svelte';
@@ -215,14 +217,14 @@
   <div class="stat-card">
     <Icon icon="solar:wallet-bold" width="2em" height="2em" />
     <div>
-      <strong>{formatCurrency(totalPayroll)}</strong>
+      <strong>{formatCurrency(totalPayroll, $settings.currency)}</strong>
       <span>Total Payroll</span>
     </div>
   </div>
   <div class="stat-card">
     <Icon icon="solar:chart-bold" width="2em" height="2em" />
     <div>
-      <strong>{formatCurrency(totalAdjustments)}</strong>
+      <strong>{formatCurrency(totalAdjustments, $settings.currency)}</strong>
       <span>Total Adjustments</span>
     </div>
   </div>
@@ -291,7 +293,6 @@
         </div>
         
         <div class="form-group-stacked">
-          <label>&nbsp;</label>
           <button 
             type="button"
             onclick={() => addAdjustment(selectedEmployee)}
@@ -329,7 +330,7 @@
           <Icon icon="solar:heart-bold" width="1em" height="1em" />
           {employee.maritalStatus === 'married' ? 'Married' : 'Single'} • 
           <Icon icon="solar:wallet-bold" width="1em" height="1em" />
-          Base: {formatCurrency(employee.monthlySalary)}/month
+          Base: {formatCurrency(employee.monthlySalary, $settings.currency)}/month
         </p>
         
         <!-- Enhanced Config Version Info -->
@@ -358,19 +359,19 @@
         
         <div class="salary-grid">
                        <div class="salary-section">
-               <h5><Icon icon="solar:clock-circle-bold" width="1em" height="1em" /> Attendance Summary</h5>
+               <h5><Icon icon="solar:clock-circle-bold" width="1em" height="1em" /> {t.attendance} Summary</h5>
                <dl>
                  <dt>Total Hours:</dt>
                  <dd>{attendanceSummary.hours.toFixed(1)} hours</dd>
                  <dt>Total Days:</dt>
                  <dd>{attendanceSummary.days} days</dd>
-                 <dt>Regular Days:</dt>
+                 <dt>{t.regular} Days:</dt>
                  <dd>{attendanceSummary.byType['regular'] || 0} days</dd>
-                 <dt>Holidays:</dt>
+                 <dt>{t.holiday}s:</dt>
                  <dd>{attendanceSummary.byType['holiday'] || 0} days</dd>
-                 <dt>Paid Leave:</dt>
+                 <dt>{t.paid_leave}:</dt>
                  <dd>{attendanceSummary.byType['paid_leave'] || 0} days</dd>
-                 <dt>Unpaid Leave:</dt>
+                 <dt>{t.unpaid_leave}:</dt>
                  <dd>{attendanceSummary.byType['unpaid_leave'] || 0} days</dd>
                </dl>
              </div>
@@ -379,31 +380,31 @@
               <h5><Icon icon="solar:calculator-bold" width="1em" height="1em" /> Salary Components</h5>
               <dl>
                 <dt>Basic Salary:</dt>
-                <dd>{formatCurrency(salaryRecord.components.basicSalary)}</dd>
-                <dt>Bonus E ({salaryRecord.configSummary.bonusE}×):</dt>
-                <dd>{formatCurrency(salaryRecord.components['bonusE'] || 0)}</dd>
-                <dt>Bonus S ({salaryRecord.configSummary.bonusS}×):</dt>
-                <dd>{formatCurrency(salaryRecord.components['bonusS'] || 0)}</dd>
-                <dt>Bonus K:</dt>
-                <dd>{formatCurrency(salaryRecord.components['bonusK'] || 0)}</dd>
-                <dt>Bonus M:</dt>
-                <dd>{formatCurrency(salaryRecord.components['bonusM'] || 0)}</dd>
+                <dd>{formatCurrency(salaryRecord.components.basicSalary, $settings.currency)}</dd>
+                                <dt>{t.bonusE} ({salaryRecord.configSummary.bonusE}×):</dt>
+                <dd>{formatCurrency(salaryRecord.components['bonusE'] || 0, $settings.currency)}</dd>
+                <dt>{t.bonusS} ({salaryRecord.configSummary.bonusS}×):</dt>
+                <dd>{formatCurrency(salaryRecord.components['bonusS'] || 0, $settings.currency)}</dd>
+                <dt>{t.bonusK}:</dt>
+                <dd>{formatCurrency(salaryRecord.components['bonusK'] || 0, $settings.currency)}</dd>
+                <dt>{t.bonusM}:</dt>
+                <dd>{formatCurrency(salaryRecord.components['bonusM'] || 0, $settings.currency)}</dd>
                 {#if employee.maritalStatus === 'married'}
-                  <dt>Bonus T:</dt>
-                  <dd>{formatCurrency(salaryRecord.components['bonusT'] || 0)}</dd>
-                {/if}
-              </dl>
-            </div>
-            
-            <div class="salary-section">
-              <h5><Icon icon="solar:chart-bold" width="1em" height="1em" /> Adjustments & Deductions</h5>
-              <dl>
-                <dt>Adjustments:</dt>
-                <dd>{formatCurrency(salaryRecord.adjustmentTotal)}</dd>
-                <dt>Insurance Deduction ({salaryRecord.configSummary.insuranceRate}%):</dt>
-                <dd>-{formatCurrency(salaryRecord.components.insuranceDeduction)}</dd>
-                <dt><strong>Final Salary:</strong></dt>
-                <dd><strong>{formatCurrency(salaryRecord.finalSalary)}</strong></dd>
+                  <dt>{t.bonusT}:</dt>
+                    <dd>{formatCurrency(salaryRecord.components['bonusT'] || 0, $settings.currency)}</dd>
+                  {/if}
+                </dl>
+              </div>
+              
+              <div class="salary-section">
+                <h5><Icon icon="solar:chart-bold" width="1em" height="1em" /> Adjustments & Deductions</h5>
+                <dl>
+                  <dt>Adjustments:</dt>
+                  <dd>{formatCurrency(salaryRecord.adjustmentTotal, $settings.currency)}</dd>
+                  <dt>{t.insurance} ({salaryRecord.configSummary.insuranceRate}%):</dt>
+                  <dd>-{formatCurrency(salaryRecord.components.insuranceDeduction, $settings.currency)}</dd>
+                  <dt><strong>Final Salary:</strong></dt>
+                  <dd><strong>{formatCurrency(salaryRecord.finalSalary, $settings.currency)}</strong></dd>
               </dl>
             </div>
           </div>
@@ -425,7 +426,7 @@
                   {#each adjustments as adjustment}
                     <tr>
                       <td class={adjustment.amount >= 0 ? 'text-success' : 'text-error'}>
-                        {adjustment.amount >= 0 ? '+' : ''}{formatCurrency(adjustment.amount)}
+                        {adjustment.amount >= 0 ? '+' : ''}{formatCurrency(adjustment.amount, $settings.currency)}
                       </td>
                       <td>{adjustment.comment || '-'}</td>
                       {#if !showHistoricalView}
@@ -481,6 +482,28 @@
     border-radius: 1.5rem;
     padding: 1.5rem;
     box-shadow: 0 8px 32px color-mix(in oklab, var(--primary) 18%, transparent);
+    overflow: hidden;
+  }
+  
+  .salary-section dl {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem 1rem;
+    align-items: center;
+  }
+  
+  .salary-section dt {
+    font-weight: 500;
+    color: var(--fg-muted);
+    word-break: break-word;
+    hyphens: auto;
+  }
+  
+  .salary-section dd {
+    text-align: right;
+    font-weight: 600;
+    color: var(--fg);
+    word-break: break-all;
   }
   
   .salary-section h5 {

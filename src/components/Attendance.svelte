@@ -2,6 +2,7 @@
   import { employees, attendance, currentPeriod } from '../lib/stores.js';
   import { validateAttendance } from '../lib/core.js';
   import { toasts } from '../lib/toast.js';
+  import { t } from '../lib/i18n.js';
   import Modal from './Modal.svelte';
   import ToastContainer from './ToastContainer.svelte';
   import Icon from '@iconify/svelte';
@@ -15,19 +16,19 @@
   let showDeleteModal = $state(false);
   let attendanceToDelete = $state(null);
   
-  const DAY_TYPE_LABELS = {
-    regular: 'Regular Work Day',
-    holiday: 'Holiday',
-    paid_leave: 'Paid Leave',
-    unpaid_leave: 'Unpaid Leave'
-  }
-  
   const DAY_TYPE_DESCRIPTIONS = {
     regular: 'Enter entry and exit times for hourly calculation',
     holiday: 'Automatically credited 8 hours',
     paid_leave: 'Automatically credited 8 hours',
     unpaid_leave: 'No hours credited, no pay'
   }
+  
+  const DAY_TYPE_OPTIONS = [
+    { key: 'regular', value: t.regular },
+    { key: 'holiday', value: t.holiday },
+    { key: 'paid_leave', value: t.paid_leave },
+    { key: 'unpaid_leave', value: t.unpaid_leave }
+  ]
   
   $effect(() => {
     if (!selectedDate) {
@@ -122,8 +123,8 @@
   }
 </script>
 
-<h2><Icon icon={ICONS.navAttendance} width="1.5em" height="1.5em" /> Attendance Management</h2>
-<p>Track employee attendance and work hours. Daily attendance records are used to calculate basic salary based on hours worked.</p>
+<h2><Icon icon={ICONS.navAttendance} width="1.5em" height="1.5em" /> {t.attendance} Management</h2>
+<p>Track employee {t.attendance.toLowerCase()} and work hours. Daily {t.attendance.toLowerCase()} records are used to calculate basic salary based on hours worked.</p>
 
 <div class="stats-grid">
   <div class="stat-card">
@@ -150,8 +151,8 @@
 </div>
 
 <section>
-  <h3><Icon icon="solar:document-add-bold" width="1.2em" height="1.2em" /> Record Daily Attendance</h3>
-      <p class="text-muted">Record attendance for each employee. Different day types affect salary calculations differently.</p>
+  <h3><Icon icon="solar:document-add-bold" width="1.2em" height="1.2em" /> Record Daily {t.attendance}</h3>
+      <p class="text-muted">Record {t.attendance.toLowerCase()} for each employee. Different day types affect salary calculations differently.</p>
   
   <form>
     <div class="form-group-horizontal">
@@ -188,7 +189,7 @@
           Day Type
         </label>
         <select id="type-select" bind:value={selectedType} disabled={!selectedEmployee}>
-          {#each Object.entries(DAY_TYPE_LABELS) as [key, value]}
+          {#each DAY_TYPE_OPTIONS as { key, value }}
             <option value={key}>{value}</option>
           {/each}
         </select>
@@ -230,7 +231,7 @@
         
         <div class="form-group-stacked">
           <button onclick={recordAttendance} disabled={!selectedEmployee || !selectedDate}>
-            <Icon icon="solar:floppy-disk-bold" width="1.2em" height="1.2em" /> Record Attendance
+            <Icon icon="solar:floppy-disk-bold" width="1.2em" height="1.2em" /> Record {t.attendance}
           </button>
         </div>
       </div>
@@ -238,7 +239,7 @@
       <div class="form-group-horizontal">
         <div class="form-group-stacked">
           <button onclick={recordAttendance} disabled={!selectedEmployee || !selectedDate}>
-            <Icon icon="solar:floppy-disk-bold" width="1.2em" height="1.2em" /> Record Attendance
+            <Icon icon="solar:floppy-disk-bold" width="1.2em" height="1.2em" /> Record {t.attendance}
           </button>
         </div>
       </div>
@@ -247,14 +248,14 @@
 </section>
 
 <section>
-  <h3><Icon icon="solar:chart-bold" width="1.2em" height="1.2em" /> Monthly Attendance Records</h3>
+  <h3><Icon icon="solar:chart-bold" width="1.2em" height="1.2em" /> Monthly {t.attendance} Records</h3>
       <p class="text-muted">Current month: {$currentPeriod.month}/{$currentPeriod.year}</p>
   
   {#if !hasEmployees}
     <div>
       <Icon icon="solar:users-group-rounded-bold" width="2.5em" height="2.5em" />
       <h4>No employees added yet</h4>
-      <p>Add employees first to record attendance</p>
+      <p>Add employees first to record {t.attendance.toLowerCase()}</p>
     </div>
   {:else}
     {#each $employees as employee}
@@ -290,7 +291,7 @@
         {#if attendanceDates.length === 0}
           <div>
             <Icon icon="solar:calendar-bold" width="2em" height="2em" />
-            <p>No attendance records for this month</p>
+            <p>No {t.attendance.toLowerCase()} records for this month</p>
           </div>
         {:else}
           <table>
@@ -310,7 +311,7 @@
                   <td>{new Date(date).toLocaleDateString()}</td>
                   <td>
                     <span class="day-type-badge" class:regular={record.type === 'regular'} class:holiday={record.type === 'holiday'} class:paid={record.type === 'paid_leave'} class:unpaid={record.type === 'unpaid_leave'}>
-                      {DAY_TYPE_LABELS[record.type]}
+                      {t[record.type]}
                     </span>
                   </td>
                   <td>{record.entryTime || '-'}</td>
@@ -416,8 +417,8 @@
 <Modal 
   show={showDeleteModal}
   type="warning"
-  title="Delete Attendance Record"
-  message="Are you sure you want to delete this attendance record?"
+  title="Delete {t.attendance} Record"
+  message="Are you sure you want to delete this {t.attendance.toLowerCase()} record?"
   confirmText="Delete"
   cancelText="Cancel"
   on:confirm={confirmDelete}

@@ -220,13 +220,17 @@ export const EMPLOYEE_ATTRIBUTES = {
   MARITAL_STATUS: ['single', 'married']
 }
 
-export const formatCurrency = (amount) =>
-  new Intl.NumberFormat('id-ID', {
+export const formatCurrency = (amount, currencyConfig = null) => {
+  // If no currency config provided, use default IDR
+  const config = currencyConfig || { code: 'IDR', locale: 'id-ID' }
+  
+  return new Intl.NumberFormat(config.locale, {
     style: 'currency',
-    currency: 'IDR',
+    currency: config.code,
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
   }).format(amount)
+}
 
 export const calculateSalary = (employee, attendanceData, adjustments = [], config = DEFAULT_CONFIG) => 
   calculateSalaryBreakdown(employee, attendanceData, adjustments, config)

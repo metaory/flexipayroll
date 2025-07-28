@@ -1,5 +1,6 @@
 <script>
   import { config } from '../lib/stores.js';
+  import { t } from '../lib/i18n.js';
   import { DEFAULT_CONFIG, formatCurrency } from '../lib/core.js';
   import { toasts } from '../lib/toast.js';
   import { storage } from '../lib/stores.js';
@@ -219,7 +220,7 @@
         <div class="form-group-stacked">
           <label for="bonus-e">
             <Icon icon={ICONS.star} width="1em" height="1em" />
-            Bonus E (Daily Rate Multiplier)
+            {t.bonusE} (Daily Rate Multiplier)
           </label>
           <input
             id="bonus-e"
@@ -235,7 +236,7 @@
         <div class="form-group-stacked">
           <label for="bonus-s">
             <Icon icon={ICONS.star} width="1em" height="1em" />
-            Bonus S (Daily Rate Multiplier)
+            {t.bonusS} (Daily Rate Multiplier)
           </label>
           <input
             id="bonus-s"
@@ -251,7 +252,7 @@
         <div class="form-group-stacked">
           <label for="bonus-k">
             <Icon icon={ICONS.star} width="1em" height="1em" />
-            Bonus K (Fixed Amount)
+            {t.bonusK} (Fixed Amount)
           </label>
           <input
             id="bonus-k"
@@ -266,7 +267,7 @@
         <div class="form-group-stacked">
           <label for="bonus-m">
             <Icon icon={ICONS.star} width="1em" height="1em" />
-            Bonus M (Fixed Amount)
+            {t.bonusM} (Fixed Amount)
           </label>
           <input
             id="bonus-m"
@@ -281,7 +282,7 @@
         <div class="form-group-stacked">
           <label for="bonus-t">
             <Icon icon={ICONS.heart} width="1em" height="1em" />
-            Bonus T (Married Only)
+            {t.bonusT} (Married Only)
           </label>
           <input
             id="bonus-t"
@@ -542,10 +543,14 @@
     box-shadow: 0 4px 16px color-mix(in oklab, var(--warning) 30%, transparent);
   }
 
+
+
   small {
     font-size: 0.75rem;
     margin-top: 0.25rem;
   }
+
+
 </style>
 
 <Modal 
