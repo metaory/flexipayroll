@@ -15,7 +15,7 @@ $tablet: 1024px
 // Colors
 $base: #5533ff
 $primary: $base
-$secondary: color.adjust($base, $hue: 180deg)
+$secondary: color.adjust($base, $hue: 20deg)
 $success: color.adjust($base, $hue: 140deg)
 $warning: color.adjust($base, $hue: 45deg)
 $error: color.adjust($base, $hue: 348deg)
@@ -154,7 +154,7 @@ body
   padding: 0 $padding
   padding-top: 3rem
   overflow-x: hidden
-  
+
   @media (max-width: $mobile)
     padding: 0 1rem
     padding-top: 2rem
@@ -193,27 +193,27 @@ body
 %grid-responsive
   @extend %grid
   grid-template-columns: 1fr
-  
+
   @media (min-width: $mobile)
     grid-template-columns: repeat(2, 1fr)
-  
+
   @media (min-width: $tablet)
     grid-template-columns: repeat(4, 1fr)
 
 %grid-responsive-2
   @extend %grid
   grid-template-columns: 1fr
-  
+
   @media (min-width: $mobile)
     grid-template-columns: repeat(2, 1fr)
 
 %grid-responsive-3
   @extend %grid
   grid-template-columns: 1fr
-  
+
   @media (min-width: $mobile)
     grid-template-columns: repeat(2, 1fr)
-  
+
   @media (min-width: $tablet)
     grid-template-columns: repeat(3, 1fr)
 
@@ -307,35 +307,35 @@ body
   width: 100%
   max-width: 100%
   box-shadow: 0 2px 8px color-mix(in oklab, var(--secondary) 25%, transparent)
-  
+
   &::placeholder
     color: var(--fg-muted)
     opacity: 0.7
-  
+
   &:hover
     background: color-mix(in oklab, var(--secondary) 20%, transparent)
     box-shadow: 0 4px 16px color-mix(in oklab, var(--secondary) 35%, transparent)
     transform: translateY(-2px)
-  
+
   &:focus
     background: color-mix(in oklab, var(--primary) 25%, transparent)
     box-shadow: 0 6px 24px color-mix(in oklab, var(--primary) 50%, transparent)
     transform: translateY(-3px)
     outline: none
-  
+
   &:active
     background: color-mix(in oklab, var(--primary) 35%, transparent)
     box-shadow: 0 3px 12px color-mix(in oklab, var(--primary) 40%, transparent)
     transform: translateY(-1px)
-  
+
   &.error
     background: color-mix(in oklab, var(--error) 25%, transparent)
     box-shadow: 0 2px 8px color-mix(in oklab, var(--error) 40%, transparent)
-    
+
     &:hover
       background: color-mix(in oklab, var(--error) 35%, transparent)
       box-shadow: 0 4px 16px color-mix(in oklab, var(--error) 50%, transparent)
-    
+
     &:focus
       background: color-mix(in oklab, var(--error) 40%, transparent)
       box-shadow: 0 6px 24px color-mix(in oklab, var(--error) 60%, transparent)
@@ -360,7 +360,7 @@ body
   overflow: hidden
   border-radius: 1.5rem
   box-shadow: 0 8px 32px color-mix(in oklab, var(--primary) 15%, transparent)
-  
+
   @media (max-width: $mobile)
     padding: 1.5rem
     border-radius: 1rem
@@ -374,7 +374,7 @@ body
   @extend %font-weight-medium
   min-height: $min-height
   white-space: nowrap
-  
+
   @media (max-width: $mobile)
     padding: 0.5rem 0.75rem
     font-size: 0.75rem
@@ -383,14 +383,14 @@ body
 %button-primary
   @extend %button-base, %bg-primary, %glass
   color: white
-  background: color-mix(in oklab, var(--primary) 85%, transparent)
+  background: color-mix(in oklab, var(--secondary) 85%, transparent)
   box-shadow: 0 2px 8px color-mix(in oklab, var(--primary) 30%, transparent)
-  
+
   &:hover
     background: color-mix(in oklab, var(--primary) 95%, transparent)
     transform: translateY(-2px)
     box-shadow: 0 6px 20px color-mix(in oklab, var(--primary) 50%, transparent)
-  
+
   &:active
     background: color-mix(in oklab, var(--primary) 100%, transparent)
     transform: translateY(-1px)
@@ -401,12 +401,12 @@ body
   color: var(--fg)
   background: color-mix(in oklab, var(--secondary) 15%, transparent)
   box-shadow: 0 2px 8px color-mix(in oklab, var(--secondary) 30%, transparent)
-  
+
   &:hover
     background: color-mix(in oklab, var(--secondary) 25%, transparent)
     transform: translateY(-2px)
     box-shadow: 0 6px 20px color-mix(in oklab, var(--secondary) 45%, transparent)
-  
+
   &:active
     background: color-mix(in oklab, var(--secondary) 35%, transparent)
     transform: translateY(-1px)
@@ -417,12 +417,12 @@ body
   color: white
   background: color-mix(in oklab, var(--error) 85%, transparent)
   box-shadow: 0 2px 8px color-mix(in oklab, var(--error) 30%, transparent)
-  
+
   &:hover
     background: color-mix(in oklab, var(--error) 95%, transparent)
     transform: translateY(-2px)
     box-shadow: 0 6px 20px color-mix(in oklab, var(--error) 50%, transparent)
-  
+
   &:active
     background: color-mix(in oklab, var(--error) 100%, transparent)
     transform: translateY(-1px)
@@ -466,19 +466,19 @@ body
 
 %heading-size-large
   font-size: 2rem
-  
+
   @media (max-width: $mobile)
     font-size: 1.5rem
 
 %heading-size-medium
   font-size: 1.5rem
-  
+
   @media (max-width: $mobile)
     font-size: 1.25rem
 
 %heading-size-small
   font-size: 1.25rem
-  
+
   @media (max-width: $mobile)
     font-size: 1.1rem
 
@@ -505,7 +505,7 @@ body
     height: 4rem
     overflow: hidden
     gap: 1rem
-    
+
     @media (max-width: $mobile)
       padding: 0 1rem
       height: 3.5rem
@@ -521,7 +521,7 @@ body
       flex-shrink: 0
       &:hover
         @extend %hover-lift
-      
+
       @media (max-width: $mobile)
         font-size: 1rem
         gap: 0.25rem
@@ -537,7 +537,7 @@ body
       gap: 0.5rem
       overflow: hidden
       flex-shrink: 0
-      
+
       @media (max-width: $mobile)
         gap: 0.25rem
 
@@ -546,7 +546,7 @@ body
         flex-shrink: 0
         white-space: nowrap
         min-width: fit-content
-        
+
         @media (max-width: $mobile)
           padding: 0.4rem 0.6rem
           font-size: 0.7rem
@@ -555,7 +555,7 @@ body
       @extend %button-circular
       &:hover
         transform: translateY(-2px) rotate(15deg)
-      
+
       @media (max-width: $mobile)
         width: 2rem
         height: 2rem
@@ -574,7 +574,7 @@ footer
   @extend %bg-subtle, %glass
   @extend %grid-responsive-3
   overflow: hidden
-  
+
   @media (max-width: $mobile)
     padding: 2rem 0
 
@@ -684,21 +684,21 @@ input, select, textarea
 select
   background-image: none
   cursor: pointer
-  
+
   &:hover
     background: color-mix(in oklab, var(--secondary) 20%, transparent)
-  
+
   &:focus
     background: color-mix(in oklab, var(--primary) 25%, transparent)
 
 input[type="file"]
   padding: 0.5rem
   cursor: pointer
-  
+
   &:hover
     background: color-mix(in oklab, var(--secondary) 20%, transparent)
     box-shadow: 0 4px 16px color-mix(in oklab, var(--secondary) 35%, transparent)
-  
+
   &:focus
     background: color-mix(in oklab, var(--primary) 25%, transparent)
     box-shadow: 0 6px 24px color-mix(in oklab, var(--primary) 50%, transparent)
@@ -710,7 +710,7 @@ input[type="file"]
   align-items: start
   gap: 0.75rem
   margin-bottom: 1.5rem
-  
+
   @media (min-width: $mobile)
     grid-template-columns: 200px 1fr
     gap: 1.5rem
@@ -719,13 +719,13 @@ input[type="file"]
     grid-column: 1
     justify-self: start
     @extend %label-text
-    
+
     @media (min-width: $mobile)
       justify-self: end
 
   input, select, textarea
     grid-column: 1
-    
+
     @media (min-width: $mobile)
       grid-column: 2
 
@@ -762,7 +762,7 @@ table
     text-align: left
     word-wrap: break-word
     overflow-wrap: break-word
-    
+
     @media (max-width: $mobile)
       padding: 0.5rem 0.75rem
       font-size: 0.8rem
@@ -792,7 +792,7 @@ dl
   display: grid
   grid-template-columns: 1fr
   gap: 0.5rem
-  
+
   @media (min-width: $mobile)
     grid-template-columns: 200px 1fr
     gap: 0.5rem 1rem
@@ -846,7 +846,7 @@ div:has(> h4)
   grid-template-columns: 1fr
   gap: 1rem
   margin-bottom: 2rem
-  
+
   @media (min-width: $mobile)
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr))
 
@@ -855,7 +855,7 @@ div:has(> h4)
   grid-template-columns: 1fr
   gap: 2rem
   margin: 1.5rem 0
-  
+
   @media (min-width: $tablet)
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr))
 
