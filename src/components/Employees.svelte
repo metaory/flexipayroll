@@ -7,17 +7,8 @@
   import Icon from '@iconify/svelte';
   import { ICONS } from '../lib/icons.js';
   
-  let showAddForm = $state(false)
+  let showForm = $state(false)
   let editingEmployee = $state(null)
-  let formData = $state({
-    name: '',
-    gender: 'male',
-    maritalStatus: 'single',
-    monthlySalary: ''
-  })
-  let formErrors = $state({})
-  let isSubmitting = $state(false)
-  let submitError = $state('')
   let showDeleteModal = $state(false)
   let employeeToDelete = $state(null)
   
@@ -28,24 +19,29 @@
     monthlySalary: ''
   }
   
-  const resetForm = () => {
-    formData = { ...defaultFormData }
-    formErrors = {}
-    submitError = ''
-    editingEmployee = null
-  }
+  let formData = $state({ ...defaultFormData })
+  let formErrors = $state({})
+  let isSubmitting = $state(false)
   
   const validateForm = () => {
     const errors = {}
-    const name = formData.name.trim()
-    const salary = Number(formData.monthlySalary)
     
-    if (!name) errors.name = 'Name is required'
-    if (name && name.length < 2) errors.name = 'Name must be at least 2 characters'
-    if (!salary || salary <= 0) errors.monthlySalary = 'Valid salary is required'
+    if (!formData.name?.trim() || formData.name.trim().length < 2) {
+      errors.name = 'Name must be at least 2 characters'
+    }
+    if (!formData.monthlySalary || Number(formData.monthlySalary) <= 0) {
+      errors.monthlySalary = 'Monthly salary must be greater than 0'
+    }
     
-    formErrors = errors
-    return Object.keys(errors).length === 0
+    return { isValid: Object.keys(errors).length === 0, errors }
+  }
+  
+  const resetForm = () => {
+    formData = { ...defaultFormData }
+    formErrors = {}
+    isSubmitting = false
+    editingEmployee = null
+    showForm = false
   }
   
   const createEmployee = () => ({
@@ -55,16 +51,19 @@
   })
   
   const handleSubmit = () => {
-    if (!validateForm()) return
+    const validation = validateForm()
+    if (!validation.isValid) {
+      formErrors = validation.errors
+      return
+    }
     
     isSubmitting = true
-    submitError = ''
     
     const employee = createEmployee()
-    const validation = validateEmployee(employee)
+    const employeeValidation = validateEmployee(employee)
     
-    if (!validation.isValid) {
-      submitError = validation.errors.join(', ')
+    if (!employeeValidation.isValid) {
+      formErrors = { submit: employeeValidation.errors.join(', ') }
       isSubmitting = false
       return
     }
@@ -76,8 +75,6 @@
     employees.update(updateList)
     
     resetForm()
-    showAddForm = false
-    isSubmitting = false
     
     const message = editingEmployee ? 'Employee updated successfully!' : 'Employee added successfully!'
     toasts.success(message)
@@ -85,6 +82,7 @@
   
   const editEmployee = (employee) => {
     editingEmployee = employee
+    showForm = true
     formData = {
       name: employee.name,
       gender: employee.gender,
@@ -92,8 +90,6 @@
       monthlySalary: employee.monthlySalary.toString()
     }
     formErrors = {}
-    submitError = ''
-    showAddForm = true
   }
   
   const deleteEmployee = (id) => {
@@ -107,15 +103,9 @@
     showDeleteModal = false
     employeeToDelete = null
   }
-
-  const cancelDelete = () => {
-    showDeleteModal = false
-    employeeToDelete = null
-  }
   
   const cancelForm = () => {
     resetForm()
-    showAddForm = false
   }
   
   const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1)
@@ -155,19 +145,19 @@
   </div>
 </div>
 
-<button onclick={() => showAddForm = true} class="slide-up">
+<button onclick={() => { editingEmployee = null; showForm = true }} class="slide-up">
   <Icon icon="solar:user-plus-bold" width="1.2em" height="1.2em" /> Add Employee
 </button>
 
-{#if showAddForm}
+{#if showForm}
   <section class="slide-up">
     <h3><Icon icon={editingEmployee ? ICONS.edit : ICONS.userAdd} width="1.2em" height="1.2em" /> {editingEmployee ? 'Edit Employee' : 'Add New Employee'}</h3>
           <p class="text-muted">Employee information affects salary calculations including bonuses and deductions</p>
     
-    {#if submitError}
+    {#if formErrors.submit}
       <div class="error-message">
         <Icon icon="solar:info-circle-bold" width="1em" height="1em" />
-        {submitError}
+        {formErrors.submit}
       </div>
     {/if}
     
@@ -179,13 +169,13 @@
         </label>
         <input 
           id="employee-name"
-          class={formErrors['name'] ? 'error' : ''}
+          class={formErrors.name ? 'error' : ''}
           bind:value={formData.name}
           placeholder="Enter employee full name"
           required
         />
-        {#if formErrors['name']}
-          <small class="text-error">{formErrors['name']}</small>
+        {#if formErrors.name}
+          <small class="text-error">{formErrors.name}</small>
         {/if}
       </div>
       
@@ -223,28 +213,27 @@
         <input 
           id="employee-salary"
           type="number"
-          class={formErrors['monthlySalary'] ? 'error' : ''}
+          class={formErrors.monthlySalary ? 'error' : ''}
           bind:value={formData.monthlySalary}
           placeholder="Enter monthly base salary"
           min="0"
           required
         />
-        {#if formErrors['monthlySalary']}
-          <small class="text-error">{formErrors['monthlySalary']}</small>
+        {#if formErrors.monthlySalary}
+          <small class="text-error">{formErrors.monthlySalary}</small>
         {/if}
-                  <small class="text-muted">Used to calculate daily and hourly rates for salary calculations</small>
+        <small class="text-muted">Used to calculate daily and hourly rates for salary calculations</small>
       </div>
       
       <div class="button-group">
         <button onclick={handleSubmit} disabled={isSubmitting}>
           <Icon 
-            icon={buttonIcon}
+            icon={isSubmitting ? ICONS.loading : (editingEmployee ? ICONS.save : ICONS.userAdd)}
             width="1.2em" 
             height="1.2em" 
-            class="spinning" 
-            style={isSubmitting ? '' : 'animation: none;'} 
+            class={isSubmitting ? 'spinning' : ''} 
           />
-          {loadingText}
+          {isSubmitting ? 'Saving...' : (editingEmployee ? 'Update Employee' : 'Add Employee')}
         </button>
         <button class="secondary" onclick={cancelForm} disabled={isSubmitting}>Cancel</button>
       </div>
@@ -261,7 +250,7 @@
       <Icon icon={ICONS.users} width="2.5em" height="2.5em" />
       <h4>No employees yet</h4>
       <p>Get started by adding your first employee to begin payroll management</p>
-      <button onclick={() => showAddForm = true}>
+      <button onclick={() => { editingEmployee = null; showForm = true }}>
         <Icon icon={ICONS.userAdd} width="1.2em" height="1.2em" /> Add First Employee
       </button>
     </div>
@@ -312,7 +301,7 @@
   confirmText="Delete"
   cancelText="Cancel"
   on:confirm={confirmDelete}
-  on:cancel={cancelDelete}
+  on:cancel={() => { showDeleteModal = false; employeeToDelete = null }}
 />
 
 <ToastContainer />

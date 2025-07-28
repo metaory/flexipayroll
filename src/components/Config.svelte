@@ -2,6 +2,7 @@
   import { config } from '../lib/stores.js';
   import { DEFAULT_CONFIG, formatCurrency } from '../lib/core.js';
   import { toasts } from '../lib/toast.js';
+  import { storage } from '../lib/stores.js';
   import Modal from './Modal.svelte';
   import ToastContainer from './ToastContainer.svelte';
   import Icon from '@iconify/svelte';
@@ -21,26 +22,35 @@
 
   const updateLocalConfig = (field, value) => {
     const newConfig = { ...localConfig };
-    if (field.includes('.')) {
-      const parts = field.split('.');
-      if (parts.length === 3) {
-        // Handle nested objects like bonuses.E.value
-        const [section, subsection, key] = parts;
-        if (!newConfig[section]) newConfig[section] = {};
-        if (!newConfig[section][subsection]) newConfig[section][subsection] = {};
-        newConfig[section][subsection][key] = value;
-      } else if (parts.length === 2) {
-        // Handle simple nested objects like deductions.insurance.value
-        const [section, key] = parts;
-        if (!newConfig[section]) newConfig[section] = {};
-        newConfig[section][key] = value;
-      }
-    } else {
+    if (!field.includes('.')) {
       newConfig[field] = value;
+      localConfig = newConfig;
+      hasUnsavedChanges = true;
+      saveStatus = '';
+      return;
     }
-    localConfig = newConfig;
-    hasUnsavedChanges = true;
-    saveStatus = '';
+    
+    const parts = field.split('.');
+    if (parts.length === 3) {
+      const [section, subsection, key] = parts;
+      if (!newConfig[section]) newConfig[section] = {};
+      if (!newConfig[section][subsection]) newConfig[section][subsection] = {};
+      newConfig[section][subsection][key] = value;
+      localConfig = newConfig;
+      hasUnsavedChanges = true;
+      saveStatus = '';
+      return;
+    }
+    
+    if (parts.length === 2) {
+      const [section, key] = parts;
+      if (!newConfig[section]) newConfig[section] = {};
+      newConfig[section][key] = value;
+      localConfig = newConfig;
+      hasUnsavedChanges = true;
+      saveStatus = '';
+      return;
+    }
   }
 
   const saveConfig = () => {
@@ -76,12 +86,7 @@
   }
 
   const exportData = () => {
-    const data = {
-      employees: JSON.parse(localStorage.getItem('xpayroll_employees') || '[]'),
-      attendance: JSON.parse(localStorage.getItem('xpayroll_attendance') || '{}'),
-      config: localConfig
-    };
-
+    const data = storage.exportData(localConfig);
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -99,8 +104,8 @@
     reader.onload = (e) => {
       const data = JSON.parse(String(e.target.result));
       
-      if (data.employees) localStorage.setItem('xpayroll_employees', JSON.stringify(data.employees));
-      if (data.attendance) localStorage.setItem('xpayroll_attendance', JSON.stringify(data.attendance));
+      storage.importData(data);
+      
       if (data.config) {
         localConfig = { ...data.config };
         hasUnsavedChanges = true;
@@ -120,7 +125,7 @@
   }
 
   const confirmClear = () => {
-    localStorage.clear();
+    storage.clearAll();
     toasts.warning('All data cleared. The application will reload.');
     setTimeout(() => location.reload(), 2000);
     showClearModal = false;

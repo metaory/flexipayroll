@@ -2,6 +2,7 @@
   import { employees, attendance, config, currentPeriod } from '../lib/stores.js';
   import { calculateSalary, calculateAttendanceSummary, formatCurrency } from '../lib/core.js';
   import { toasts } from '../lib/toast.js';
+  import { storage } from '../lib/stores.js';
   import Modal from './Modal.svelte';
   import ToastContainer from './ToastContainer.svelte';
   import Icon from '@iconify/svelte';
@@ -26,10 +27,10 @@
     }
     
     const adjustment = createAdjustment(employeeId);
-    const currentAdjustments = JSON.parse(localStorage.getItem(`xpayroll_adjustments_${employeeId}`) || '[]');
+    const currentAdjustments = storage.getAdjustments(employeeId);
     const updatedAdjustments = [...currentAdjustments, adjustment];
     
-    localStorage.setItem(`xpayroll_adjustments_${employeeId}`, JSON.stringify(updatedAdjustments));
+    storage.setAdjustments(employeeId, updatedAdjustments);
     
     adjustmentAmount = '';
     adjustmentComment = '';
@@ -42,9 +43,9 @@
   }
 
   const confirmDelete = () => {
-    const currentAdjustments = JSON.parse(localStorage.getItem(`xpayroll_adjustments_${adjustmentToDelete.employeeId}`) || '[]');
+    const currentAdjustments = storage.getAdjustments(adjustmentToDelete.employeeId);
     const updatedAdjustments = currentAdjustments.filter(adj => adj.id !== adjustmentToDelete.adjustmentId);
-    localStorage.setItem(`xpayroll_adjustments_${adjustmentToDelete.employeeId}`, JSON.stringify(updatedAdjustments));
+    storage.setAdjustments(adjustmentToDelete.employeeId, updatedAdjustments);
     toasts.success('Adjustment removed successfully!');
     showDeleteModal = false;
     adjustmentToDelete = null;
@@ -56,7 +57,7 @@
   }
   
   const getAdjustments = (employeeId) => {
-    return JSON.parse(localStorage.getItem(`xpayroll_adjustments_${employeeId}`) || '[]');
+    return storage.getAdjustments(employeeId);
   }
   
   const getMonthAttendance = (employeeId) => {

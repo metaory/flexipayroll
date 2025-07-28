@@ -1,6 +1,6 @@
 <script>
   import { employees, attendance, currentPeriod } from '../lib/stores.js';
-  import { DAY_TYPES, validateAttendance } from '../lib/core.js';
+  import { validateAttendance } from '../lib/core.js';
   import { toasts } from '../lib/toast.js';
   import Modal from './Modal.svelte';
   import ToastContainer from './ToastContainer.svelte';
@@ -14,27 +14,27 @@
   let showDeleteModal = $state(false);
   let attendanceToDelete = $state(null);
   
-  $effect(() => {
-    if (!selectedDate) {
-      selectedDate = new Date().toISOString().split('T')[0];
-    }
-  });
-  
-  const dayTypeLabels = {
+  const DAY_TYPE_LABELS = {
     regular: 'Regular Work Day',
     holiday: 'Holiday',
     paid_leave: 'Paid Leave',
     unpaid_leave: 'Unpaid Leave'
   }
   
-  const dayTypeDescriptions = {
+  const DAY_TYPE_DESCRIPTIONS = {
     regular: 'Enter entry and exit times for hourly calculation',
     holiday: 'Automatically credited 8 hours',
     paid_leave: 'Automatically credited 8 hours',
     unpaid_leave: 'No hours credited, no pay'
   }
   
-  const getDayTypeLabel = (type) => dayTypeLabels[type] || type
+  $effect(() => {
+    if (!selectedDate) {
+      selectedDate = new Date().toISOString().split('T')[0];
+    }
+  });
+  
+
   
   const createAttendanceData = () => ({
     type: selectedType,
@@ -84,11 +84,6 @@
     
     attendance.update(updateAttendance);
     toasts.success('Attendance record deleted successfully!');
-    showDeleteModal = false;
-    attendanceToDelete = null;
-  }
-
-  const cancelDelete = () => {
     showDeleteModal = false;
     attendanceToDelete = null;
   }
@@ -192,11 +187,11 @@
           Day Type
         </label>
         <select id="type-select" bind:value={selectedType} disabled={!selectedEmployee}>
-          {#each Object.entries(DAY_TYPES) as [key, value]}
-            <option value={value}>{getDayTypeLabel(value)}</option>
+          {#each Object.entries(DAY_TYPE_LABELS) as [key, value]}
+            <option value={key}>{value}</option>
           {/each}
         </select>
-        <small class="text-muted">{dayTypeDescriptions[selectedType]}</small>
+        <small class="text-muted">{DAY_TYPE_DESCRIPTIONS[selectedType]}</small>
       </div>
     </div>
     
@@ -314,7 +309,7 @@
                   <td>{new Date(date).toLocaleDateString()}</td>
                   <td>
                     <span class="day-type-badge" class:regular={record.type === 'regular'} class:holiday={record.type === 'holiday'} class:paid={record.type === 'paid_leave'} class:unpaid={record.type === 'unpaid_leave'}>
-                      {getDayTypeLabel(record.type)}
+                      {DAY_TYPE_LABELS[record.type]}
                     </span>
                   </td>
                   <td>{record.entryTime || '-'}</td>
@@ -425,7 +420,7 @@
   confirmText="Delete"
   cancelText="Cancel"
   on:confirm={confirmDelete}
-  on:cancel={cancelDelete}
+  on:cancel={() => { showDeleteModal = false; attendanceToDelete = null }}
 />
 
 <ToastContainer /> 
