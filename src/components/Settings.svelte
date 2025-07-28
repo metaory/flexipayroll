@@ -113,52 +113,50 @@
 
     <div class="currency-settings-layout">
       <div class="currency-settings">
-        <div class="form-group-horizontal">
-          <div class="form-group-stacked">
-            <label for="currency-code">
-              <Icon icon={ICONS.money} width="1em" height="1em" />
-              Currency Code
-            </label>
-            <input
-              id="currency-code"
-              type="text"
-              value={localSettings.currency.code}
-              oninput={e => updateLocalSetting('currency', { ...localSettings.currency, code: e.currentTarget.value.toUpperCase() })}
-              maxlength="3"
-              placeholder="USD"
-            />
-            <small class="text-muted">ISO 4217 currency code</small>
-          </div>
+        <div class="form-group-stacked">
+          <label for="currency-code">
+            <Icon icon={ICONS.money} width="1em" height="1em" />
+            Currency Code
+          </label>
+          <input
+            id="currency-code"
+            type="text"
+            value={localSettings.currency.code}
+            oninput={e => updateLocalSetting('currency', { ...localSettings.currency, code: e.currentTarget.value.toUpperCase() })}
+            maxlength="3"
+            placeholder="USD"
+          />
+          <small class="text-muted">ISO 4217 currency code</small>
+        </div>
 
-          <div class="form-group-stacked">
-            <label for="currency-symbol">
-              <Icon icon={ICONS.money} width="1em" height="1em" />
-              Currency Symbol
-            </label>
-            <input
-              id="currency-symbol"
-              type="text"
-              value={localSettings.currency.symbol}
-              oninput={e => updateLocalSetting('currency', { ...localSettings.currency, symbol: e.currentTarget.value })}
-              maxlength="5"
-            />
-            <small class="text-muted">Symbol to display</small>
-          </div>
+        <div class="form-group-stacked">
+          <label for="currency-symbol">
+            <Icon icon={ICONS.money} width="1em" height="1em" />
+            Currency Symbol
+          </label>
+          <input
+            id="currency-symbol"
+            type="text"
+            value={localSettings.currency.symbol}
+            oninput={e => updateLocalSetting('currency', { ...localSettings.currency, symbol: e.currentTarget.value })}
+            maxlength="5"
+          />
+          <small class="text-muted">Symbol to display</small>
+        </div>
 
-          <div class="form-group-stacked">
-            <label for="currency-locale">
-              <Icon icon={ICONS.money} width="1em" height="1em" />
-              Locale
-            </label>
-            <input
-              id="currency-locale"
-              type="text"
-              value={localSettings.currency.locale}
-              oninput={e => updateLocalSetting('currency', { ...localSettings.currency, locale: e.currentTarget.value })}
-              placeholder="en-US"
-            />
-            <small class="text-muted">Number formatting locale</small>
-          </div>
+        <div class="form-group-stacked">
+          <label for="currency-locale">
+            <Icon icon={ICONS.money} width="1em" height="1em" />
+            Locale
+          </label>
+          <input
+            id="currency-locale"
+            type="text"
+            value={localSettings.currency.locale}
+            oninput={e => updateLocalSetting('currency', { ...localSettings.currency, locale: e.currentTarget.value })}
+            placeholder="en-US"
+          />
+          <small class="text-muted">Number formatting locale</small>
         </div>
 
         <div class="form-group-stacked">
