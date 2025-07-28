@@ -1,7 +1,7 @@
 <script>
   import { employees, attendance, config, currentPeriod, salaryRecords } from '../lib/stores.js';
   import { calculateSalaryRecord, calculateAttendanceSummary, formatCurrency } from '../lib/core.js';
-  import { storage, storeSalaryRecord, getSalaryRecord, clearPeriodSalaryRecords } from '../lib/stores.js';
+  import { storage, storeSalaryRecord, getSalaryRecord, clearPeriodSalaryRecords, getPeriodSalaryRecords } from '../lib/stores.js';
   import { toasts } from '../lib/toast.js';
   import ToastContainer from './ToastContainer.svelte';
   import Icon from '@iconify/svelte';
@@ -10,9 +10,26 @@
   let selectedEmployee = $state('');
   let adjustmentAmount = $state('');
   let adjustmentComment = $state('');
+  let selectedPeriod = $state({ year: $currentPeriod.year, month: $currentPeriod.month });
+  let showHistoricalView = $state(false);
+
+  // Generate available periods (last 12 months)
+  const availablePeriods = (() => {
+    const periods = [];
+    const currentDate = new Date();
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+      periods.push({
+        year: date.getFullYear(),
+        month: date.getMonth() + 1,
+        label: `${date.getMonth() + 1}/${date.getFullYear()}`
+      });
+    }
+    return periods;
+  })();
 
   const getMonthAttendance = (employeeId) => {
-    const monthKey = `${$currentPeriod.year}-${String($currentPeriod.month).padStart(2, '0')}`;
+    const monthKey = `${selectedPeriod.year}-${String(selectedPeriod.month).padStart(2, '0')}`;
     return $attendance[employeeId]?.[monthKey] || {};
   };
 
@@ -53,12 +70,12 @@
     const adjustments = getAdjustments(employee.id);
     
     // Check if we already have a salary record for this period
-    const existingRecord = getSalaryRecord(employee.id, $currentPeriod.year, $currentPeriod.month);
+    const existingRecord = getSalaryRecord(employee.id, selectedPeriod.year, selectedPeriod.month);
     
     // Only calculate and store if we don't have a record or if data has changed
     if (!existingRecord) {
       const salaryRecord = calculateSalaryRecord(employee, monthAttendance, adjustments, $config);
-      storeSalaryRecord(employee.id, $currentPeriod.year, $currentPeriod.month, salaryRecord);
+      storeSalaryRecord(employee.id, selectedPeriod.year, selectedPeriod.month, salaryRecord);
       return salaryRecord;
     }
     
@@ -67,7 +84,7 @@
 
   const recalculateAllSalaries = () => {
     // Clear existing salary records for current period
-    clearPeriodSalaryRecords($currentPeriod.year, $currentPeriod.month);
+    clearPeriodSalaryRecords(selectedPeriod.year, selectedPeriod.month);
     
     // Recalculate all salaries for current period
     $employees.forEach(employee => {
@@ -98,21 +115,101 @@
     }, 0)
   );
 
-  // Check if any salary records exist for current period
+  // Check if any salary records exist for selected period
   const hasSalaryRecords = $derived(
-    $employees.some(emp => getSalaryRecord(emp.id, $currentPeriod.year, $currentPeriod.month))
+    $employees.some(emp => getSalaryRecord(emp.id, selectedPeriod.year, selectedPeriod.month))
   );
+
+  // Check if viewing current period
+  const isCurrentPeriod = $derived(
+    selectedPeriod.year === $currentPeriod.year && selectedPeriod.month === $currentPeriod.month
+  );
+
+  // Get config differences if viewing historical data
+  const getConfigDifferences = (salaryRecord) => {
+    if (!salaryRecord?.configSnapshot) return null;
+    
+    const historical = salaryRecord.configSnapshot;
+    const current = $config;
+    
+    const differences = [];
+    
+    if (historical.workdayHours !== current.workdayHours) {
+      differences.push(`Workday hours: ${historical.workdayHours}h → ${current.workdayHours}h`);
+    }
+    if (historical.workingDaysPerMonth !== current.workingDaysPerMonth) {
+      differences.push(`Working days: ${historical.workingDaysPerMonth} → ${current.workingDaysPerMonth}`);
+    }
+    if (historical.bonuses.E.value !== current.bonuses.E.value) {
+      differences.push(`Bonus E: ${historical.bonuses.E.value}× → ${current.bonuses.E.value}×`);
+    }
+    if (historical.bonuses.S.value !== current.bonuses.S.value) {
+      differences.push(`Bonus S: ${historical.bonuses.S.value}× → ${current.bonuses.S.value}×`);
+    }
+    if (historical.deductions.insurance.value !== current.deductions.insurance.value) {
+      differences.push(`Insurance: ${(historical.deductions.insurance.value * 100).toFixed(1)}% → ${(current.deductions.insurance.value * 100).toFixed(1)}%`);
+    }
+    
+    return differences;
+  };
+
+  const formatConfigTimestamp = (timestamp) => {
+    return new Date(timestamp).toLocaleString('id-ID', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 </script>
 
 <h2>Payroll Calculation</h2>
-<p>Calculate and review employee salaries for the current period. Salaries include basic pay, bonuses, adjustments, and deductions.</p>
+<p>Calculate and review employee salaries for the selected period. Salaries include basic pay, bonuses, adjustments, and deductions.</p>
+
+<!-- Period Selection -->
+<section class="config-section">
+  <h3><Icon icon="solar:calendar-bold" width="1.2em" height="1.2em" /> Period Selection</h3>
+  <p class="text-muted">Select a period to view or calculate salary reports</p>
+  
+  <div class="form-group-horizontal">
+    <div class="form-group-stacked">
+      <label for="period-select">
+        <Icon icon="solar:calendar-bold" width="1em" height="1em" />
+        Select Period
+      </label>
+      <select id="period-select" bind:value={selectedPeriod} onchange={() => showHistoricalView = !isCurrentPeriod}>
+        {#each availablePeriods as period}
+          <option value={period}>{period.label}</option>
+        {/each}
+      </select>
+    </div>
+    
+    <div class="form-group-stacked">
+      <label>
+        <Icon icon="solar:eye-bold" width="1em" height="1em" />
+        View Mode
+      </label>
+      <div class="button-group">
+        <button class={isCurrentPeriod ? 'active' : ''} onclick={() => { selectedPeriod = $currentPeriod; showHistoricalView = false; }}>
+          <Icon icon="solar:edit-bold" width="1em" height="1em" />
+          Current Period (Editable)
+        </button>
+        <button class={showHistoricalView ? 'active' : ''} onclick={() => showHistoricalView = true}>
+          <Icon icon="solar:history-bold" width="1em" height="1em" />
+          Historical View
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
 
 <div class="stats-grid">
   <div class="stat-card">
     <Icon icon="solar:calendar-bold" width="2em" height="2em" />
     <div>
-      <strong>{$currentPeriod.month}/{$currentPeriod.year}</strong>
-      <span>Payroll Period</span>
+      <strong>{selectedPeriod.month}/{selectedPeriod.year}</strong>
+      <span>Selected Period</span>
     </div>
   </div>
   <div class="stat-card">
@@ -134,70 +231,80 @@
 {#if hasSalaryRecords}
   <div class="config-notice">
     <Icon icon="solar:info-circle-bold" width="1em" height="1em" />
-    <span>Salaries calculated with configuration from {new Date($employees[0] ? getSalaryRecord($employees[0].id, $currentPeriod.year, $currentPeriod.month)?.configSnapshot?.timestamp : Date.now()).toLocaleString()}</span>
-    <button class="secondary" onclick={recalculateAllSalaries}>
-      <Icon icon="solar:refresh-bold" width="1.2em" height="1.2em" />
-      Recalculate with Current Config
-    </button>
+    <span>Salaries calculated with configuration from {formatConfigTimestamp($employees[0] ? getSalaryRecord($employees[0].id, selectedPeriod.year, selectedPeriod.month)?.configSnapshot?.timestamp : Date.now())}</span>
+    {#if isCurrentPeriod}
+      <button class="secondary" onclick={recalculateAllSalaries}>
+        <Icon icon="solar:refresh-bold" width="1.2em" height="1.2em" />
+        Recalculate with Current Config
+      </button>
+    {/if}
   </div>
 {/if}
 
-<section>
-  <h3><Icon icon="solar:calculator-bold" width="1.2em" height="1.2em" /> Salary Adjustments</h3>
-      <p class="text-muted">Add positive or negative adjustments to employee salaries with optional comments</p>
-  
-  <form>
-    <div class="form-group-horizontal">
-      <div class="form-group-stacked">
-        <label for="employee-select">
-          <Icon icon="solar:user-bold" width="1em" height="1em" />
-          Select Employee
-        </label>
-        <select id="employee-select" bind:value={selectedEmployee}>
-          <option value="">Choose an employee...</option>
-          {#each $employees as employee}
-            <option value={employee.id}>{employee.name}</option>
-          {/each}
-        </select>
+{#if !showHistoricalView}
+  <section>
+    <h3><Icon icon="solar:calculator-bold" width="1.2em" height="1.2em" /> Salary Adjustments</h3>
+        <p class="text-muted">Add positive or negative adjustments to employee salaries with optional comments</p>
+    
+    <form>
+      <div class="form-group-horizontal">
+        <div class="form-group-stacked">
+          <label for="employee-select">
+            <Icon icon="solar:user-bold" width="1em" height="1em" />
+            Select Employee
+          </label>
+          <select id="employee-select" bind:value={selectedEmployee}>
+            <option value="">Choose an employee...</option>
+            {#each $employees as employee}
+              <option value={employee.id}>{employee.name}</option>
+            {/each}
+          </select>
+        </div>
+        
+        <div class="form-group-stacked">
+          <label for="adjustment-amount">
+            <Icon icon="solar:wallet-bold" width="1em" height="1em" />
+            Adjustment Amount (IDR)
+          </label>
+          <input 
+            id="adjustment-amount"
+            type="number"
+            bind:value={adjustmentAmount}
+            placeholder="Enter positive or negative amount"
+            disabled={!selectedEmployee}
+          />
+          <small class="text-muted">Positive for bonus, negative for deduction</small>
+        </div>
+        
+        <div class="form-group-stacked">
+          <label for="adjustment-comment">
+            <Icon icon="solar:document-text-bold" width="1em" height="1em" />
+            Comment (Optional)
+          </label>
+          <input 
+            id="adjustment-comment"
+            type="text"
+            bind:value={adjustmentComment}
+            placeholder="Reason for adjustment"
+            disabled={!selectedEmployee}
+          />
+        </div>
+        
+        <div class="form-group-stacked">
+          <label>&nbsp;</label>
+          <button 
+            type="button"
+            onclick={() => addAdjustment(selectedEmployee)}
+            disabled={!selectedEmployee || !adjustmentAmount}
+          >
+            <Icon icon="solar:add-circle-bold" width="1.2em" height="1.2em" />
+            Add Adjustment
+          </button>
+        </div>
       </div>
-      
-      <div class="form-group-stacked">
-        <label for="adjustment-amount">
-          <Icon icon="solar:wallet-bold" width="1em" height="1em" />
-          Adjustment Amount (IDR)
-        </label>
-        <input 
-          id="adjustment-amount"
-          type="number"
-          bind:value={adjustmentAmount}
-          placeholder="Enter positive or negative amount"
-          disabled={!selectedEmployee}
-        />
-        <small class="text-muted">Positive for bonus, negative for deduction</small>
-      </div>
-      
-      <div class="form-group-stacked">
-        <label for="adjustment-comment">
-          <Icon icon="solar:document-text-bold" width="1em" height="1em" />
-          Comment (Optional)
-        </label>
-        <input 
-          id="adjustment-comment"
-          type="text"
-          bind:value={adjustmentComment}
-          placeholder="Reason for adjustment"
-          disabled={!selectedEmployee}
-        />
-      </div>
-      
-      <div class="form-group-stacked">
-        <button onclick={() => addAdjustment(selectedEmployee)} disabled={!selectedEmployee || !adjustmentAmount}>
-          <Icon icon="solar:plus-bold" width="1.2em" height="1.2em" /> Add Adjustment
-        </button>
-      </div>
-    </div>
-  </form>
-</section>
+    </form>
+  </section>
+{/if}
 
 <section>
   <h3><Icon icon="solar:document-text-bold" width="1.2em" height="1.2em" /> Salary Reports</h3>
@@ -214,6 +321,7 @@
       {@const salaryRecord = getSalaryRecordForDisplay(employee)}
       {@const attendanceSummary = calculateAttendanceSummary(getMonthAttendance(employee.id), salaryRecord.configSnapshot)}
       {@const adjustments = getAdjustments(employee.id)}
+      {@const configDifferences = getConfigDifferences(salaryRecord)}
       
       <section>
         <h4><Icon icon="solar:user-bold" width="1em" height="1em" /> {employee.name}</h4>
@@ -224,94 +332,116 @@
           Base: {formatCurrency(employee.monthlySalary)}/month
         </p>
         
-        <!-- Config Version Info -->
+        <!-- Enhanced Config Version Info -->
         <div class="config-version">
           <Icon icon="solar:settings-bold" width="1em" height="1em" />
-          <span>Calculated with config: {salaryRecord.configSummary.workdayHours}h/day, {salaryRecord.configSummary.workingDaysPerMonth} days/month, {salaryRecord.configSummary.insuranceRate}% insurance</span>
-        </div>
-        
-        <div class="salary-grid">
-                     <div class="salary-section">
-             <h5><Icon icon="solar:clock-circle-bold" width="1em" height="1em" /> Attendance Summary</h5>
-             <dl>
-               <dt>Total Hours:</dt>
-               <dd>{attendanceSummary.hours.toFixed(1)} hours</dd>
-               <dt>Total Days:</dt>
-               <dd>{attendanceSummary.days} days</dd>
-               <dt>Regular Days:</dt>
-               <dd>{attendanceSummary.byType['regular'] || 0} days</dd>
-               <dt>Holidays:</dt>
-               <dd>{attendanceSummary.byType['holiday'] || 0} days</dd>
-               <dt>Paid Leave:</dt>
-               <dd>{attendanceSummary.byType['paid_leave'] || 0} days</dd>
-               <dt>Unpaid Leave:</dt>
-               <dd>{attendanceSummary.byType['unpaid_leave'] || 0} days</dd>
-             </dl>
-           </div>
-          
-          <div class="salary-section">
-            <h5><Icon icon="solar:calculator-bold" width="1em" height="1em" /> Salary Components</h5>
-            <dl>
-              <dt>Basic Salary:</dt>
-              <dd>{formatCurrency(salaryRecord.components.basicSalary)}</dd>
-              <dt>Bonus E ({salaryRecord.configSummary.bonusE}×):</dt>
-              <dd>{formatCurrency(salaryRecord.components['bonusE'] || 0)}</dd>
-              <dt>Bonus S ({salaryRecord.configSummary.bonusS}×):</dt>
-              <dd>{formatCurrency(salaryRecord.components['bonusS'] || 0)}</dd>
-              <dt>Bonus K:</dt>
-              <dd>{formatCurrency(salaryRecord.components['bonusK'] || 0)}</dd>
-              <dt>Bonus M:</dt>
-              <dd>{formatCurrency(salaryRecord.components['bonusM'] || 0)}</dd>
-              {#if employee.maritalStatus === 'married'}
-                <dt>Bonus T:</dt>
-                <dd>{formatCurrency(salaryRecord.components['bonusT'] || 0)}</dd>
-              {/if}
-            </dl>
-          </div>
-          
-          <div class="salary-section">
-            <h5><Icon icon="solar:chart-bold" width="1em" height="1em" /> Adjustments & Deductions</h5>
-            <dl>
-              <dt>Adjustments:</dt>
-              <dd>{formatCurrency(salaryRecord.adjustmentTotal)}</dd>
-              <dt>Insurance Deduction ({salaryRecord.configSummary.insuranceRate}%):</dt>
-              <dd>-{formatCurrency(salaryRecord.components.insuranceDeduction)}</dd>
-              <dt><strong>Final Salary:</strong></dt>
-              <dd><strong>{formatCurrency(salaryRecord.finalSalary)}</strong></dd>
-            </dl>
+          <div>
+            <div>Calculated with config: {salaryRecord.configSummary.workdayHours}h/day, {salaryRecord.configSummary.workingDaysPerMonth} days/month, {salaryRecord.configSummary.insuranceRate}% insurance</div>
+            <small class="text-muted">Calculated on {formatConfigTimestamp(salaryRecord.configSnapshot.timestamp)}</small>
           </div>
         </div>
-        
-        {#if adjustments.length > 0}
-          <div class="adjustments-section">
-            <h5><Icon icon="solar:list-bold" width="1em" height="1em" /> Adjustments Applied</h5>
-            <table>
-              <thead>
-                <tr>
-                  <th><Icon icon="solar:wallet-bold" width="1em" height="1em" /> Amount</th>
-                  <th><Icon icon="solar:document-text-bold" width="1em" height="1em" /> Comment</th>
-                  <th><Icon icon="solar:settings-bold" width="1em" height="1em" /> Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {#each adjustments as adjustment}
-                  <tr>
-                    <td class={adjustment.amount >= 0 ? 'text-success' : 'text-error'}>
-                      {adjustment.amount >= 0 ? '+' : ''}{formatCurrency(adjustment.amount)}
-                    </td>
-                    <td>{adjustment.comment || '-'}</td>
-                    <td>
-                      <button class="danger" onclick={() => removeAdjustment(employee.id, adjustment.id)}>
-                        <Icon icon="solar:trash-bin-trash-bold" width="1.1em" height="1.1em" /> Remove
-                      </button>
-                    </td>
-                  </tr>
+
+        <!-- Config Differences (Historical View) -->
+        {#if showHistoricalView && configDifferences && configDifferences.length > 0}
+          <div class="config-differences">
+            <Icon icon="solar:warning-bold" width="1em" height="1em" />
+            <div>
+              <div><strong>Config has changed since this calculation:</strong></div>
+              <ul>
+                {#each configDifferences as difference}
+                  <li>{difference}</li>
                 {/each}
-              </tbody>
-            </table>
+              </ul>
+            </div>
           </div>
         {/if}
-      </section>
+        
+        <div class="salary-grid">
+                       <div class="salary-section">
+               <h5><Icon icon="solar:clock-circle-bold" width="1em" height="1em" /> Attendance Summary</h5>
+               <dl>
+                 <dt>Total Hours:</dt>
+                 <dd>{attendanceSummary.hours.toFixed(1)} hours</dd>
+                 <dt>Total Days:</dt>
+                 <dd>{attendanceSummary.days} days</dd>
+                 <dt>Regular Days:</dt>
+                 <dd>{attendanceSummary.byType['regular'] || 0} days</dd>
+                 <dt>Holidays:</dt>
+                 <dd>{attendanceSummary.byType['holiday'] || 0} days</dd>
+                 <dt>Paid Leave:</dt>
+                 <dd>{attendanceSummary.byType['paid_leave'] || 0} days</dd>
+                 <dt>Unpaid Leave:</dt>
+                 <dd>{attendanceSummary.byType['unpaid_leave'] || 0} days</dd>
+               </dl>
+             </div>
+            
+            <div class="salary-section">
+              <h5><Icon icon="solar:calculator-bold" width="1em" height="1em" /> Salary Components</h5>
+              <dl>
+                <dt>Basic Salary:</dt>
+                <dd>{formatCurrency(salaryRecord.components.basicSalary)}</dd>
+                <dt>Bonus E ({salaryRecord.configSummary.bonusE}×):</dt>
+                <dd>{formatCurrency(salaryRecord.components['bonusE'] || 0)}</dd>
+                <dt>Bonus S ({salaryRecord.configSummary.bonusS}×):</dt>
+                <dd>{formatCurrency(salaryRecord.components['bonusS'] || 0)}</dd>
+                <dt>Bonus K:</dt>
+                <dd>{formatCurrency(salaryRecord.components['bonusK'] || 0)}</dd>
+                <dt>Bonus M:</dt>
+                <dd>{formatCurrency(salaryRecord.components['bonusM'] || 0)}</dd>
+                {#if employee.maritalStatus === 'married'}
+                  <dt>Bonus T:</dt>
+                  <dd>{formatCurrency(salaryRecord.components['bonusT'] || 0)}</dd>
+                {/if}
+              </dl>
+            </div>
+            
+            <div class="salary-section">
+              <h5><Icon icon="solar:chart-bold" width="1em" height="1em" /> Adjustments & Deductions</h5>
+              <dl>
+                <dt>Adjustments:</dt>
+                <dd>{formatCurrency(salaryRecord.adjustmentTotal)}</dd>
+                <dt>Insurance Deduction ({salaryRecord.configSummary.insuranceRate}%):</dt>
+                <dd>-{formatCurrency(salaryRecord.components.insuranceDeduction)}</dd>
+                <dt><strong>Final Salary:</strong></dt>
+                <dd><strong>{formatCurrency(salaryRecord.finalSalary)}</strong></dd>
+              </dl>
+            </div>
+          </div>
+          
+          {#if adjustments.length > 0}
+            <div class="adjustments-section">
+              <h5><Icon icon="solar:list-bold" width="1em" height="1em" /> Adjustments Applied</h5>
+              <table>
+                <thead>
+                  <tr>
+                    <th><Icon icon="solar:wallet-bold" width="1em" height="1em" /> Amount</th>
+                    <th><Icon icon="solar:document-text-bold" width="1em" height="1em" /> Comment</th>
+                    {#if !showHistoricalView}
+                      <th><Icon icon="solar:settings-bold" width="1em" height="1em" /> Actions</th>
+                    {/if}
+                  </tr>
+                </thead>
+                <tbody>
+                  {#each adjustments as adjustment}
+                    <tr>
+                      <td class={adjustment.amount >= 0 ? 'text-success' : 'text-error'}>
+                        {adjustment.amount >= 0 ? '+' : ''}{formatCurrency(adjustment.amount)}
+                      </td>
+                      <td>{adjustment.comment || '-'}</td>
+                      {#if !showHistoricalView}
+                        <td>
+                          <button class="danger" onclick={() => removeAdjustment(employee.id, adjustment.id)}>
+                            <Icon icon="solar:trash-bin-trash-bold" width="1em" height="1em" />
+                          </button>
+                        </td>
+                      {/if}
+                    </tr>
+                  {/each}
+                </tbody>
+              </table>
+            </div>
+          {/if}
+        </section>
     {/each}
   {/if}
 </section>
@@ -421,6 +551,8 @@
     font-size: 0.85rem;
     font-weight: 500;
   }
+
+
 </style>
 
 

@@ -577,6 +577,38 @@ dl.horizontal
   @extend %font-weight-medium
   border: 1px solid color-mix(in oklab, var(--info) 15%, transparent)
 
+  div
+    display: flex
+    flex-direction: column
+    gap: 0.25rem
+
+// Config Differences Styling
+.config-differences
+  @extend %flex
+  gap: 0.75rem
+  padding: 1rem 1.25rem
+  background: color-mix(in oklab, var(--warning) 8%, transparent)
+  color: var(--warning)
+  border-radius: 0.75rem
+  margin-bottom: 1rem
+  font-size: 0.85rem
+  @extend %font-weight-medium
+  border: 1px solid color-mix(in oklab, var(--warning) 20%, transparent)
+
+  div
+    display: flex
+    flex-direction: column
+    gap: 0.5rem
+
+  ul
+    margin: 0
+    padding-left: 1.5rem
+
+  li
+    list-style: disc
+    margin-bottom: 0.25rem
+    font-size: 0.8rem
+
 // Spacing
 %spacing
   > * + *
