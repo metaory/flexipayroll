@@ -1,94 +1,107 @@
 <script>
-  import { employees, attendance, config, currentPeriod } from '../lib/stores.js';
-  import { calculateSalary, calculateAttendanceSummary, formatCurrency } from '../lib/core.js';
+  import { employees, attendance, config, currentPeriod, salaryRecords } from '../lib/stores.js';
+  import { calculateSalaryRecord, calculateAttendanceSummary, formatCurrency } from '../lib/core.js';
+  import { storage, storeSalaryRecord, getSalaryRecord, clearPeriodSalaryRecords } from '../lib/stores.js';
   import { toasts } from '../lib/toast.js';
-  import { storage } from '../lib/stores.js';
-  import Modal from './Modal.svelte';
   import ToastContainer from './ToastContainer.svelte';
   import Icon from '@iconify/svelte';
-  
+  import { ICONS } from '../lib/icons.js';
+
   let selectedEmployee = $state('');
   let adjustmentAmount = $state('');
   let adjustmentComment = $state('');
-  let showDeleteModal = $state(false);
-  let adjustmentToDelete = $state(null);
-  
-  const createAdjustment = (employeeId) => ({
-    id: Date.now().toString(),
-    amount: Number(adjustmentAmount),
-    comment: adjustmentComment.trim(),
-    employeeId
-  })
-  
+
+  const getMonthAttendance = (employeeId) => {
+    const monthKey = `${$currentPeriod.year}-${String($currentPeriod.month).padStart(2, '0')}`;
+    return $attendance[employeeId]?.[monthKey] || {};
+  };
+
+  const getAdjustments = (employeeId) => {
+    return storage.getAdjustments(employeeId) || [];
+  };
+
   const addAdjustment = (employeeId) => {
-    if (!adjustmentAmount || Number(adjustmentAmount) === 0) {
-      toasts.error('Please enter a valid adjustment amount');
-      return;
-    }
+    if (!adjustmentAmount || !employeeId) return;
     
-    const adjustment = createAdjustment(employeeId);
-    const currentAdjustments = storage.getAdjustments(employeeId);
-    const updatedAdjustments = [...currentAdjustments, adjustment];
+    const adjustments = getAdjustments(employeeId);
+    const newAdjustment = {
+      id: Date.now().toString(),
+      amount: Number(adjustmentAmount),
+      comment: adjustmentComment.trim(),
+      addedAt: Date.now()
+    };
     
-    storage.setAdjustments(employeeId, updatedAdjustments);
+    storage.setAdjustments(employeeId, [...adjustments, newAdjustment]);
     
+    // Clear form
     adjustmentAmount = '';
     adjustmentComment = '';
-    toasts.success('Adjustment added successfully!');
-  }
-  
-  const removeAdjustment = (employeeId, adjustmentId) => {
-    adjustmentToDelete = { employeeId, adjustmentId };
-    showDeleteModal = true;
-  }
-
-  const confirmDelete = () => {
-    const currentAdjustments = storage.getAdjustments(adjustmentToDelete.employeeId);
-    const updatedAdjustments = currentAdjustments.filter(adj => adj.id !== adjustmentToDelete.adjustmentId);
-    storage.setAdjustments(adjustmentToDelete.employeeId, updatedAdjustments);
-    toasts.success('Adjustment removed successfully!');
-    showDeleteModal = false;
-    adjustmentToDelete = null;
-  }
-
-  const cancelDelete = () => {
-    showDeleteModal = false;
-    adjustmentToDelete = null;
-  }
-  
-  const getAdjustments = (employeeId) => {
-    return storage.getAdjustments(employeeId);
-  }
-  
-  const getMonthAttendance = (employeeId) => {
-    const monthStr = `${$currentPeriod.year}-${$currentPeriod.month.toString().padStart(2, '0')}`;
-    const empAttendance = $attendance[employeeId] || {};
-    const results = {};
+    selectedEmployee = '';
     
-    for (const [date, data] of Object.entries(empAttendance)) {
-      if (date.startsWith(monthStr)) {
-        results[date] = data;
-      }
+    toasts.success('Adjustment added successfully!');
+  };
+
+  const removeAdjustment = (employeeId, adjustmentId) => {
+    const adjustments = getAdjustments(employeeId);
+    const filtered = adjustments.filter(adj => adj.id !== adjustmentId);
+    storage.setAdjustments(employeeId, filtered);
+    toasts.success('Adjustment removed successfully!');
+  };
+
+  const calculateAndStoreSalary = (employee) => {
+    const monthAttendance = getMonthAttendance(employee.id);
+    const adjustments = getAdjustments(employee.id);
+    
+    // Check if we already have a salary record for this period
+    const existingRecord = getSalaryRecord(employee.id, $currentPeriod.year, $currentPeriod.month);
+    
+    // Only calculate and store if we don't have a record or if data has changed
+    if (!existingRecord) {
+      const salaryRecord = calculateSalaryRecord(employee, monthAttendance, adjustments, $config);
+      storeSalaryRecord(employee.id, $currentPeriod.year, $currentPeriod.month, salaryRecord);
+      return salaryRecord;
     }
-    return results;
-  }
-  
-  const hasEmployees = $derived($employees.length > 0)
-  const isMarried = $derived(selectedEmployee ? $employees.find(emp => emp.id === selectedEmployee)?.maritalStatus === 'married' : false)
+    
+    return existingRecord;
+  };
+
+  const recalculateAllSalaries = () => {
+    // Clear existing salary records for current period
+    clearPeriodSalaryRecords($currentPeriod.year, $currentPeriod.month);
+    
+    // Recalculate all salaries for current period
+    $employees.forEach(employee => {
+      calculateAndStoreSalary(employee);
+    });
+    
+    toasts.success('All salaries recalculated with current configuration!');
+  };
+
+  const getSalaryRecordForDisplay = (employee) => {
+    return calculateAndStoreSalary(employee);
+  };
+
+  const hasEmployees = $derived($employees.length > 0);
+  const isMarried = $derived(selectedEmployee ? $employees.find(emp => emp.id === selectedEmployee)?.maritalStatus === 'married' : false);
   
   const totalPayroll = $derived(
     $employees.reduce((total, emp) => {
-      const salaryBreakdown = calculateSalary(emp, getMonthAttendance(emp.id), $config, getAdjustments(emp.id));
-      return total + salaryBreakdown.finalSalary;
+      const salaryRecord = getSalaryRecordForDisplay(emp);
+      return total + salaryRecord.finalSalary;
     }, 0)
-  )
+  );
   
   const totalAdjustments = $derived(
     $employees.reduce((total, emp) => {
       const adjustments = getAdjustments(emp.id);
       return total + adjustments.reduce((sum, adj) => sum + adj.amount, 0);
     }, 0)
-  )
+  );
+
+  // Check if any salary records exist for current period
+  const hasSalaryRecords = $derived(
+    $employees.some(emp => getSalaryRecord(emp.id, $currentPeriod.year, $currentPeriod.month))
+  );
 </script>
 
 <h2>Payroll Calculation</h2>
@@ -117,6 +130,17 @@
     </div>
   </div>
 </div>
+
+{#if hasSalaryRecords}
+  <div class="config-notice">
+    <Icon icon="solar:info-circle-bold" width="1em" height="1em" />
+    <span>Salaries calculated with configuration from {new Date($employees[0] ? getSalaryRecord($employees[0].id, $currentPeriod.year, $currentPeriod.month)?.configSnapshot?.timestamp : Date.now()).toLocaleString()}</span>
+    <button class="secondary" onclick={recalculateAllSalaries}>
+      <Icon icon="solar:refresh-bold" width="1.2em" height="1.2em" />
+      Recalculate with Current Config
+    </button>
+  </div>
+{/if}
 
 <section>
   <h3><Icon icon="solar:calculator-bold" width="1.2em" height="1.2em" /> Salary Adjustments</h3>
@@ -176,7 +200,7 @@
 </section>
 
 <section>
-  <h3><Icon icon="solar:chart-bold" width="1.2em" height="1.2em" /> Salary Breakdown</h3>
+  <h3><Icon icon="solar:document-text-bold" width="1.2em" height="1.2em" /> Salary Reports</h3>
       <p class="text-muted">Detailed salary calculations for each employee including bonuses, adjustments, and deductions</p>
   
   {#if !hasEmployees}
@@ -187,10 +211,9 @@
     </div>
   {:else}
     {#each $employees as employee}
-      {@const monthAttendance = getMonthAttendance(employee.id)}
+      {@const salaryRecord = getSalaryRecordForDisplay(employee)}
+      {@const attendanceSummary = calculateAttendanceSummary(getMonthAttendance(employee.id), salaryRecord.configSnapshot)}
       {@const adjustments = getAdjustments(employee.id)}
-      {@const salaryBreakdown = calculateSalary(employee, monthAttendance, $config, adjustments)}
-      {@const attendanceSummary = calculateAttendanceSummary(monthAttendance, $config)}
       
       <section>
         <h4><Icon icon="solar:user-bold" width="1em" height="1em" /> {employee.name}</h4>
@@ -200,6 +223,12 @@
           <Icon icon="solar:wallet-bold" width="1em" height="1em" />
           Base: {formatCurrency(employee.monthlySalary)}/month
         </p>
+        
+        <!-- Config Version Info -->
+        <div class="config-version">
+          <Icon icon="solar:settings-bold" width="1em" height="1em" />
+          <span>Calculated with config: {salaryRecord.configSummary.workdayHours}h/day, {salaryRecord.configSummary.workingDaysPerMonth} days/month, {salaryRecord.configSummary.insuranceRate}% insurance</span>
+        </div>
         
         <div class="salary-grid">
                      <div class="salary-section">
@@ -224,18 +253,18 @@
             <h5><Icon icon="solar:calculator-bold" width="1em" height="1em" /> Salary Components</h5>
             <dl>
               <dt>Basic Salary:</dt>
-              <dd>{formatCurrency(salaryBreakdown.components.basicSalary)}</dd>
-              <dt>Bonus E:</dt>
-              <dd>{formatCurrency(salaryBreakdown.components['bonusE'] || 0)}</dd>
-              <dt>Bonus S:</dt>
-              <dd>{formatCurrency(salaryBreakdown.components['bonusS'] || 0)}</dd>
+              <dd>{formatCurrency(salaryRecord.components.basicSalary)}</dd>
+              <dt>Bonus E ({salaryRecord.configSummary.bonusE}×):</dt>
+              <dd>{formatCurrency(salaryRecord.components['bonusE'] || 0)}</dd>
+              <dt>Bonus S ({salaryRecord.configSummary.bonusS}×):</dt>
+              <dd>{formatCurrency(salaryRecord.components['bonusS'] || 0)}</dd>
               <dt>Bonus K:</dt>
-              <dd>{formatCurrency(salaryBreakdown.components['bonusK'] || 0)}</dd>
+              <dd>{formatCurrency(salaryRecord.components['bonusK'] || 0)}</dd>
               <dt>Bonus M:</dt>
-              <dd>{formatCurrency(salaryBreakdown.components['bonusM'] || 0)}</dd>
-              {#if isMarried}
+              <dd>{formatCurrency(salaryRecord.components['bonusM'] || 0)}</dd>
+              {#if employee.maritalStatus === 'married'}
                 <dt>Bonus T:</dt>
-                <dd>{formatCurrency(salaryBreakdown.components['bonusT'] || 0)}</dd>
+                <dd>{formatCurrency(salaryRecord.components['bonusT'] || 0)}</dd>
               {/if}
             </dl>
           </div>
@@ -244,11 +273,11 @@
             <h5><Icon icon="solar:chart-bold" width="1em" height="1em" /> Adjustments & Deductions</h5>
             <dl>
               <dt>Adjustments:</dt>
-              <dd>{formatCurrency(salaryBreakdown.adjustmentTotal)}</dd>
-              <dt>Insurance Deduction:</dt>
-              <dd>-{formatCurrency(salaryBreakdown.insuranceDeduction)}</dd>
+              <dd>{formatCurrency(salaryRecord.adjustmentTotal)}</dd>
+              <dt>Insurance Deduction ({salaryRecord.configSummary.insuranceRate}%):</dt>
+              <dd>-{formatCurrency(salaryRecord.components.insuranceDeduction)}</dd>
               <dt><strong>Final Salary:</strong></dt>
-              <dd><strong>{formatCurrency(salaryBreakdown.finalSalary)}</strong></dd>
+              <dd><strong>{formatCurrency(salaryRecord.finalSalary)}</strong></dd>
             </dl>
           </div>
         </div>
@@ -286,6 +315,8 @@
     {/each}
   {/if}
 </section>
+
+<ToastContainer />
 
 <style>
   /* Using global .stats-grid and .salary-grid classes */
@@ -346,20 +377,51 @@
     font-size: 0.75rem;
     margin-top: 0.25rem;
   }
+
+  .config-notice {
+    background: color-mix(in oklab, var(--info) 10%, transparent);
+    border-radius: 1rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--info);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .config-notice .secondary {
+    background: color-mix(in oklab, var(--info) 20%, transparent);
+    color: var(--info);
+    border: 1px solid color-mix(in oklab, var(--info) 30%, transparent);
+    padding: 0.5rem 1rem;
+    border-radius: 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s ease;
+  }
+
+  .config-notice .secondary:hover {
+    background: color-mix(in oklab, var(--info) 30%, transparent);
+  }
+
+  .config-version {
+    background: color-mix(in oklab, var(--info) 5%, transparent);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--info);
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
 </style>
-
-<Modal 
-  show={showDeleteModal}
-  type="warning"
-  title="Remove Adjustment"
-  message="Are you sure you want to remove this adjustment?"
-  confirmText="Remove"
-  cancelText="Cancel"
-  on:confirm={confirmDelete}
-  on:cancel={cancelDelete}
-/>
-
-<ToastContainer />
 
 
 

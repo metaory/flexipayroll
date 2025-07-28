@@ -29,6 +29,39 @@ export const DEFAULT_CONFIG = {
 }
 
 // ============================================================================
+// CONFIG SNAPSHOT UTILITIES
+// ============================================================================
+
+// Create a minimal config snapshot for storage efficiency
+export const createConfigSnapshot = (config) => ({
+  workdayHours: config.workdayHours,
+  workingDaysPerMonth: config.workingDaysPerMonth,
+  bonuses: {
+    E: { value: config.bonuses.E.value },
+    S: { value: config.bonuses.S.value },
+    K: { value: config.bonuses.K.value },
+    M: { value: config.bonuses.M.value },
+    T: { value: config.bonuses.T.value }
+  },
+  deductions: {
+    insurance: { value: config.deductions.insurance.value }
+  },
+  timestamp: Date.now()
+})
+
+// Generate a human-readable config summary
+export const getConfigSummary = (configSnapshot) => ({
+  workdayHours: configSnapshot.workdayHours,
+  workingDaysPerMonth: configSnapshot.workingDaysPerMonth,
+  bonusE: configSnapshot.bonuses.E.value,
+  bonusS: configSnapshot.bonuses.S.value,
+  bonusK: configSnapshot.bonuses.K.value,
+  bonusM: configSnapshot.bonuses.M.value,
+  bonusT: configSnapshot.bonuses.T.value,
+  insuranceRate: (configSnapshot.deductions.insurance.value * 100).toFixed(1)
+})
+
+// ============================================================================
 // PURE FUNCTIONS - CORE CALCULATIONS
 // ============================================================================
 
@@ -120,6 +153,18 @@ export const calculateSalaryBreakdown = (employee, attendanceData, adjustments =
   }
 }
 
+// Enhanced salary calculation with config snapshot
+export const calculateSalaryWithSnapshot = (employee, attendanceData, adjustments = [], config = DEFAULT_CONFIG) => {
+  const salaryBreakdown = calculateSalaryBreakdown(employee, attendanceData, adjustments, config)
+  const configSnapshot = createConfigSnapshot(config)
+  
+  return {
+    ...salaryBreakdown,
+    configSnapshot,
+    configSummary: getConfigSummary(configSnapshot)
+  }
+}
+
 // ============================================================================
 // PURE FUNCTIONS - VALIDATION
 // ============================================================================
@@ -184,4 +229,8 @@ export const formatCurrency = (amount) =>
   }).format(amount)
 
 export const calculateSalary = (employee, attendanceData, adjustments = [], config = DEFAULT_CONFIG) => 
-  calculateSalaryBreakdown(employee, attendanceData, adjustments, config) 
+  calculateSalaryBreakdown(employee, attendanceData, adjustments, config)
+
+// New function that includes config snapshot
+export const calculateSalaryRecord = (employee, attendanceData, adjustments = [], config = DEFAULT_CONFIG) => 
+  calculateSalaryWithSnapshot(employee, attendanceData, adjustments, config) 

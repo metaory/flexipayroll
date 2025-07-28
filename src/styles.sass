@@ -31,6 +31,7 @@ $error: color.adjust($base, $hue: 0deg)
   --success: #{$success}
   --warning: #{$warning}
   --error: #{$error}
+  --info: #{$secondary}
   --radius: #{$radius}
   --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1)
   --border-muted: #{color.adjust($base, $hue: 45deg, $saturation: -50%, $lightness: 40%, $alpha: 0.4)}
@@ -45,6 +46,7 @@ $error: color.adjust($base, $hue: 0deg)
   --success: #{color.adjust($success, $lightness: 25%)}
   --warning: #{color.adjust($warning, $lightness: 25%)}
   --error: #{color.adjust($error, $lightness: 25%)}
+  --info: #{color.adjust($secondary, $lightness: 25%)}
   --border-muted: #{color.adjust($base, $hue: 25deg, $saturation: -40%, $lightness: -30%, $alpha: 0.4)}
 
 // Reset & Base
@@ -223,11 +225,357 @@ body
 // Form Layouts
 %form-horizontal
   @extend %grid-responsive
-  align-items: end
+  align-items: start
+  gap: 2rem
 
 %form-stacked
   @extend %grid
   grid-template-columns: 1fr
+  gap: 1.5rem
+
+// Enhanced Form Groups
+%form-group
+  @extend %grid
+  grid-template-columns: 1fr
+  align-items: start
+  gap: 0.75rem
+  margin-bottom: 1.5rem
+
+  @media (min-width: $mobile)
+    grid-template-columns: 200px 1fr
+    gap: 1.5rem
+
+  label
+    grid-column: 1
+    justify-self: start
+    @extend %label-text
+
+    @media (min-width: $mobile)
+      justify-self: end
+
+  input, select, textarea
+    grid-column: 1
+
+    @media (min-width: $mobile)
+      grid-column: 2
+
+%form-group-stacked
+  @extend %grid
+  grid-template-columns: 1fr
+  gap: 0.75rem
+  margin-bottom: 1.5rem
+
+  label
+    @extend %label-text
+
+  input, select, textarea
+    width: 100%
+
+  small
+    @extend %text-muted
+    font-size: 0.75rem
+    line-height: 1.4
+
+%form-group-horizontal
+  @extend %grid
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr))
+  gap: 2rem
+  margin-bottom: 2rem
+
+  @media (max-width: $mobile)
+    grid-template-columns: 1fr
+    gap: 1.5rem
+
+  .form-group-stacked
+    margin-bottom: 0
+
+// Config Section Styling
+.config-section
+  @extend %card
+  border: 1px solid color-mix(in oklab, var(--primary) 10%, transparent)
+  background: color-mix(in oklab, var(--primary) 4%, transparent)
+
+  h3
+    @extend %flex
+    gap: 0.5rem
+    margin-bottom: 1rem
+    padding-bottom: 0.75rem
+    border-bottom: 1px solid color-mix(in oklab, var(--primary) 15%, transparent)
+
+  p
+    margin-bottom: 1.5rem
+
+  .form-group-horizontal
+    margin-bottom: 1rem
+
+  .form-group-stacked
+    padding: 1rem
+    background: color-mix(in oklab, var(--bg-muted) 20%, transparent)
+    border-radius: 0.75rem
+    border: 1px solid color-mix(in oklab, var(--primary) 8%, transparent)
+
+    &:hover
+      background: color-mix(in oklab, var(--bg-muted) 30%, transparent)
+      border-color: color-mix(in oklab, var(--primary) 15%, transparent)
+
+    label
+      margin-bottom: 0.5rem
+
+    input
+      margin-bottom: 0.5rem
+
+    small
+      display: block
+      margin-top: 0.25rem
+
+// Enhanced Form Field Styling
+%form-field
+  padding: 1rem 1.25rem
+  @extend %color-secondary
+  @extend %glass, %transition, %focus
+  border-radius: 1rem
+  color: var(--fg)
+  font-size: $font
+  min-height: $min-height
+  width: 100%
+  max-width: 100%
+  @extend %shadow-sm
+  border: 1px solid color-mix(in oklab, var(--primary) 8%, transparent)
+
+  &::placeholder
+    color: var(--fg-muted)
+    opacity: 0.7
+
+  &:hover
+    @extend %color-secondary-hover
+    @extend %shadow-md
+    @extend %button-hover
+    border-color: color-mix(in oklab, var(--primary) 15%, transparent)
+
+  &:focus
+    background: color-mix(in oklab, var(--primary) 20%, transparent)
+    @extend %shadow-xl
+    transform: translateY(-2px)
+    outline: none
+    border-color: color-mix(in oklab, var(--primary) 30%, transparent)
+
+  &:active
+    background: color-mix(in oklab, var(--primary) 30%, transparent)
+    box-shadow: 0 3px 12px color-mix(in oklab, var(--primary) 35%, transparent)
+    @extend %button-active
+
+  &:disabled
+    @extend %button-disabled
+    box-shadow: 0 1px 4px color-mix(in oklab, var(--bg-muted) 20%, transparent)
+    border-color: color-mix(in oklab, var(--bg-muted) 30%, transparent)
+
+    &:hover, &:focus
+      @extend %button-disabled
+      box-shadow: 0 1px 4px color-mix(in oklab, var(--bg-muted) 20%, transparent)
+
+  &:read-only
+    background: color-mix(in oklab, var(--bg-muted) 40%, transparent)
+    color: var(--fg-muted)
+    cursor: default
+    border-color: color-mix(in oklab, var(--bg-muted) 30%, transparent)
+
+    &:hover
+      background: color-mix(in oklab, var(--bg-muted) 40%, transparent)
+      transform: none
+      @extend %shadow-sm
+
+  &.error
+    background: color-mix(in oklab, var(--error) 20%, transparent)
+    box-shadow: 0 2px 8px color-mix(in oklab, var(--error) 30%, transparent)
+    border-color: color-mix(in oklab, var(--error) 30%, transparent)
+
+    &:hover
+      background: color-mix(in oklab, var(--error) 30%, transparent)
+      @extend %shadow-md
+
+    &:focus
+      background: color-mix(in oklab, var(--error) 35%, transparent)
+      @extend %shadow-xl
+
+// Enhanced Label Styling
+%label-text
+  @extend %flex
+  gap: 0.5rem
+  @extend %font-weight-bold
+  font-size: $font
+  color: var(--fg)
+  margin-bottom: 0.5rem
+  align-items: center
+
+  svg
+    color: var(--primary)
+    opacity: 0.8
+
+// Enhanced Card Styling
+%card
+  background: color-mix(in oklab, var(--primary) 6%, transparent)
+  @extend %glass, %transition
+  padding: 2.5rem
+  border-radius: 1.5rem
+  box-shadow: 0 8px 32px color-mix(in oklab, var(--primary) 12%, transparent)
+  margin-bottom: 2rem
+  border: 1px solid color-mix(in oklab, var(--primary) 8%, transparent)
+
+  @media (max-width: $mobile)
+    padding: 1.5rem
+    border-radius: 1rem
+
+// Enhanced Table Styling
+table
+  width: 100%
+  background: color-mix(in oklab, var(--primary) 6%, transparent)
+  @extend %glass, %shadow-card
+  overflow: hidden
+  border-radius: 1rem
+  border: 1px solid color-mix(in oklab, var(--primary) 8%, transparent)
+
+  th, td
+    padding: 0.75rem 1rem
+    text-align: left
+    word-wrap: break-word
+    overflow-wrap: break-word
+    border-bottom: 1px solid color-mix(in oklab, var(--primary) 8%, transparent)
+
+    @media (max-width: $mobile)
+      padding: 0.5rem 0.75rem
+      font-size: 0.8rem
+
+  th
+    background: color-mix(in oklab, var(--primary) 12%, transparent)
+    @extend %glass
+    @extend %font-weight-bold
+    font-size: $font
+    position: sticky
+    top: 0
+    z-index: 10
+    box-shadow: 0 2px 8px color-mix(in oklab, var(--primary) 20%, transparent)
+    border-bottom: 2px solid color-mix(in oklab, var(--primary) 15%, transparent)
+
+  tr
+    @extend %transition
+    &:hover
+      background: color-mix(in oklab, var(--secondary) 10%, transparent)
+      @extend %button-hover
+      @extend %shadow-md
+
+    &:last-child td
+      border-bottom: none
+
+  td button
+    @extend %button-small
+
+// Enhanced Description List Styling
+dl
+  display: grid
+  grid-template-columns: 1fr
+  gap: 0.75rem
+
+  @media (min-width: $mobile)
+    grid-template-columns: 200px 1fr
+    gap: 0.75rem 1.5rem
+
+  dt
+    @extend %font-weight-bold
+    @extend %text-muted
+    padding: 0.5rem 0
+    border-bottom: 1px solid color-mix(in oklab, var(--primary) 8%, transparent)
+
+  dd
+    color: var(--fg)
+    word-wrap: break-word
+    overflow-wrap: break-word
+    padding: 0.5rem 0
+    border-bottom: 1px solid color-mix(in oklab, var(--primary) 8%, transparent)
+
+dl.horizontal
+  @extend %form-horizontal
+
+
+
+// Enhanced Save Status Styling
+.save-status
+  @extend %flex
+  gap: 0.75rem
+  padding: 1rem 1.5rem
+  border-radius: 0.75rem
+  margin-bottom: 1.5rem
+  @extend %font-weight-medium
+  border: 1px solid
+
+  &.success
+    background: color-mix(in oklab, var(--success) 15%, transparent)
+    color: var(--success)
+    border-color: color-mix(in oklab, var(--success) 25%, transparent)
+
+  &.warning
+    background: color-mix(in oklab, var(--warning) 15%, transparent)
+    color: var(--warning)
+    border-color: color-mix(in oklab, var(--warning) 25%, transparent)
+
+// Enhanced Unsaved Changes Styling
+.unsaved-changes
+  @extend %flex-between
+  padding: 1rem 1.5rem
+  background: color-mix(in oklab, var(--warning) 15%, transparent)
+  color: var(--warning)
+  border-radius: 0.75rem
+  margin-bottom: 1.5rem
+  border: 1px solid color-mix(in oklab, var(--warning) 25%, transparent)
+
+  .warning-message
+    @extend %flex
+    gap: 0.75rem
+    @extend %font-weight-medium
+
+  .save-actions
+    @extend %flex
+    gap: 0.75rem
+
+// Config Notice Styling
+.config-notice
+  @extend %flex
+  gap: 0.75rem
+  padding: 1rem 1.5rem
+  background: color-mix(in oklab, var(--info) 10%, transparent)
+  color: var(--info)
+  border-radius: 1rem
+  margin-bottom: 1.5rem
+  font-size: 0.9rem
+  @extend %font-weight-medium
+  border: 1px solid color-mix(in oklab, var(--info) 20%, transparent)
+
+  button
+    background: color-mix(in oklab, var(--info) 20%, transparent)
+    color: var(--info)
+    border: 1px solid color-mix(in oklab, var(--info) 30%, transparent)
+    padding: 0.5rem 1rem
+    border-radius: 0.75rem
+    font-size: 0.8rem
+    @extend %font-weight-bold
+    @extend %flex
+    gap: 0.5rem
+    @extend %transition
+
+    &:hover
+      background: color-mix(in oklab, var(--info) 30%, transparent)
+
+// Config Version Styling
+.config-version
+  @extend %flex
+  gap: 0.75rem
+  padding: 0.75rem 1rem
+  background: color-mix(in oklab, var(--info) 5%, transparent)
+  color: var(--info)
+  border-radius: 0.75rem
+  margin-bottom: 1rem
+  font-size: 0.85rem
+  @extend %font-weight-medium
+  border: 1px solid color-mix(in oklab, var(--info) 15%, transparent)
 
 // Spacing
 %spacing
@@ -538,6 +886,19 @@ body
 %input-base
   @extend %form-field
 
+// Form Elements
+form
+  @extend %form-stacked
+
+fieldset
+  // Borders already reset globally
+
+label
+  @extend %label-text
+
+input, select, textarea
+  @extend %input-base
+
 // Typography
 %heading
   font-family: 'Bungee', monospace
@@ -778,19 +1139,6 @@ p
   @extend %text-muted
   margin-bottom: 1.5rem
 
-// Form Elements
-form
-  @extend %form-stacked
-
-fieldset
-  // Borders already reset globally
-
-label
-  @extend %label-text
-
-input, select, textarea
-  @extend %input-base
-
 select
   background-image: none
   cursor: pointer
@@ -813,42 +1161,24 @@ input[type="file"]
     background: color-mix(in oklab, var(--primary) 25%, transparent)
     @extend %shadow-xl
 
-// Form Groups
+// Form Groups - Using enhanced placeholders
 .form-group
-  @extend %grid
-  grid-template-columns: 1fr
-  align-items: start
-  gap: 0.75rem
-  margin-bottom: 1.5rem
-
-  @media (min-width: $mobile)
-    grid-template-columns: 200px 1fr
-    gap: 1.5rem
-
-  label
-    grid-column: 1
-    justify-self: start
-    @extend %label-text
-
-    @media (min-width: $mobile)
-      justify-self: end
-
-  input, select, textarea
-    grid-column: 1
-
-    @media (min-width: $mobile)
-      grid-column: 2
+  @extend %form-group
 
 .form-group-stacked
-  @extend %form-stacked
+  @extend %form-group-stacked
 
 .form-group-horizontal
-  @extend %form-horizontal
+  @extend %form-group-horizontal
 
-// Button Groups
+// Button Groups - Using enhanced styling
 .button-group
   @extend %flex-wrap
-  gap: 0.5rem
+  gap: 0.75rem
+  padding: 1rem
+  background: color-mix(in oklab, var(--bg-muted) 20%, transparent)
+  border-radius: 0.75rem
+  border: 1px solid color-mix(in oklab, var(--primary) 8%, transparent)
 
 button
   @extend %button-primary
