@@ -1,12 +1,17 @@
 <script>
   import { config } from '../lib/stores.js';
   import { DEFAULT_CONFIG, formatCurrency } from '../lib/core.js';
+  import { toasts } from '../lib/toast.js';
+  import Modal from './Modal.svelte';
+  import ToastContainer from './ToastContainer.svelte';
   import Icon from '@iconify/svelte';
   import { ICONS } from '../lib/icons.js';
 
   let localConfig = $state({ ...$config });
   let hasUnsavedChanges = $state(false);
   let saveStatus = $state('');
+  let showResetModal = $state(false);
+  let showClearModal = $state(false);
 
   $effect(() => {
     localConfig = { ...$config };
@@ -42,6 +47,7 @@
     config.set(localConfig);
     hasUnsavedChanges = false;
     saveStatus = 'Configuration saved successfully!';
+    toasts.success('Configuration saved successfully!');
     setTimeout(() => saveStatus = '', 3000);
   }
 
@@ -49,15 +55,24 @@
     localConfig = { ...$config };
     hasUnsavedChanges = false;
     saveStatus = 'Changes cancelled';
+    toasts.info('Changes cancelled');
     setTimeout(() => saveStatus = '', 3000);
   }
 
   const resetToDefaults = () => {
-    if (confirm('Are you sure you want to reset all configuration to defaults? This will affect all calculations.')) {
-      localConfig = { ...DEFAULT_CONFIG };
-      hasUnsavedChanges = true;
-      saveStatus = 'Configuration reset to defaults. Click Save to apply changes.';
-    }
+    showResetModal = true;
+  }
+
+  const confirmReset = () => {
+    localConfig = { ...DEFAULT_CONFIG };
+    hasUnsavedChanges = true;
+    saveStatus = 'Configuration reset to defaults. Click Save to apply changes.';
+    toasts.warning('Configuration reset to defaults. Click Save to apply changes.');
+    showResetModal = false;
+  }
+
+  const cancelReset = () => {
+    showResetModal = false;
   }
 
   const exportData = () => {
@@ -82,29 +97,37 @@
 
     const reader = new FileReader();
     reader.onload = (e) => {
-      try {
-        const data = JSON.parse(String(e.target.result));
-        if (data.employees) localStorage.setItem('xpayroll_employees', JSON.stringify(data.employees));
-        if (data.attendance) localStorage.setItem('xpayroll_attendance', JSON.stringify(data.attendance));
-        if (data.config) {
-          localConfig = { ...data.config };
-          hasUnsavedChanges = true;
-          saveStatus = 'Data imported. Click Save to apply configuration changes.';
-        }
-        alert('Data imported successfully!');
-        location.reload();
-      } catch (error) {
-        alert(`Error importing data: ${error.message}`);
+      const data = JSON.parse(String(e.target.result));
+      
+      if (data.employees) localStorage.setItem('xpayroll_employees', JSON.stringify(data.employees));
+      if (data.attendance) localStorage.setItem('xpayroll_attendance', JSON.stringify(data.attendance));
+      if (data.config) {
+        localConfig = { ...data.config };
+        hasUnsavedChanges = true;
+        saveStatus = 'Data imported. Click Save to apply configuration changes.';
       }
+      
+      toasts.success('Data imported successfully!');
+      setTimeout(() => location.reload(), 2000);
     };
+    
+    reader.onerror = () => toasts.error('Error reading file');
     reader.readAsText(file);
   }
 
   const clearAllData = () => {
-    if (confirm('Are you sure you want to clear ALL data? This will delete all employees, attendance records, and reset configuration. This action cannot be undone.')) {
-      localStorage.clear();
-      location.reload();
-    }
+    showClearModal = true;
+  }
+
+  const confirmClear = () => {
+    localStorage.clear();
+    toasts.warning('All data cleared. The application will reload.');
+    setTimeout(() => location.reload(), 2000);
+    showClearModal = false;
+  }
+
+  const cancelClear = () => {
+    showClearModal = false;
   }
 </script>
 
@@ -519,3 +542,27 @@
     margin-top: 0.25rem;
   }
 </style>
+
+<Modal 
+  show={showResetModal}
+  type="warning"
+  title="Reset Configuration"
+  message="Are you sure you want to reset all configuration to defaults? This will affect all calculations."
+  confirmText="Reset"
+  cancelText="Cancel"
+  on:confirm={confirmReset}
+  on:cancel={cancelReset}
+/>
+
+<Modal 
+  show={showClearModal}
+  type="error"
+  title="Clear All Data"
+  message="Are you sure you want to clear ALL data? This will delete all employees, attendance records, and reset configuration. This action cannot be undone."
+  confirmText="Clear All"
+  cancelText="Cancel"
+  on:confirm={confirmClear}
+  on:cancel={cancelClear}
+/>
+
+<ToastContainer />

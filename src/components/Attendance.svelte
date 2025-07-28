@@ -1,6 +1,9 @@
 <script>
   import { employees, attendance, currentPeriod } from '../lib/stores.js';
   import { DAY_TYPES, validateAttendance } from '../lib/core.js';
+  import { toasts } from '../lib/toast.js';
+  import Modal from './Modal.svelte';
+  import ToastContainer from './ToastContainer.svelte';
   import Icon from '@iconify/svelte';
   
   let selectedEmployee = $state('');
@@ -8,6 +11,8 @@
   let selectedType = $state('regular');
   let entryTime = $state('');
   let exitTime = $state('');
+  let showDeleteModal = $state(false);
+  let attendanceToDelete = $state(null);
   
   $effect(() => {
     if (!selectedDate) {
@@ -39,7 +44,7 @@
   
   const recordAttendance = () => {
     if (!selectedEmployee || !selectedDate) {
-      alert('Please select an employee and date');
+      toasts.error('Please select an employee and date');
       return;
     }
     
@@ -47,31 +52,45 @@
     const validation = validateAttendance(attendanceData);
     
     if (!validation.isValid) {
-      alert(`Validation errors:\n${validation.errors.join('\n')}`);
+      toasts.error(`Validation errors: ${validation.errors.join(', ')}`);
       return;
     }
     
-    let currentAttendance = $attendance;
-    if (!currentAttendance[selectedEmployee]) {
-      currentAttendance[selectedEmployee] = {};
-    }
+    const updateAttendance = current => {
+      const updated = { ...current };
+      if (!updated[selectedEmployee]) updated[selectedEmployee] = {};
+      updated[selectedEmployee][selectedDate] = attendanceData;
+      return updated;
+    };
     
-    currentAttendance[selectedEmployee][selectedDate] = attendanceData;
-    attendance.set(currentAttendance);
+    attendance.update(updateAttendance);
     
     entryTime = '';
     exitTime = '';
-    alert('Attendance recorded successfully!');
+    toasts.success('Attendance recorded successfully!');
   }
   
   const deleteAttendance = (employeeId, date) => {
-    if (confirm('Are you sure you want to delete this attendance record?')) {
-      let currentAttendance = $attendance;
-      if (currentAttendance[employeeId]?.[date]) {
-        delete currentAttendance[employeeId][date];
-        attendance.set(currentAttendance);
-      }
-    }
+    attendanceToDelete = { employeeId, date };
+    showDeleteModal = true;
+  }
+
+  const confirmDelete = () => {
+    const updateAttendance = current => {
+      const updated = { ...current };
+      delete updated[attendanceToDelete.employeeId]?.[attendanceToDelete.date];
+      return updated;
+    };
+    
+    attendance.update(updateAttendance);
+    toasts.success('Attendance record deleted successfully!');
+    showDeleteModal = false;
+    attendanceToDelete = null;
+  }
+
+  const cancelDelete = () => {
+    showDeleteModal = false;
+    attendanceToDelete = null;
   }
   
   const getAttendanceForEmployee = (employeeId) => {
@@ -163,6 +182,7 @@
           type="date"
           bind:value={selectedDate}
           required
+          disabled={!selectedEmployee}
         />
       </div>
       
@@ -171,7 +191,7 @@
           <Icon icon="solar:tag-bold" width="1em" height="1em" />
           Day Type
         </label>
-        <select id="type-select" bind:value={selectedType}>
+        <select id="type-select" bind:value={selectedType} disabled={!selectedEmployee}>
           {#each Object.entries(DAY_TYPES) as [key, value]}
             <option value={value}>{getDayTypeLabel(value)}</option>
           {/each}
@@ -192,6 +212,7 @@
             type="time"
             bind:value={entryTime}
             required
+            disabled={!selectedEmployee}
           />
           <small class="text-muted">When employee started work</small>
         </div>
@@ -206,12 +227,13 @@
             type="time"
             bind:value={exitTime}
             required
+            disabled={!selectedEmployee}
           />
           <small class="text-muted">When employee finished work</small>
         </div>
         
         <div class="form-group-stacked">
-          <button onclick={recordAttendance}>
+          <button onclick={recordAttendance} disabled={!selectedEmployee || !selectedDate}>
             <Icon icon="solar:floppy-disk-bold" width="1.2em" height="1.2em" /> Record Attendance
           </button>
         </div>
@@ -219,7 +241,7 @@
     {:else}
       <div class="form-group-horizontal">
         <div class="form-group-stacked">
-          <button onclick={recordAttendance}>
+          <button onclick={recordAttendance} disabled={!selectedEmployee || !selectedDate}>
             <Icon icon="solar:floppy-disk-bold" width="1.2em" height="1.2em" /> Record Attendance
           </button>
         </div>
@@ -393,4 +415,17 @@
     font-size: 0.75rem;
     margin-top: 0.25rem;
   }
-</style> 
+</style>
+
+<Modal 
+  show={showDeleteModal}
+  type="warning"
+  title="Delete Attendance Record"
+  message="Are you sure you want to delete this attendance record?"
+  confirmText="Delete"
+  cancelText="Cancel"
+  on:confirm={confirmDelete}
+  on:cancel={cancelDelete}
+/>
+
+<ToastContainer /> 

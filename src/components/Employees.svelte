@@ -1,6 +1,9 @@
 <script>
   import { employees } from '../lib/stores.js'
   import { validateEmployee, EMPLOYEE_ATTRIBUTES, formatCurrency } from '../lib/core.js'
+  import { toasts } from '../lib/toast.js'
+  import Modal from './Modal.svelte'
+  import ToastContainer from './ToastContainer.svelte'
   import Icon from '@iconify/svelte';
   import { ICONS } from '../lib/icons.js';
   
@@ -15,6 +18,8 @@
   let formErrors = $state({})
   let isSubmitting = $state(false)
   let submitError = $state('')
+  let showDeleteModal = $state(false)
+  let employeeToDelete = $state(null)
   
   const defaultFormData = {
     name: '',
@@ -32,13 +37,12 @@
   
   const validateForm = () => {
     const errors = {}
+    const name = formData.name.trim()
+    const salary = Number(formData.monthlySalary)
     
-    if (!formData.name.trim()) errors.name = 'Name is required'
-    else if (formData.name.trim().length < 2) errors.name = 'Name must be at least 2 characters'
-    
-    if (!formData.monthlySalary || Number(formData.monthlySalary) <= 0) {
-      errors.monthlySalary = 'Valid salary is required'
-    }
+    if (!name) errors.name = 'Name is required'
+    if (name && name.length < 2) errors.name = 'Name must be at least 2 characters'
+    if (!salary || salary <= 0) errors.monthlySalary = 'Valid salary is required'
     
     formErrors = errors
     return Object.keys(errors).length === 0
@@ -65,14 +69,18 @@
       return
     }
     
-    employees.update(list => editingEmployee 
+    const updateList = list => editingEmployee 
       ? list.map(emp => emp.id === editingEmployee.id ? employee : emp)
       : [...list, employee]
-    )
+    
+    employees.update(updateList)
     
     resetForm()
     showAddForm = false
     isSubmitting = false
+    
+    const message = editingEmployee ? 'Employee updated successfully!' : 'Employee added successfully!'
+    toasts.success(message)
   }
   
   const editEmployee = (employee) => {
@@ -89,9 +97,20 @@
   }
   
   const deleteEmployee = (id) => {
-    if (confirm('Are you sure you want to delete this employee? This will also remove all their attendance records.')) {
-      employees.update(list => list.filter(emp => emp.id !== id))
-    }
+    employeeToDelete = $employees.find(emp => emp.id === id)
+    showDeleteModal = true
+  }
+
+  const confirmDelete = () => {
+    employees.update(list => list.filter(emp => emp.id !== employeeToDelete.id))
+    toasts.success('Employee deleted successfully!')
+    showDeleteModal = false
+    employeeToDelete = null
+  }
+
+  const cancelDelete = () => {
+    showDeleteModal = false
+    employeeToDelete = null
   }
   
   const cancelForm = () => {
@@ -284,6 +303,19 @@
     </table>
   {/if}
 </section>
+
+<Modal 
+  show={showDeleteModal}
+  type="warning"
+  title="Delete Employee"
+  message={employeeToDelete ? `Are you sure you want to delete ${employeeToDelete.name}? This will also remove all their attendance records.` : ''}
+  confirmText="Delete"
+  cancelText="Cancel"
+  on:confirm={confirmDelete}
+  on:cancel={cancelDelete}
+/>
+
+<ToastContainer />
 
 <style>
   .spinning {

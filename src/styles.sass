@@ -328,6 +328,34 @@ body
     box-shadow: 0 3px 12px color-mix(in oklab, var(--primary) 40%, transparent)
     transform: translateY(-1px)
 
+  &:disabled
+    background: color-mix(in oklab, var(--bg-muted) 60%, transparent)
+    color: var(--fg-muted)
+    cursor: not-allowed
+    opacity: 0.6
+    transform: none
+    box-shadow: 0 1px 4px color-mix(in oklab, var(--bg-muted) 20%, transparent)
+
+    &:hover
+      background: color-mix(in oklab, var(--bg-muted) 60%, transparent)
+      transform: none
+      box-shadow: 0 1px 4px color-mix(in oklab, var(--bg-muted) 20%, transparent)
+
+    &:focus
+      background: color-mix(in oklab, var(--bg-muted) 60%, transparent)
+      transform: none
+      box-shadow: 0 1px 4px color-mix(in oklab, var(--bg-muted) 20%, transparent)
+
+  &:read-only
+    background: color-mix(in oklab, var(--bg-muted) 40%, transparent)
+    color: var(--fg-muted)
+    cursor: default
+
+    &:hover
+      background: color-mix(in oklab, var(--bg-muted) 40%, transparent)
+      transform: none
+      box-shadow: 0 2px 8px color-mix(in oklab, var(--secondary) 25%, transparent)
+
   &.error
     background: color-mix(in oklab, var(--error) 25%, transparent)
     box-shadow: 0 2px 8px color-mix(in oklab, var(--error) 40%, transparent)
@@ -397,6 +425,19 @@ body
     transform: translateY(-1px)
     box-shadow: 0 3px 12px color-mix(in oklab, var(--primary) 40%, transparent)
 
+  &:disabled
+    background: color-mix(in oklab, var(--bg-muted) 60%, transparent)
+    color: var(--fg-muted)
+    cursor: not-allowed
+    opacity: 0.6
+    transform: none
+    box-shadow: 0 1px 4px color-mix(in oklab, var(--bg-muted) 20%, transparent)
+
+    &:hover
+      background: color-mix(in oklab, var(--bg-muted) 60%, transparent)
+      transform: none
+      box-shadow: 0 1px 4px color-mix(in oklab, var(--bg-muted) 20%, transparent)
+
 %button-secondary
   @extend %button-base, %bg-subtle, %glass
   color: var(--fg)
@@ -413,6 +454,19 @@ body
     transform: translateY(-1px)
     box-shadow: 0 3px 12px color-mix(in oklab, var(--secondary) 40%, transparent)
 
+  &:disabled
+    background: color-mix(in oklab, var(--bg-muted) 60%, transparent)
+    color: var(--fg-muted)
+    cursor: not-allowed
+    opacity: 0.6
+    transform: none
+    box-shadow: 0 1px 4px color-mix(in oklab, var(--bg-muted) 20%, transparent)
+
+    &:hover
+      background: color-mix(in oklab, var(--bg-muted) 60%, transparent)
+      transform: none
+      box-shadow: 0 1px 4px color-mix(in oklab, var(--bg-muted) 20%, transparent)
+
 %button-danger
   @extend %button-base, %bg-error, %glass
   color: white
@@ -428,6 +482,19 @@ body
     background: color-mix(in oklab, var(--error) 100%, transparent)
     transform: translateY(-1px)
     box-shadow: 0 3px 12px color-mix(in oklab, var(--error) 40%, transparent)
+
+  &:disabled
+    background: color-mix(in oklab, var(--bg-muted) 60%, transparent)
+    color: var(--fg-muted)
+    cursor: not-allowed
+    opacity: 0.6
+    transform: none
+    box-shadow: 0 1px 4px color-mix(in oklab, var(--bg-muted) 20%, transparent)
+
+    &:hover
+      background: color-mix(in oklab, var(--bg-muted) 60%, transparent)
+      transform: none
+      box-shadow: 0 1px 4px color-mix(in oklab, var(--bg-muted) 20%, transparent)
 
 %button-circular
   @extend %button-secondary, %circular
@@ -840,6 +907,115 @@ div:has(> h4)
   @media (min-width: $tablet)
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr))
 
+// Toast Notifications
+%toast-base
+  position: fixed
+  top: 1rem
+  right: 1rem
+  z-index: 2000
+  padding: 1rem 1.5rem
+  border-radius: 1rem
+  @extend %glass, %transition
+  max-width: 400px
+  box-shadow: 0 8px 32px color-mix(in oklab, var(--primary) 20%, transparent)
+  display: flex
+  align-items: center
+  gap: 0.75rem
+  font-weight: 500
+  transform: translateX(100%)
+  opacity: 0
+
+  &.show
+    transform: translateX(0)
+    opacity: 1
+
+  @media (max-width: $mobile)
+    right: 0.5rem
+    left: 0.5rem
+    max-width: none
+    transform: translateY(-100%)
+    top: 0.5rem
+
+    &.show
+      transform: translateY(0)
+
+%toast-success
+  @extend %toast-base
+  background: color-mix(in oklab, var(--success) 20%, transparent)
+  color: var(--success)
+  border-left: 4px solid var(--success)
+
+%toast-error
+  @extend %toast-base
+  background: color-mix(in oklab, var(--error) 20%, transparent)
+  color: var(--error)
+  border-left: 4px solid var(--error)
+
+%toast-warning
+  @extend %toast-base
+  background: color-mix(in oklab, var(--warning) 20%, transparent)
+  color: var(--warning)
+  border-left: 4px solid var(--warning)
+
+%toast-info
+  @extend %toast-base
+  background: color-mix(in oklab, var(--secondary) 20%, transparent)
+  color: var(--secondary)
+  border-left: 4px solid var(--secondary)
+
+// Modal/Dialog
+%modal-overlay
+  position: fixed
+  top: 0
+  left: 0
+  right: 0
+  bottom: 0
+  background: color-mix(in oklab, var(--bg) 80%, transparent)
+  backdrop-filter: blur(8px)
+  z-index: 1500
+  display: flex
+  align-items: center
+  justify-content: center
+  padding: 1rem
+  opacity: 0
+  visibility: hidden
+  @extend %transition
+
+  &.show
+    opacity: 1
+    visibility: visible
+
+%modal-content
+  background: color-mix(in oklab, var(--primary) 8%, transparent)
+  @extend %glass, %shadow-card
+  border-radius: 1.5rem
+  padding: 2rem
+  max-width: 500px
+  width: 100%
+  max-height: 80vh
+  overflow-y: auto
+  transform: scale(0.9) translateY(20px)
+  @extend %transition
+
+  .show &
+    transform: scale(1) translateY(0)
+
+  @media (max-width: $mobile)
+    padding: 1.5rem
+    border-radius: 1rem
+
+%modal-header
+  @extend %flex-between
+  margin-bottom: 1.5rem
+  padding-bottom: 1rem
+  border-bottom: 1px solid color-mix(in oklab, var(--border-muted) 50%, transparent)
+
+%modal-actions
+  @extend %flex-wrap
+  justify-content: flex-end
+  gap: 0.75rem
+  margin-top: 2rem
+
 // Animations
 @keyframes fadeIn
   from
@@ -855,9 +1031,31 @@ div:has(> h4)
     opacity: 1
     transform: translateY(0)
 
+@keyframes slideInRight
+  from
+    opacity: 0
+    transform: translateX(100%)
+  to
+    opacity: 1
+    transform: translateX(0)
+
+@keyframes slideInTop
+  from
+    opacity: 0
+    transform: translateY(-100%)
+  to
+    opacity: 1
+    transform: translateY(0)
+
 .fade-in
   animation: fadeIn 0.3s ease-in
 
 .slide-up
   animation: slideUp 0.3s ease-out
+
+.slide-in-right
+  animation: slideInRight 0.3s ease-out
+
+.slide-in-top
+  animation: slideInTop 0.3s ease-out
 

@@ -1,11 +1,16 @@
 <script>
   import { employees, attendance, config, currentPeriod } from '../lib/stores.js';
   import { calculateSalary, calculateAttendanceSummary, formatCurrency } from '../lib/core.js';
+  import { toasts } from '../lib/toast.js';
+  import Modal from './Modal.svelte';
+  import ToastContainer from './ToastContainer.svelte';
   import Icon from '@iconify/svelte';
   
   let selectedEmployee = $state('');
   let adjustmentAmount = $state('');
   let adjustmentComment = $state('');
+  let showDeleteModal = $state(false);
+  let adjustmentToDelete = $state(null);
   
   const createAdjustment = (employeeId) => ({
     id: Date.now().toString(),
@@ -16,28 +21,38 @@
   
   const addAdjustment = (employeeId) => {
     if (!adjustmentAmount || Number(adjustmentAmount) === 0) {
-      alert('Please enter a valid adjustment amount');
+      toasts.error('Please enter a valid adjustment amount');
       return;
     }
     
     const adjustment = createAdjustment(employeeId);
+    const currentAdjustments = JSON.parse(localStorage.getItem(`xpayroll_adjustments_${employeeId}`) || '[]');
+    const updatedAdjustments = [...currentAdjustments, adjustment];
     
-    // Get current adjustments for this employee
-    let currentAdjustments = JSON.parse(localStorage.getItem(`xpayroll_adjustments_${employeeId}`) || '[]');
-    currentAdjustments.push(adjustment);
-    localStorage.setItem(`xpayroll_adjustments_${employeeId}`, JSON.stringify(currentAdjustments));
+    localStorage.setItem(`xpayroll_adjustments_${employeeId}`, JSON.stringify(updatedAdjustments));
     
     adjustmentAmount = '';
     adjustmentComment = '';
-    alert('Adjustment added successfully!');
+    toasts.success('Adjustment added successfully!');
   }
   
   const removeAdjustment = (employeeId, adjustmentId) => {
-    if (confirm('Are you sure you want to remove this adjustment?')) {
-      let currentAdjustments = JSON.parse(localStorage.getItem(`xpayroll_adjustments_${employeeId}`) || '[]');
-      currentAdjustments = currentAdjustments.filter(adj => adj.id !== adjustmentId);
-      localStorage.setItem(`xpayroll_adjustments_${employeeId}`, JSON.stringify(currentAdjustments));
-    }
+    adjustmentToDelete = { employeeId, adjustmentId };
+    showDeleteModal = true;
+  }
+
+  const confirmDelete = () => {
+    const currentAdjustments = JSON.parse(localStorage.getItem(`xpayroll_adjustments_${adjustmentToDelete.employeeId}`) || '[]');
+    const updatedAdjustments = currentAdjustments.filter(adj => adj.id !== adjustmentToDelete.adjustmentId);
+    localStorage.setItem(`xpayroll_adjustments_${adjustmentToDelete.employeeId}`, JSON.stringify(updatedAdjustments));
+    toasts.success('Adjustment removed successfully!');
+    showDeleteModal = false;
+    adjustmentToDelete = null;
+  }
+
+  const cancelDelete = () => {
+    showDeleteModal = false;
+    adjustmentToDelete = null;
   }
   
   const getAdjustments = (employeeId) => {
@@ -131,6 +146,7 @@
           type="number"
           bind:value={adjustmentAmount}
           placeholder="Enter positive or negative amount"
+          disabled={!selectedEmployee}
         />
         <small class="text-muted">Positive for bonus, negative for deduction</small>
       </div>
@@ -145,6 +161,7 @@
           type="text"
           bind:value={adjustmentComment}
           placeholder="Reason for adjustment"
+          disabled={!selectedEmployee}
         />
       </div>
       
@@ -329,6 +346,19 @@
     margin-top: 0.25rem;
   }
 </style>
+
+<Modal 
+  show={showDeleteModal}
+  type="warning"
+  title="Remove Adjustment"
+  message="Are you sure you want to remove this adjustment?"
+  confirmText="Remove"
+  cancelText="Cancel"
+  on:confirm={confirmDelete}
+  on:cancel={cancelDelete}
+/>
+
+<ToastContainer />
 
 
 
