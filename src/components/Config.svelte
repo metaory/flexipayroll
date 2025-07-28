@@ -493,7 +493,7 @@
   .config-form {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 1.5rem;
     margin-top: 1rem;
   }
 

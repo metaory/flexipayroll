@@ -111,77 +111,88 @@
     <h3><Icon icon={ICONS.money} width="1.2em" height="1.2em" /> Currency Settings</h3>
     <p class="text-muted">Configure the currency format used for displaying amounts throughout the application.</p>
 
-    <div class="form-group-horizontal">
-      <div class="form-group-stacked">
-        <label for="currency-code">
-          <Icon icon={ICONS.money} width="1em" height="1em" />
-          Currency Code
-        </label>
-        <input
-          id="currency-code"
-          type="text"
-          value={localSettings.currency.code}
-          oninput={e => updateLocalSetting('currency', { ...localSettings.currency, code: e.currentTarget.value.toUpperCase() })}
-          maxlength="3"
-          placeholder="USD"
-        />
-        <small class="text-muted">ISO 4217 currency code (e.g., USD, EUR, IDR)</small>
+    <div class="currency-settings-layout">
+      <div class="currency-settings">
+        <div class="form-group-horizontal">
+          <div class="form-group-stacked">
+            <label for="currency-code">
+              <Icon icon={ICONS.money} width="1em" height="1em" />
+              Currency Code
+            </label>
+            <input
+              id="currency-code"
+              type="text"
+              value={localSettings.currency.code}
+              oninput={e => updateLocalSetting('currency', { ...localSettings.currency, code: e.currentTarget.value.toUpperCase() })}
+              maxlength="3"
+              placeholder="USD"
+            />
+            <small class="text-muted">ISO 4217 currency code</small>
+          </div>
+
+          <div class="form-group-stacked">
+            <label for="currency-symbol">
+              <Icon icon={ICONS.money} width="1em" height="1em" />
+              Currency Symbol
+            </label>
+            <input
+              id="currency-symbol"
+              type="text"
+              value={localSettings.currency.symbol}
+              oninput={e => updateLocalSetting('currency', { ...localSettings.currency, symbol: e.currentTarget.value })}
+              maxlength="5"
+            />
+            <small class="text-muted">Symbol to display</small>
+          </div>
+
+          <div class="form-group-stacked">
+            <label for="currency-locale">
+              <Icon icon={ICONS.money} width="1em" height="1em" />
+              Locale
+            </label>
+            <input
+              id="currency-locale"
+              type="text"
+              value={localSettings.currency.locale}
+              oninput={e => updateLocalSetting('currency', { ...localSettings.currency, locale: e.currentTarget.value })}
+              placeholder="en-US"
+            />
+            <small class="text-muted">Number formatting locale</small>
+          </div>
+        </div>
+
+        <div class="form-group-stacked">
+          <label class="switch-label">
+            <Icon icon={ICONS.money} width="1em" height="1em" />
+            Symbol Position
+          </label>
+          <div class="switch-container">
+            <button 
+              class="switch-button {localSettings.currency.position === 'before' ? 'active' : ''}"
+              onclick={() => updateLocalSetting('currency', { ...localSettings.currency, position: 'before' })}
+            >
+              Before
+            </button>
+            <button 
+              class="switch-button {localSettings.currency.position === 'after' ? 'active' : ''}"
+              onclick={() => updateLocalSetting('currency', { ...localSettings.currency, position: 'after' })}
+            >
+              After
+            </button>
+          </div>
+          <small class="text-muted">Symbol position relative to amount</small>
+        </div>
       </div>
 
-      <div class="form-group-stacked">
-        <label for="currency-symbol">
-          <Icon icon={ICONS.money} width="1em" height="1em" />
-          Currency Symbol
-        </label>
-        <input
-          id="currency-symbol"
-          type="text"
-          value={localSettings.currency.symbol}
-          oninput={e => updateLocalSetting('currency', { ...localSettings.currency, symbol: e.currentTarget.value })}
-          maxlength="5"
-        />
-        <small class="text-muted">Symbol to display (e.g., Rp, $, €)</small>
-      </div>
-
-      <div class="form-group-stacked">
-        <label for="currency-locale">
-          <Icon icon={ICONS.money} width="1em" height="1em" />
-          Locale
-        </label>
-        <input
-          id="currency-locale"
-          type="text"
-          value={localSettings.currency.locale}
-          oninput={e => updateLocalSetting('currency', { ...localSettings.currency, locale: e.currentTarget.value })}
-          placeholder="en-US"
-        />
-        <small class="text-muted">Locale for number formatting (e.g., en-US, id-ID, de-DE)</small>
-      </div>
-
-      <div class="form-group-stacked">
-        <label for="currency-position">
-          <Icon icon={ICONS.money} width="1em" height="1em" />
-          Symbol Position
-        </label>
-        <input
-          id="currency-position"
-          type="text"
-          value={localSettings.currency.position}
-          oninput={e => updateLocalSetting('currency', { ...localSettings.currency, position: e.currentTarget.value })}
-          placeholder="before"
-        />
-        <small class="text-muted">Position: "before" (e.g., $100) or "after" (e.g., 100€)</small>
-      </div>
-    </div>
-
-    <div class="form-group-stacked">
-      <h4>Preview</h4>
       <div class="currency-preview">
-        <strong>Sample amounts formatted with current settings:</strong>
-        <div class="preview-amounts">
-          <span>{formatCurrency(1000000, localSettings.currency)}</span>
-          <span>{formatCurrency(500000, localSettings.currency)}</span>
-          <span>{formatCurrency(10000, localSettings.currency)}</span>
+        <h4>Preview</h4>
+        <div class="preview-content">
+          <strong>Sample amounts formatted with current settings:</strong>
+          <div class="preview-amounts">
+            <span>{formatCurrency(1000000, localSettings.currency)}</span>
+            <span>{formatCurrency(500000, localSettings.currency)}</span>
+            <span>{formatCurrency(10000, localSettings.currency)}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -251,7 +262,7 @@
   .config-form {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 1.5rem;
     margin-top: 1rem;
   }
 
@@ -396,6 +407,38 @@
     flex-wrap: wrap;
   }
 
+  .currency-settings-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  .currency-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .currency-preview {
+    background: color-mix(in oklab, var(--bg-muted) 20%, transparent);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    border: 1px solid color-mix(in oklab, var(--primary) 8%, transparent);
+    height: fit-content;
+  }
+
+  .preview-content {
+    margin-top: 1rem;
+  }
+
+  .preview-amounts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+
   .preview-amounts span {
     background: color-mix(in oklab, var(--primary) 10%, transparent);
     padding: 0.5rem 1rem;
@@ -404,6 +447,51 @@
     font-weight: bold;
     color: var(--primary);
     border: 1px solid color-mix(in oklab, var(--primary) 15%, transparent);
+  }
+
+  .switch-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+
+  .switch-container {
+    display: flex;
+    background: color-mix(in oklab, var(--bg-muted) 30%, transparent);
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+    gap: 0.25rem;
+  }
+
+  .switch-button {
+    flex: 1;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 0.25rem;
+    background: transparent;
+    color: var(--fg);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+  }
+
+  .switch-button.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 2px 8px color-mix(in oklab, var(--primary) 30%, transparent);
+  }
+
+  .switch-button:hover:not(.active) {
+    background: color-mix(in oklab, var(--bg-muted) 50%, transparent);
+  }
+
+  @media (max-width: 768px) {
+    .currency-settings-layout {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
   }
 
 

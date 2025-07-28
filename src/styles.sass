@@ -238,12 +238,12 @@ body
   @extend %grid
   grid-template-columns: 1fr
   align-items: start
-  gap: 0.75rem
-  margin-bottom: 1.5rem
+  gap: 0.5rem
+  margin-bottom: 1rem
 
   @media (min-width: $mobile)
-    grid-template-columns: 200px 1fr
-    gap: 1.5rem
+    grid-template-columns: 180px 1fr
+    gap: 1rem
 
   label
     grid-column: 1
@@ -262,8 +262,8 @@ body
 %form-group-stacked
   @extend %grid
   grid-template-columns: 1fr
-  gap: 0.75rem
-  margin-bottom: 1.5rem
+  gap: 0.5rem
+  margin-bottom: 1rem
 
   label
     @extend %label-text
@@ -278,13 +278,13 @@ body
 
 %form-group-horizontal
   @extend %grid
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr))
-  gap: 2rem
-  margin-bottom: 2rem
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr))
+  gap: 1.5rem
+  margin-bottom: 1.5rem
 
   @media (max-width: $mobile)
     grid-template-columns: 1fr
-    gap: 1.5rem
+    gap: 1rem
 
   .form-group-stacked
     margin-bottom: 0
@@ -298,20 +298,20 @@ body
   h3
     @extend %flex
     gap: 0.5rem
-    margin-bottom: 1rem
-    padding-bottom: 0.75rem
+    margin-bottom: 0.75rem
+    padding-bottom: 0.5rem
     border-bottom: 1px solid color-mix(in oklab, var(--primary) 15%, transparent)
 
   p
-    margin-bottom: 1.5rem
-
-  .form-group-horizontal
     margin-bottom: 1rem
 
+  .form-group-horizontal
+    margin-bottom: 0.75rem
+
   .form-group-stacked
-    padding: 1rem
+    padding: 0.75rem
     background: color-mix(in oklab, var(--bg-muted) 20%, transparent)
-    border-radius: 0.75rem
+    border-radius: 0.5rem
     border: 1px solid color-mix(in oklab, var(--primary) 8%, transparent)
 
     &:hover
@@ -319,18 +319,18 @@ body
       border-color: color-mix(in oklab, var(--primary) 15%, transparent)
 
     label
-      margin-bottom: 0.5rem
+      margin-bottom: 0.25rem
 
     input
-      margin-bottom: 0.5rem
+      margin-bottom: 0.25rem
 
     small
       display: block
-      margin-top: 0.25rem
+      margin-top: 0.125rem
 
 // Enhanced Form Field Styling
 %form-field
-  padding: 1rem 1.25rem
+  padding: 0.75rem 1rem
   @extend %color-secondary
   @extend %glass, %transition, %focus
   border-radius: 1rem
@@ -952,9 +952,9 @@ input, select, textarea
   @extend %flex
   gap: 0.5rem
   @extend %font-weight-bold
-  font-size: $font
+  font-size: 0.875rem
   color: var(--fg)
-  margin-bottom: 0.5rem
+  margin-bottom: 0.25rem
 
 %heading-size-large
   font-size: 2rem
@@ -1171,7 +1171,11 @@ footer
 
 // Components - Fixed section styling
 section
-  @extend %card, %spacing
+  @extend %card
+  margin-bottom: 1.5rem
+
+  &:last-child
+    margin-bottom: 0
 
 h1, h2, h3, h4, h5, h6
   @extend %heading
@@ -1193,11 +1197,11 @@ h3
 h4
   @extend %heading-size-xs
   color: var(--fg)
-  margin: 1.5rem 0 0.5rem
+  margin: 1rem 0 0.5rem
 
 p
   @extend %text-muted
-  margin-bottom: 1.5rem
+  margin-bottom: 1rem
 
 select
   background-image: none

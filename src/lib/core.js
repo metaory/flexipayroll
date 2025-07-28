@@ -221,15 +221,19 @@ export const EMPLOYEE_ATTRIBUTES = {
 }
 
 export const formatCurrency = (amount, currencyConfig = null) => {
-  // If no currency config provided, use default IDR
-  const config = currencyConfig || { code: 'IDR', locale: 'id-ID' }
+  // If no currency config provided, use default USD
+  const config = currencyConfig || { code: 'USD', symbol: '$', locale: 'en-US', position: 'before' }
   
-  return new Intl.NumberFormat(config.locale, {
-    style: 'currency',
-    currency: config.code,
+  // Format the number using the locale
+  const formattedNumber = new Intl.NumberFormat(config.locale, {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
   }).format(amount)
+  
+  // Apply custom symbol and position
+  return config.position === 'after' 
+    ? `${formattedNumber}${config.symbol}`
+    : `${config.symbol}${formattedNumber}`
 }
 
 export const calculateSalary = (employee, attendanceData, adjustments = [], config = DEFAULT_CONFIG) => 

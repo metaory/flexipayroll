@@ -163,7 +163,7 @@
     {/if}
     
     <form>
-      <div class="form-group">
+      <div class="form-group-stacked">
         <label for="employee-name">
           <Icon icon={ICONS.user} width="1em" height="1em" />
           Full Name
@@ -180,7 +180,7 @@
         {/if}
       </div>
       
-      <div class="form-group">
+      <div class="form-group-stacked">
         <label for="employee-gender">
           <Icon icon={ICONS.male} width="1em" height="1em" />
           Gender
@@ -193,7 +193,7 @@
         <small class="text-muted">Used for reporting and identification</small>
       </div>
       
-      <div class="form-group">
+      <div class="form-group-stacked">
         <label for="employee-marital">
           <Icon icon={ICONS.heart} width="1em" height="1em" />
           Marital Status
@@ -206,7 +206,7 @@
         <small class="text-muted">Married employees receive Bonus T automatically</small>
       </div>
       
-      <div class="form-group">
+      <div class="form-group-stacked">
         <label for="employee-salary">
           <Icon icon={ICONS.wallet} width="1em" height="1em" />
           Monthly Base Salary (IDR)
