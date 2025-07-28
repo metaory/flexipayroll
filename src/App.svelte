@@ -59,48 +59,5 @@
 <footer>
   <img src="/logo.jpg" alt="XPayroll" width="48" height="48" />
   <p>Modern payroll management system for efficient business operations.</p>
-  
-  <section>
-    <h3>Product</h3>
-    <ul>
-      <li><button>Features</button></li>
-      <li><button>Pricing</button></li>
-      <li><button>API</button></li>
-      <li><button>Documentation</button></li>
-    </ul>
-  </section>
-  
-  <section>
-    <h3>Company</h3>
-    <ul>
-      <li><button>About</button></li>
-      <li><button>Blog</button></li>
-      <li><button>Careers</button></li>
-      <li><button>Contact</button></li>
-    </ul>
-  </section>
-  
-  <section>
-    <h3>Legal</h3>
-    <ul>
-      <li><button>Privacy</button></li>
-      <li><button>Terms</button></li>
-      <li><button>Security</button></li>
-      <li><button>Compliance</button></li>
-    </ul>
-  </section>
-  
   <p>© 2025 XPayroll. All rights reserved.</p>
-  
-  <nav>
-    <button aria-label="GitHub">
-      <Icon icon="solar:github-bold" width="1.25rem" height="1.25rem" />
-    </button>
-    <button aria-label="Twitter">
-      <Icon icon="solar:twitter-bold" width="1.25rem" height="1.25rem" />
-    </button>
-    <button aria-label="LinkedIn">
-      <Icon icon="solar:linkedin-bold" width="1.25rem" height="1.25rem" />
-    </button>
-  </nav>
 </footer>

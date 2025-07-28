@@ -15,17 +15,17 @@ $tablet: 1024px
 // Colors
 $base: #5533ff
 $primary: $base
-$secondary: color.adjust($base, $hue: 20deg)
+$secondary: color.adjust($base, $hue: 110deg)
 $success: color.adjust($base, $hue: 140deg)
 $warning: color.adjust($base, $hue: 45deg)
 $error: color.adjust($base, $hue: 348deg)
 
 // CSS Variables
 :root
-  --bg: #{color.adjust($base, $hue: 45deg, $saturation: -60%, $lightness: 45%, $alpha: 0.2)}
-  --bg-muted: #{color.adjust($base, $hue: 45deg, $saturation: -40%, $lightness: 35%)}
-  --fg: #{color.adjust($base, $lightness: -40%)}
-  --fg-muted: #{color.adjust($base, $lightness: -20%)}
+  --bg: #{color.adjust($base, $hue: 45deg, $saturation: -70%, $lightness: 50%, $alpha: 0.15)}
+  --bg-muted: #{color.adjust($base, $hue: 45deg, $saturation: -50%, $lightness: 40%)}
+  --fg: #{color.adjust($base, $lightness: -45%)}
+  --fg-muted: #{color.adjust($base, $lightness: -25%)}
   --primary: #{$primary}
   --secondary: #{$secondary}
   --success: #{$success}
@@ -36,15 +36,15 @@ $error: color.adjust($base, $hue: 348deg)
   --border-muted: #{color.adjust($base, $hue: 45deg, $saturation: -50%, $lightness: 40%, $alpha: 0.4)}
 
 .dark
-  --bg: #{color.adjust($base, $hue: 25deg, $saturation: -50%, $lightness: -35%, $alpha: -0.0008)}
-  --bg-muted: #{color.adjust($base, $hue: 25deg, $saturation: -30%, $lightness: -25%)}
-  --fg: #{color.adjust($base, $lightness: 40%)}
-  --fg-muted: #{color.adjust($base, $lightness: 20%)}
-  --primary: #{color.adjust($primary, $lightness: 15%)}
-  --secondary: #{color.adjust($secondary, $lightness: 15%)}
-  --success: #{color.adjust($success, $lightness: 15%)}
-  --warning: #{color.adjust($warning, $lightness: 15%)}
-  --error: #{color.adjust($error, $lightness: 15%)}
+  --bg: #{color.adjust($base, $hue: 25deg, $saturation: -60%, $lightness: -40%, $alpha: -0.001)}
+  --bg-muted: #{color.adjust($base, $hue: 25deg, $saturation: -40%, $lightness: -30%)}
+  --fg: #{color.adjust($base, $lightness: 45%)}
+  --fg-muted: #{color.adjust($base, $lightness: 25%)}
+  --primary: #{color.adjust($primary, $lightness: 20%)}
+  --secondary: #{color.adjust($secondary, $lightness: 20%)}
+  --success: #{color.adjust($success, $lightness: 20%)}
+  --warning: #{color.adjust($warning, $lightness: 20%)}
+  --error: #{color.adjust($error, $lightness: 20%)}
   --border-muted: #{color.adjust($base, $hue: 25deg, $saturation: -40%, $lightness: -30%, $alpha: 0.4)}
 
 // Reset & Base
@@ -151,10 +151,10 @@ body
   min-height: 100vh
   max-width: 1200px
   margin: 0 auto
-  padding: 0 $padding
+  padding: 0 2rem
   padding-top: 3rem
   overflow-x: hidden
-
+  
   @media (max-width: $mobile)
     padding: 0 1rem
     padding-top: 2rem
@@ -357,12 +357,13 @@ body
   background: color-mix(in oklab, var(--primary) 8%, transparent)
   @extend %glass, %transition
   padding: 2.5rem
-  overflow: hidden
+  margin: 0 -1rem
   border-radius: 1.5rem
   box-shadow: 0 8px 32px color-mix(in oklab, var(--primary) 15%, transparent)
-
+  
   @media (max-width: $mobile)
     padding: 1.5rem
+    margin: 0 -0.5rem
     border-radius: 1rem
 
 %button-base
@@ -492,10 +493,10 @@ body
   left: 0
   right: 0
   z-index: 1000
-  background: var(--bg)
-  border-bottom: 1px solid var(--bg-muted)
-  box-shadow: var(--shadow)
-  overflow: hidden
+  background: color-mix(in oklab, var(--bg) 85%, transparent)
+  backdrop-filter: blur(20px)
+  border-bottom: 1px solid color-mix(in oklab, var(--primary) 20%, transparent)
+  box-shadow: 0 4px 20px color-mix(in oklab, var(--primary) 15%, transparent)
 
   .header-content
     @extend %flex-between
@@ -503,9 +504,8 @@ body
     margin: 0 auto
     padding: 0 $padding
     height: 4rem
-    overflow: hidden
     gap: 1rem
-
+    
     @media (max-width: $mobile)
       padding: 0 1rem
       height: 3.5rem
@@ -521,7 +521,7 @@ body
       flex-shrink: 0
       &:hover
         @extend %hover-lift
-
+      
       @media (max-width: $mobile)
         font-size: 1rem
         gap: 0.25rem
@@ -534,28 +534,48 @@ body
 
     .main-nav
       @extend %flex
-      gap: 0.5rem
-      overflow: hidden
+      gap: 0.75rem
       flex-shrink: 0
-
+      
       @media (max-width: $mobile)
-        gap: 0.25rem
+        gap: 0.5rem
 
       button
-        @extend %button-secondary
+        @extend %flex
+        gap: 0.5rem
+        padding: 0.75rem 1.25rem
+        background: transparent
+        color: var(--fg-muted)
+        font-size: $font
+        @extend %font-weight-medium
+        border-radius: 1rem
+        @extend %transition
         flex-shrink: 0
         white-space: nowrap
         min-width: fit-content
-
+        
+        &:hover
+          background: color-mix(in oklab, var(--secondary) 20%, transparent)
+          color: var(--fg)
+          transform: translateY(-1px)
+        
+        &.active
+          background: color-mix(in oklab, var(--primary) 25%, transparent)
+          color: var(--primary)
+          box-shadow: 0 4px 16px color-mix(in oklab, var(--primary) 30%, transparent)
+        
         @media (max-width: $mobile)
-          padding: 0.4rem 0.6rem
-          font-size: 0.7rem
+          padding: 0.5rem 0.75rem
+          font-size: 0.75rem
+          gap: 0.25rem
 
     .theme-toggle
       @extend %button-circular
+      background: color-mix(in oklab, var(--secondary) 15%, transparent)
       &:hover
+        background: color-mix(in oklab, var(--secondary) 25%, transparent)
         transform: translateY(-2px) rotate(15deg)
-
+      
       @media (max-width: $mobile)
         width: 2rem
         height: 2rem
@@ -572,70 +592,28 @@ footer
   @extend %margin-top
   padding: 3rem 0
   @extend %bg-subtle, %glass
-  @extend %grid-responsive-3
-  overflow: hidden
-
+  text-align: center
+  
   @media (max-width: $mobile)
     padding: 2rem 0
 
   > img
-    grid-column: 1 / -1
     justify-self: center
     @extend %interactive
+    margin-bottom: 1rem
 
   > p:first-of-type
-    grid-column: 1 / -1
     @extend %text-muted
     text-align: center
-    margin-bottom: 0
+    margin-bottom: 1rem
     @extend %opacity-muted
 
-  > section
-    @extend %spacing
-
-    h3
-      @extend %heading-primary
-      @extend %margin-bottom
-      @extend %heading-size-xs
-      @extend %opacity-muted
-
-    ul
-      list-style: none
-      @extend %spacing
-
-      button
-        @extend %button-secondary
-        width: 100%
-        justify-content: flex-start
-        background: transparent
-        border: none
-        padding: 0.5rem
-        text-align: left
-        @extend %opacity-muted
-        &:hover
-          color: var(--primary)
-          @extend %hover-opacity
-          transform: translateX(4px)
-
   > p:last-of-type
-    grid-column: 1 / -1
     @extend %text-muted
     text-align: center
     font-size: $font
-    margin-top: 0
+    margin-top: 1rem
     @extend %opacity-subtle
-
-  > nav
-    grid-column: 1 / -1
-    @extend %flex
-    justify-content: center
-    gap: 0.5rem
-    margin-top: 0
-
-    button
-      @extend %button-circular, %opacity-muted
-      &:hover
-        @extend %hover-opacity, %hover-lift
 
 // Components
 section
