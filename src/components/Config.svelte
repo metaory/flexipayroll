@@ -36,21 +36,21 @@
     hasUnsavedChanges = true;
     saveStatus = '';
   }
-  
+
   const saveConfig = () => {
     config.set(localConfig);
     hasUnsavedChanges = false;
     saveStatus = 'Configuration saved successfully!';
     setTimeout(() => saveStatus = '', 3000);
   }
-  
+
   const cancelChanges = () => {
     localConfig = { ...$config };
     hasUnsavedChanges = false;
     saveStatus = 'Changes cancelled';
     setTimeout(() => saveStatus = '', 3000);
   }
-  
+
   const resetToDefaults = () => {
     if (confirm('Are you sure you want to reset all configuration to defaults? This will affect all calculations.')) {
       localConfig = { ...DEFAULT_CONFIG };
@@ -58,14 +58,14 @@
       saveStatus = 'Configuration reset to defaults. Click Save to apply changes.';
     }
   }
-  
+
   const exportData = () => {
     const data = {
       employees: JSON.parse(localStorage.getItem('xpayroll_employees') || '[]'),
       attendance: JSON.parse(localStorage.getItem('xpayroll_attendance') || '{}'),
       config: localConfig
     };
-    
+
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -74,11 +74,11 @@
     a.click();
     URL.revokeObjectURL(url);
   }
-  
+
   const importData = (event) => {
     const file = event.target.files[0];
     if (!file) return;
-    
+
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
@@ -98,7 +98,7 @@
     };
     reader.readAsText(file);
   }
-  
+
   const clearAllData = () => {
     if (confirm('Are you sure you want to clear ALL data? This will delete all employees, attendance records, and reset configuration. This action cannot be undone.')) {
       localStorage.clear();
@@ -118,8 +118,8 @@
   {#if hasUnsavedChanges}
     <div class="save-banner-fixed">
       <div class="save-banner-content">
-        <Icon icon="solar:info-circle-bold" width="1.2em" height="1.2em" />
-        <span><strong>Unsaved Changes:</strong> You have configuration changes that need to be saved</span>
+        <Icon icon="solar:danger-triangle-bold" width="3em" height="3em" />
+        <span><strong>Unsaved Changes</strong> You have configuration changes that need to be saved</span>
       </div>
       <div class="save-actions">
         <button class="secondary" onclick={cancelChanges}>
@@ -145,14 +145,14 @@
     <section class="config-section">
       <h3><Icon icon="solar:clock-circle-bold" width="1.2em" height="1.2em" /> Working Time Settings</h3>
       <p style="color: var(--fg-muted);">These settings determine how daily and hourly rates are calculated for all employees</p>
-      
+
       <div class="form-group-horizontal">
         <div class="form-group-stacked">
           <label for="working-days">
             <Icon icon="solar:calendar-bold" width="1em" height="1em" />
             Working Days per Month
           </label>
-          <input 
+          <input
             id="working-days"
             type="number"
             value={localConfig.workingDaysPerMonth}
@@ -162,13 +162,13 @@
           />
           <small style="color: var(--fg-muted);">Used to calculate daily rate: Monthly Salary ÷ Working Days</small>
         </div>
-        
+
         <div class="form-group-stacked">
           <label for="workday-hours">
             <Icon icon="solar:clock-bold" width="1em" height="1em" />
             Standard Workday Hours
           </label>
-          <input 
+          <input
             id="workday-hours"
             type="number"
             value={localConfig.workdayHours}
@@ -185,14 +185,14 @@
     <section class="config-section">
       <h3><Icon icon="solar:gift-bold" width="1.2em" height="1.2em" /> Bonus Configuration</h3>
       <p style="color: var(--fg-muted);">Configure monthly bonuses that apply to all employees. These are added to basic salary before insurance deduction.</p>
-      
+
       <div class="form-group-horizontal">
         <div class="form-group-stacked">
           <label for="bonus-e">
             <Icon icon="solar:star-bold" width="1em" height="1em" />
             Bonus E (Daily Rate Multiplier)
           </label>
-          <input 
+          <input
             id="bonus-e"
             type="number"
             value={localConfig.bonuses.E.value}
@@ -202,13 +202,13 @@
           />
           <small style="color: var(--fg-muted);">Applied as: {localConfig.bonuses.E.value} × Daily Rate</small>
         </div>
-        
+
         <div class="form-group-stacked">
           <label for="bonus-s">
             <Icon icon="solar:star-bold" width="1em" height="1em" />
             Bonus S (Daily Rate Multiplier)
           </label>
-          <input 
+          <input
             id="bonus-s"
             type="number"
             value={localConfig.bonuses.S.value}
@@ -218,13 +218,13 @@
           />
           <small style="color: var(--fg-muted);">Applied as: {localConfig.bonuses.S.value} × Daily Rate</small>
         </div>
-        
+
         <div class="form-group-stacked">
           <label for="bonus-k">
             <Icon icon="solar:star-bold" width="1em" height="1em" />
             Bonus K (Fixed Amount)
           </label>
-          <input 
+          <input
             id="bonus-k"
             type="number"
             value={localConfig.bonuses.K.value}
@@ -233,13 +233,13 @@
           />
           <small style="color: var(--fg-muted);">Fixed amount: {formatCurrency(localConfig.bonuses.K.value)}</small>
         </div>
-        
+
         <div class="form-group-stacked">
           <label for="bonus-m">
             <Icon icon="solar:star-bold" width="1em" height="1em" />
             Bonus M (Fixed Amount)
           </label>
-          <input 
+          <input
             id="bonus-m"
             type="number"
             value={localConfig.bonuses.M.value}
@@ -248,13 +248,13 @@
           />
           <small style="color: var(--fg-muted);">Fixed amount: {formatCurrency(localConfig.bonuses.M.value)}</small>
         </div>
-        
+
         <div class="form-group-stacked">
           <label for="bonus-t">
             <Icon icon="solar:heart-bold" width="1em" height="1em" />
             Bonus T (Married Only)
           </label>
-          <input 
+          <input
             id="bonus-t"
             type="number"
             value={localConfig.bonuses.T.value}
@@ -269,13 +269,13 @@
     <section class="config-section">
       <h3><Icon icon="solar:shield-bold" width="1.2em" height="1.2em" /> Insurance Deduction</h3>
       <p style="color: var(--fg-muted);">Insurance deduction is calculated as a percentage of total salary (basic + bonuses + adjustments)</p>
-      
+
       <div class="form-group">
         <label for="insurance-rate">
           <Icon icon="solar:percent-bold" width="1em" height="1em" />
           Insurance Deduction Rate (%)
         </label>
-        <input 
+        <input
           id="insurance-rate"
           type="number"
           value={localConfig.deductions.insurance.value * 100}
@@ -291,7 +291,7 @@
     <section class="config-section">
       <h3><Icon icon="solar:chart-bold" width="1.2em" height="1.2em" /> Current Configuration Summary</h3>
       <p style="color: var(--fg-muted);">Overview of how current settings affect salary calculations</p>
-      
+
       <dl class="horizontal">
         <dt>Working Days:</dt>
         <dd>{localConfig.workingDaysPerMonth} days/month</dd>
@@ -320,7 +320,7 @@
   <section class="config-section">
     <h3><Icon icon="solar:database-bold" width="1.2em" height="1.2em" /> Data Management</h3>
     <p style="color: var(--fg-muted);">Backup and restore your payroll data, or clear all data to start fresh</p>
-    
+
     <div class="button-group">
       <button onclick={exportData}>
         <Icon icon="solar:download-bold" width="1.2em" height="1.2em" />
@@ -335,13 +335,13 @@
         Clear All Data
       </button>
     </div>
-    
+
     <div class="form-group-stacked">
       <label for="import-data">
         <Icon icon="solar:upload-bold" width="1em" height="1em" />
         Import Data from Backup
       </label>
-      <input 
+      <input
         id="import-data"
         type="file"
         accept=".json"
@@ -357,36 +357,37 @@
     max-width: 100%;
     overflow: hidden;
   }
-  
+
   .config-header {
     background: var(--bg);
     border-bottom: 1px solid var(--border-muted);
     margin: -2.5rem -2.5rem 2rem -2.5rem;
     padding: 2rem 2.5rem 1rem 2.5rem;
-    
+
     @media (max-width: 768px) {
       margin: -1.5rem -1.5rem 1.5rem -1.5rem;
       padding: 1.5rem 1.5rem 1rem 1.5rem;
     }
   }
-  
+
   .header-content h2 {
     margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
   }
-  
+
   .save-banner-fixed {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     z-index: 1000;
-    background: rgba(255, 193, 7, 0.85);
+    background: rgb(230 210 20 / 20%);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     color: #000;
+
     border-radius: 0 0 1rem 1rem;
     padding: 1rem 2rem;
     margin: 0 1rem;
@@ -394,9 +395,8 @@
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    border: 1px solid rgba(255, 193, 7, 0.3);
-    
+    box-shadow: 0 4px 40px #efe0cc;
+
     @media (max-width: 768px) {
       flex-direction: column;
       align-items: stretch;
@@ -406,21 +406,26 @@
       border-radius: 0 0 0.75rem 0.75rem;
     }
   }
-  
+
   .save-banner-content {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     flex: 1;
-    font-weight: 500;
+    font-weight: bold;
+    color: var(--fg-muted);
+    strong {
+      font-family: bungee, monospace;
+      color: var(--fg);
+    }
   }
-  
+
   .save-actions {
     display: flex;
     gap: 0.5rem;
     flex-shrink: 0;
   }
-  
+
   .save-actions button {
     padding: 0.5rem 1rem;
     font-size: 0.875rem;
@@ -428,60 +433,60 @@
     font-weight: 600;
     transition: all 0.2s ease;
   }
-  
+
   .save-actions button.primary {
     background: #000;
     color: #fff;
     border: 1px solid #000;
   }
-  
+
   .save-actions button.primary:hover {
     background: #333;
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   }
-  
+
   .save-actions button.secondary {
     background: rgba(255, 255, 255, 0.9);
     color: #000;
     border: 1px solid rgba(255, 255, 255, 0.3);
   }
-  
+
   .save-actions button.secondary:hover {
     background: rgba(255, 255, 255, 1);
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
-  
+
   .config-form {
     display: flex;
     flex-direction: column;
     gap: 2rem;
     margin-top: 1rem;
   }
-  
+
   .config-section {
     background: var(--bg-muted);
     border: 1px solid var(--border-muted);
     border-radius: var(--radius);
     padding: 2rem;
-    
+
     @media (max-width: 768px) {
       padding: 1.5rem;
     }
   }
-  
+
   .config-section h3 {
     margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
   }
-  
+
   .config-section p {
     margin-bottom: 1.5rem;
   }
-  
+
   .save-status {
     padding: 1rem;
     border-radius: var(--radius);
@@ -491,19 +496,19 @@
     gap: 0.5rem;
     font-weight: 500;
   }
-  
+
   .save-status.success {
     background: var(--success);
     color: white;
   }
-  
+
   .save-status.warning {
     background: var(--warning);
     color: white;
   }
-  
+
   small {
     font-size: 0.75rem;
     margin-top: 0.25rem;
   }
-</style> 
+</style>
