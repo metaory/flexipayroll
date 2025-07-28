@@ -2,6 +2,7 @@
   import { employees } from '../lib/stores.js'
   import { validateEmployee, EMPLOYEE_ATTRIBUTES, formatCurrency } from '../lib/core.js'
   import Icon from '@iconify/svelte';
+  import { ICONS } from '../lib/icons.js';
   
   let showAddForm = $state(false)
   let editingEmployee = $state(null)
@@ -141,8 +142,8 @@
 
 {#if showAddForm}
   <section class="slide-up">
-    <h3><Icon icon={editingEmployee ? 'solar:edit-bold' : 'solar:user-plus-bold'} width="1.2em" height="1.2em" /> {editingEmployee ? 'Edit Employee' : 'Add New Employee'}</h3>
-    <p style="color: var(--fg-muted);">Employee information affects salary calculations including bonuses and deductions</p>
+    <h3><Icon icon={editingEmployee ? ICONS.edit : ICONS.userAdd} width="1.2em" height="1.2em" /> {editingEmployee ? 'Edit Employee' : 'Add New Employee'}</h3>
+          <p class="text-muted">Employee information affects salary calculations including bonuses and deductions</p>
     
     {#if submitError}
       <div class="error-message">
@@ -154,7 +155,7 @@
     <form>
       <div class="form-group">
         <label for="employee-name">
-          <Icon icon="solar:user-bold" width="1em" height="1em" />
+          <Icon icon={ICONS.user} width="1em" height="1em" />
           Full Name
         </label>
         <input 
@@ -165,13 +166,13 @@
           required
         />
         {#if formErrors['name']}
-          <small style="color: var(--error);">{formErrors['name']}</small>
+          <small class="text-error">{formErrors['name']}</small>
         {/if}
       </div>
       
       <div class="form-group">
         <label for="employee-gender">
-          <Icon icon="solar:user-id-bold" width="1em" height="1em" />
+          <Icon icon={ICONS.male} width="1em" height="1em" />
           Gender
         </label>
         <select id="employee-gender" bind:value={formData.gender}>
@@ -179,12 +180,12 @@
             <option value={gender}>{capitalize(gender)}</option>
           {/each}
         </select>
-        <small style="color: var(--fg-muted);">Used for reporting and identification</small>
+        <small class="text-muted">Used for reporting and identification</small>
       </div>
       
       <div class="form-group">
         <label for="employee-marital">
-          <Icon icon="solar:heart-bold" width="1em" height="1em" />
+          <Icon icon={ICONS.heart} width="1em" height="1em" />
           Marital Status
         </label>
         <select id="employee-marital" bind:value={formData.maritalStatus}>
@@ -192,12 +193,12 @@
             <option value={status}>{capitalize(status)}</option>
           {/each}
         </select>
-        <small style="color: var(--fg-muted);">Married employees receive Bonus T automatically</small>
+        <small class="text-muted">Married employees receive Bonus T automatically</small>
       </div>
       
       <div class="form-group">
         <label for="employee-salary">
-          <Icon icon="solar:wallet-bold" width="1em" height="1em" />
+          <Icon icon={ICONS.wallet} width="1em" height="1em" />
           Monthly Base Salary (IDR)
         </label>
         <input 
@@ -210,9 +211,9 @@
           required
         />
         {#if formErrors['monthlySalary']}
-          <small style="color: var(--error);">{formErrors['monthlySalary']}</small>
+          <small class="text-error">{formErrors['monthlySalary']}</small>
         {/if}
-        <small style="color: var(--fg-muted);">Used to calculate daily and hourly rates for salary calculations</small>
+                  <small class="text-muted">Used to calculate daily and hourly rates for salary calculations</small>
       </div>
       
       <div class="button-group">
@@ -233,27 +234,27 @@
 {/if}
 
 <section class="fade-in">
-  <h3><Icon icon="solar:users-group-rounded-bold" width="1.2em" height="1.2em" /> Employee Directory</h3>
-  <p style="color: var(--fg-muted);">Manage your workforce. Employee data can be updated monthly and affects all salary calculations.</p>
+  <h3><Icon icon={ICONS.users} width="1.2em" height="1.2em" /> Employee Directory</h3>
+      <p class="text-muted">Manage your workforce. Employee data can be updated monthly and affects all salary calculations.</p>
   
   {#if $employees.length === 0}
     <div>
-      <Icon icon="solar:users-group-rounded-bold" width="2.5em" height="2.5em" />
+      <Icon icon={ICONS.users} width="2.5em" height="2.5em" />
       <h4>No employees yet</h4>
       <p>Get started by adding your first employee to begin payroll management</p>
       <button onclick={() => showAddForm = true}>
-        <Icon icon="solar:user-plus-bold" width="1.2em" height="1.2em" /> Add First Employee
+        <Icon icon={ICONS.userAdd} width="1.2em" height="1.2em" /> Add First Employee
       </button>
     </div>
   {:else}
     <table>
       <thead>
         <tr>
-          <th><Icon icon="solar:user-bold" width="1em" height="1em" /> Name</th>
-          <th><Icon icon="solar:user-id-bold" width="1em" height="1em" /> Gender</th>
-          <th><Icon icon="solar:heart-bold" width="1em" height="1em" /> Marital Status</th>
-          <th><Icon icon="solar:wallet-bold" width="1em" height="1em" /> Monthly Salary</th>
-          <th><Icon icon="solar:settings-bold" width="1em" height="1em" /> Actions</th>
+          <th><Icon icon={ICONS.user} width="1em" height="1em" /> Name</th>
+          <th><Icon icon={ICONS.male} width="1em" height="1em" /> Gender</th>
+          <th><Icon icon={ICONS.heart} width="1em" height="1em" /> Marital Status</th>
+          <th><Icon icon={ICONS.wallet} width="1em" height="1em" /> Monthly Salary</th>
+          <th><Icon icon={ICONS.settings} width="1em" height="1em" /> Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -270,10 +271,10 @@
             <td>
               <div class="button-group">
                 <button class="secondary" onclick={() => editEmployee(employee)}>
-                  <Icon icon="solar:edit-bold" width="1.1em" height="1.1em" /> Edit
+                  <Icon icon={ICONS.edit} width="1.1em" height="1.1em" /> Edit
                 </button>
                 <button class="danger" onclick={() => deleteEmployee(employee.id)}>
-                  <Icon icon="solar:trash-bin-trash-bold" width="1.1em" height="1.1em" /> Delete
+                  <Icon icon={ICONS.delete} width="1.1em" height="1.1em" /> Delete
                 </button>
               </div>
             </td>
@@ -301,27 +302,27 @@
   }
   
   .error-message {
-    background: var(--error);
-    border: 1px solid var(--error);
+    background: color-mix(in oklab, var(--error) 90%, transparent);
     padding: 1rem;
-    border-radius: var(--radius);
+    border-radius: 1rem;
     margin-bottom: 1rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
     color: white;
+    box-shadow: 0 4px 16px color-mix(in oklab, var(--error) 30%, transparent);
   }
   
   /* Using global .stats-grid class */
   
   .stat-card {
-    background: var(--bg-muted);
-    border: 1px solid var(--border-muted);
-    border-radius: var(--radius);
+    background: color-mix(in oklab, var(--secondary) 12%, transparent);
+    border-radius: 1.5rem;
     padding: 1.5rem;
     display: flex;
     align-items: center;
     gap: 1rem;
+    box-shadow: 0 8px 32px color-mix(in oklab, var(--secondary) 20%, transparent);
   }
   
   .stat-card > div {
@@ -344,8 +345,9 @@
     border-radius: 1rem;
     font-size: 0.75rem;
     font-weight: 500;
-    background: var(--bg-muted);
+    background: color-mix(in oklab, var(--bg-muted) 80%, transparent);
     color: var(--fg-muted);
+    box-shadow: 0 2px 8px color-mix(in oklab, var(--bg-muted) 30%, transparent);
   }
   
   .status-badge.married {

@@ -5,14 +5,15 @@
   import Config from './components/Config.svelte';
   import Icon from '@iconify/svelte';
   import { theme, toggleTheme } from './lib/stores.js';
+  import { ICONS } from './lib/icons.js';
   
   let activeTab = $state('employees');
   
   const tabs = [
-    { id: 'employees', label: 'Employees', icon: 'solar:users-group-rounded-bold', component: Employees },
-    { id: 'attendance', label: 'Attendance', icon: 'solar:calendar-bold', component: Attendance },
-    { id: 'payroll', label: 'Payroll', icon: 'solar:wallet-bold', component: Payroll },
-    { id: 'config', label: 'Configuration', icon: 'solar:settings-bold', component: Config }
+    { id: 'employees', label: 'Employees', icon: ICONS.navEmployees, component: Employees },
+    { id: 'attendance', label: 'Attendance', icon: ICONS.attendance, component: Attendance },
+    { id: 'payroll', label: 'Payroll', icon: ICONS.payroll, component: Payroll },
+    { id: 'config', label: 'Configuration', icon: ICONS.navConfig, component: Config }
   ];
 
   const ActiveComponent = $derived(tabs.find(tab => tab.id === activeTab)?.component);
@@ -44,7 +45,7 @@
     </nav>
     
     <button class="theme-toggle" onclick={toggleTheme} aria-label="Toggle color scheme">
-      <Icon icon={$theme.mode === 'dark' ? 'solar:sun-bold' : 'solar:moon-bold'} width="1.25rem" height="1.25rem" />
+      <Icon icon={$theme.mode === 'dark' ? ICONS.themeLight : ICONS.themeDark} width="1.25rem" height="1.25rem" />
     </button>
   </div>
 </header>

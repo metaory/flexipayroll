@@ -13,7 +13,7 @@ $mobile: 768px
 $tablet: 1024px
 
 // Colors
-$base: #4411ee
+$base: #5533ff
 $primary: $base
 $secondary: color.adjust($base, $hue: 180deg)
 $success: color.adjust($base, $hue: 140deg)
@@ -23,7 +23,7 @@ $error: color.adjust($base, $hue: 348deg)
 // CSS Variables
 :root
   --bg: #{color.adjust($base, $hue: 45deg, $saturation: -60%, $lightness: 45%, $alpha: 0.2)}
-  --bg-muted: #{color.adjust($base, $hue: 45deg, $saturation: -50%, $lightness: 40%)}
+  --bg-muted: #{color.adjust($base, $hue: 45deg, $saturation: -40%, $lightness: 35%)}
   --fg: #{color.adjust($base, $lightness: -40%)}
   --fg-muted: #{color.adjust($base, $lightness: -20%)}
   --primary: #{$primary}
@@ -33,10 +33,11 @@ $error: color.adjust($base, $hue: 348deg)
   --error: #{$error}
   --radius: #{$radius}
   --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1)
+  --border-muted: #{color.adjust($base, $hue: 45deg, $saturation: -50%, $lightness: 40%, $alpha: 0.4)}
 
 .dark
   --bg: #{color.adjust($base, $hue: 25deg, $saturation: -50%, $lightness: -35%, $alpha: -0.0008)}
-  --bg-muted: #{color.adjust($base, $hue: 25deg, $saturation: -40%, $lightness: -30%)}
+  --bg-muted: #{color.adjust($base, $hue: 25deg, $saturation: -30%, $lightness: -25%)}
   --fg: #{color.adjust($base, $lightness: 40%)}
   --fg-muted: #{color.adjust($base, $lightness: 20%)}
   --primary: #{color.adjust($primary, $lightness: 15%)}
@@ -44,12 +45,99 @@ $error: color.adjust($base, $hue: 348deg)
   --success: #{color.adjust($success, $lightness: 15%)}
   --warning: #{color.adjust($warning, $lightness: 15%)}
   --error: #{color.adjust($error, $lightness: 15%)}
+  --border-muted: #{color.adjust($base, $hue: 25deg, $saturation: -40%, $lightness: -30%, $alpha: 0.4)}
 
 // Reset & Base
 *
   box-sizing: border-box
   margin: 0
   padding: 0
+
+// Remove default borders from all form elements and interactive components
+button, input, select, textarea, fieldset, legend, optgroup, option
+  border: none
+  outline: none
+  background: none
+  font-family: inherit
+  font-size: inherit
+  color: inherit
+
+// Remove default button styling
+button
+  cursor: pointer
+  padding: 0
+  margin: 0
+  border-radius: 0
+  background: transparent
+  border: none
+  font: inherit
+  color: inherit
+  text-decoration: none
+  display: inline-block
+  line-height: 1
+  text-align: center
+  vertical-align: middle
+  user-select: none
+  -webkit-appearance: none
+  -moz-appearance: none
+  appearance: none
+
+// Remove default input styling
+input, select, textarea
+  border: none
+  outline: none
+  background: transparent
+  font: inherit
+  color: inherit
+  padding: 0
+  margin: 0
+  border-radius: 0
+  -webkit-appearance: none
+  -moz-appearance: none
+  appearance: none
+
+// Remove default select styling
+select
+  background-image: none
+  -webkit-appearance: none
+  -moz-appearance: none
+  appearance: none
+
+// Remove default fieldset styling
+fieldset
+  border: none
+  padding: 0
+  margin: 0
+  min-width: 0
+
+// Remove default legend styling
+legend
+  border: none
+  padding: 0
+  margin: 0
+
+// Remove default list styling
+ul, ol
+  list-style: none
+  padding: 0
+  margin: 0
+
+// Remove default link styling
+a
+  color: inherit
+  text-decoration: none
+
+// Remove default table styling
+table
+  border-collapse: collapse
+  border-spacing: 0
+
+// Remove default image styling
+img
+  max-width: 100%
+  height: auto
+  border: none
+  vertical-align: middle
 
 html, body
   overflow-x: hidden
@@ -153,14 +241,14 @@ body
 %focus
   &:focus
     outline: none
-    box-shadow: 0 0 0 3px rgba(68, 17, 238, 0.3)
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 40%, transparent), 0 4px 20px color-mix(in oklab, var(--primary) 30%, transparent)
 
 // Colors & Backgrounds
 %bg-subtle
-  background: color-mix(in oklab, var(--bg-muted) 80%, transparent)
+  background: color-mix(in oklab, var(--bg-muted) 30%, transparent)
 
 %bg-muted
-  background: color-mix(in oklab, var(--bg-muted) 60%, transparent)
+  background: color-mix(in oklab, var(--bg-muted) 40%, transparent)
 
 %bg-primary
   background: color-mix(in oklab, var(--primary) 90%, transparent)
@@ -168,20 +256,13 @@ body
 %bg-error
   background: color-mix(in oklab, var(--error) 90%, transparent)
 
-%border-muted
-  border: 1px solid color-mix(in oklab, var(--bg-muted) 40%, transparent)
-
-%border-primary
-  border: 1px solid color-mix(in oklab, var(--primary) 70%, transparent)
-
-%border-error
-  border: 1px solid color-mix(in oklab, var(--error) 70%, transparent)
+// Border placeholders removed - using shadows instead
 
 // Hover Effects
 %hover-lift
   &:hover
     transform: translateY(-2px)
-    box-shadow: var(--shadow)
+    box-shadow: 0 8px 32px color-mix(in oklab, var(--primary) 20%, transparent)
 
 %hover-opacity
   &:hover
@@ -205,13 +286,10 @@ body
   opacity: 0.6
 
 %shadow-card
-  border-radius: var(--radius)
-  box-shadow: var(--shadow)
+  border-radius: 1.5rem
+  box-shadow: 0 8px 32px color-mix(in oklab, var(--bg-muted) 40%, transparent)
 
-%no-border
-  border: none
-  padding: 0
-  margin: 0
+// No longer needed - borders are reset globally
 
 %interactive
   @extend %transition, %shadow-card
@@ -219,15 +297,48 @@ body
     @extend %hover-lift
 
 %form-field
-  padding: 0.75rem 1rem
-  @extend %border-muted, %bg-subtle, %glass, %transition, %focus
-  border-radius: var(--radius)
+  padding: 1rem 1.25rem
+  background: color-mix(in oklab, var(--secondary) 12%, transparent)
+  @extend %glass, %transition, %focus
+  border-radius: 1rem
   color: var(--fg)
-  font-family: inherit
   font-size: $font
   min-height: $min-height
   width: 100%
   max-width: 100%
+  box-shadow: 0 2px 8px color-mix(in oklab, var(--secondary) 25%, transparent)
+  
+  &::placeholder
+    color: var(--fg-muted)
+    opacity: 0.7
+  
+  &:hover
+    background: color-mix(in oklab, var(--secondary) 20%, transparent)
+    box-shadow: 0 4px 16px color-mix(in oklab, var(--secondary) 35%, transparent)
+    transform: translateY(-2px)
+  
+  &:focus
+    background: color-mix(in oklab, var(--primary) 25%, transparent)
+    box-shadow: 0 6px 24px color-mix(in oklab, var(--primary) 50%, transparent)
+    transform: translateY(-3px)
+    outline: none
+  
+  &:active
+    background: color-mix(in oklab, var(--primary) 35%, transparent)
+    box-shadow: 0 3px 12px color-mix(in oklab, var(--primary) 40%, transparent)
+    transform: translateY(-1px)
+  
+  &.error
+    background: color-mix(in oklab, var(--error) 25%, transparent)
+    box-shadow: 0 2px 8px color-mix(in oklab, var(--error) 40%, transparent)
+    
+    &:hover
+      background: color-mix(in oklab, var(--error) 35%, transparent)
+      box-shadow: 0 4px 16px color-mix(in oklab, var(--error) 50%, transparent)
+    
+    &:focus
+      background: color-mix(in oklab, var(--error) 40%, transparent)
+      box-shadow: 0 6px 24px color-mix(in oklab, var(--error) 60%, transparent)
 
 %font-weight-bold
   font-weight: 600
@@ -243,21 +354,22 @@ body
 
 // Components
 %card
-  @extend %bg-subtle, %border-muted, %glass, %transition, %shadow-card
+  background: color-mix(in oklab, var(--primary) 8%, transparent)
+  @extend %glass, %transition
   padding: 2.5rem
   overflow: hidden
+  border-radius: 1.5rem
+  box-shadow: 0 8px 32px color-mix(in oklab, var(--primary) 15%, transparent)
   
   @media (max-width: $mobile)
     padding: 1.5rem
+    border-radius: 1rem
 
 %button-base
   @extend %flex, %transition, %focus
   gap: 0.5rem
   padding: 0.75rem 1rem
-  border: none
   border-radius: var(--radius)
-  cursor: pointer
-  font-family: inherit
   font-size: $font
   @extend %font-weight-medium
   min-height: $min-height
@@ -265,25 +377,56 @@ body
   
   @media (max-width: $mobile)
     padding: 0.5rem 0.75rem
-    font-size: 0.8rem
+    font-size: 0.75rem
+    gap: 0.25rem
 
 %button-primary
   @extend %button-base, %bg-primary, %glass
   color: white
+  background: color-mix(in oklab, var(--primary) 85%, transparent)
+  box-shadow: 0 2px 8px color-mix(in oklab, var(--primary) 30%, transparent)
+  
   &:hover
-    @extend %hover-lift
+    background: color-mix(in oklab, var(--primary) 95%, transparent)
+    transform: translateY(-2px)
+    box-shadow: 0 6px 20px color-mix(in oklab, var(--primary) 50%, transparent)
+  
+  &:active
+    background: color-mix(in oklab, var(--primary) 100%, transparent)
+    transform: translateY(-1px)
+    box-shadow: 0 3px 12px color-mix(in oklab, var(--primary) 40%, transparent)
 
 %button-secondary
-  @extend %button-base, %bg-subtle, %border-muted, %glass
+  @extend %button-base, %bg-subtle, %glass
   color: var(--fg)
+  background: color-mix(in oklab, var(--secondary) 15%, transparent)
+  box-shadow: 0 2px 8px color-mix(in oklab, var(--secondary) 30%, transparent)
+  
   &:hover
-    @extend %hover-lift
+    background: color-mix(in oklab, var(--secondary) 25%, transparent)
+    transform: translateY(-2px)
+    box-shadow: 0 6px 20px color-mix(in oklab, var(--secondary) 45%, transparent)
+  
+  &:active
+    background: color-mix(in oklab, var(--secondary) 35%, transparent)
+    transform: translateY(-1px)
+    box-shadow: 0 3px 12px color-mix(in oklab, var(--secondary) 40%, transparent)
 
 %button-danger
   @extend %button-base, %bg-error, %glass
   color: white
+  background: color-mix(in oklab, var(--error) 85%, transparent)
+  box-shadow: 0 2px 8px color-mix(in oklab, var(--error) 30%, transparent)
+  
   &:hover
-    @extend %hover-lift
+    background: color-mix(in oklab, var(--error) 95%, transparent)
+    transform: translateY(-2px)
+    box-shadow: 0 6px 20px color-mix(in oklab, var(--error) 50%, transparent)
+  
+  &:active
+    background: color-mix(in oklab, var(--error) 100%, transparent)
+    transform: translateY(-1px)
+    box-shadow: 0 3px 12px color-mix(in oklab, var(--error) 40%, transparent)
 
 %button-circular
   @extend %button-secondary, %circular
@@ -295,10 +438,6 @@ body
 
 %input-base
   @extend %form-field
-  &:focus
-    @extend %border-primary
-  &.error
-    @extend %border-error
 
 // Typography
 %heading
@@ -322,7 +461,8 @@ body
   gap: 0.5rem
   @extend %font-weight-bold
   font-size: $font
-  @extend %text-muted
+  color: var(--fg)
+  margin-bottom: 0.5rem
 
 %heading-size-large
   font-size: 2rem
@@ -364,10 +504,12 @@ body
     padding: 0 $padding
     height: 4rem
     overflow: hidden
+    gap: 1rem
     
     @media (max-width: $mobile)
       padding: 0 1rem
       height: 3.5rem
+      gap: 0.5rem
 
     .logo-link
       @extend %flex
@@ -376,11 +518,13 @@ body
       color: var(--fg)
       @extend %font-weight-bold
       font-size: 1.25rem
+      flex-shrink: 0
       &:hover
         @extend %hover-lift
       
       @media (max-width: $mobile)
         font-size: 1rem
+        gap: 0.25rem
 
       img
         @extend %interactive
@@ -389,19 +533,33 @@ body
         @extend %logo-text
 
     .main-nav
-      @extend %flex-wrap
+      @extend %flex
+      gap: 0.5rem
       overflow: hidden
+      flex-shrink: 0
       
       @media (max-width: $mobile)
         gap: 0.25rem
 
       button
         @extend %button-secondary
+        flex-shrink: 0
+        white-space: nowrap
+        min-width: fit-content
+        
+        @media (max-width: $mobile)
+          padding: 0.4rem 0.6rem
+          font-size: 0.7rem
 
     .theme-toggle
       @extend %button-circular
       &:hover
         transform: translateY(-2px) rotate(15deg)
+      
+      @media (max-width: $mobile)
+        width: 2rem
+        height: 2rem
+        padding: 0
 
 main
   @extend %spacing
@@ -413,7 +571,7 @@ footer
   @extend %spacing
   @extend %margin-top
   padding: 3rem 0
-  @extend %border-muted, %bg-subtle, %glass
+  @extend %bg-subtle, %glass
   @extend %grid-responsive-3
   overflow: hidden
   
@@ -433,7 +591,7 @@ footer
     @extend %opacity-muted
 
   > section
-    @extend %spacing, %no-border
+    @extend %spacing
 
     h3
       @extend %heading-primary
@@ -482,6 +640,7 @@ footer
 // Components
 section
   @extend %card, %spacing
+  margin-bottom: 2rem
 
 h1, h2, h3, h4, h5, h6
   @extend %heading
@@ -514,7 +673,7 @@ form
   @extend %form-stacked
 
 fieldset
-  @extend %no-border
+  // Borders already reset globally
 
 label
   @extend %label-text
@@ -522,26 +681,44 @@ label
 input, select, textarea
   @extend %input-base
 
+select
+  background-image: none
+  cursor: pointer
+  
+  &:hover
+    background: color-mix(in oklab, var(--secondary) 20%, transparent)
+  
+  &:focus
+    background: color-mix(in oklab, var(--primary) 25%, transparent)
+
 input[type="file"]
   padding: 0.5rem
   cursor: pointer
-  &:hover, &:focus
-    @extend %border-primary
+  
+  &:hover
+    background: color-mix(in oklab, var(--secondary) 20%, transparent)
+    box-shadow: 0 4px 16px color-mix(in oklab, var(--secondary) 35%, transparent)
+  
+  &:focus
+    background: color-mix(in oklab, var(--primary) 25%, transparent)
+    box-shadow: 0 6px 24px color-mix(in oklab, var(--primary) 50%, transparent)
 
 // Form Groups
 .form-group
   @extend %grid
   grid-template-columns: 1fr
-  align-items: center
-  gap: 0.5rem
+  align-items: start
+  gap: 0.75rem
+  margin-bottom: 1.5rem
   
   @media (min-width: $mobile)
     grid-template-columns: 200px 1fr
-    gap: 1rem
+    gap: 1.5rem
 
   label
     grid-column: 1
     justify-self: start
+    @extend %label-text
     
     @media (min-width: $mobile)
       justify-self: end
@@ -575,14 +752,14 @@ button
 // Tables
 table
   width: 100%
-  border-collapse: collapse
-  @extend %bg-subtle, %glass, %border-muted, %shadow-card
+  background: color-mix(in oklab, var(--primary) 8%, transparent)
+  @extend %glass, %shadow-card
   overflow: hidden
+  border-radius: 1rem
 
   th, td
     padding: 0.75rem 1rem
     text-align: left
-    @extend %border-muted
     word-wrap: break-word
     overflow-wrap: break-word
     
@@ -591,17 +768,21 @@ table
       font-size: 0.8rem
 
   th
-    @extend %bg-muted, %glass
+    background: color-mix(in oklab, var(--primary) 15%, transparent)
+    @extend %glass
     @extend %font-weight-bold
     font-size: $font
     position: sticky
     top: 0
     z-index: 10
+    box-shadow: 0 2px 8px color-mix(in oklab, var(--primary) 25%, transparent)
 
   tr
     @extend %transition
     &:hover
-      @extend %bg-muted
+      background: color-mix(in oklab, var(--secondary) 12%, transparent)
+      transform: translateY(-1px)
+      box-shadow: 0 4px 16px color-mix(in oklab, var(--secondary) 20%, transparent)
 
   td button
     @extend %button-small
@@ -648,6 +829,16 @@ div:has(> h4)
 
 .mt-0
   margin-top: 0
+
+// Text Utilities
+.text-muted
+  @extend %text-muted
+
+.text-error
+  color: var(--error)
+
+.text-success
+  color: var(--success)
 
 // Responsive Utilities
 .stats-grid

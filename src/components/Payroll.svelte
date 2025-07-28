@@ -104,7 +104,7 @@
 
 <section>
   <h3><Icon icon="solar:calculator-bold" width="1.2em" height="1.2em" /> Salary Adjustments</h3>
-  <p style="color: var(--fg-muted);">Add positive or negative adjustments to employee salaries with optional comments</p>
+      <p class="text-muted">Add positive or negative adjustments to employee salaries with optional comments</p>
   
   <form>
     <div class="form-group-horizontal">
@@ -132,7 +132,7 @@
           bind:value={adjustmentAmount}
           placeholder="Enter positive or negative amount"
         />
-        <small style="color: var(--fg-muted);">Positive for bonus, negative for deduction</small>
+        <small class="text-muted">Positive for bonus, negative for deduction</small>
       </div>
       
       <div class="form-group-stacked">
@@ -159,7 +159,7 @@
 
 <section>
   <h3><Icon icon="solar:chart-bold" width="1.2em" height="1.2em" /> Salary Breakdown</h3>
-  <p style="color: var(--fg-muted);">Detailed salary calculations for each employee including bonuses, adjustments, and deductions</p>
+      <p class="text-muted">Detailed salary calculations for each employee including bonuses, adjustments, and deductions</p>
   
   {#if !hasEmployees}
     <div>
@@ -176,7 +176,7 @@
       
       <section>
         <h4><Icon icon="solar:user-bold" width="1em" height="1em" /> {employee.name}</h4>
-        <p style="color: var(--fg-muted);">
+        <p class="text-muted">
           <Icon icon="solar:heart-bold" width="1em" height="1em" />
           {employee.maritalStatus === 'married' ? 'Married' : 'Single'} • 
           <Icon icon="solar:wallet-bold" width="1em" height="1em" />
@@ -249,7 +249,7 @@
               <tbody>
                 {#each adjustments as adjustment}
                   <tr>
-                    <td style="color: {adjustment.amount >= 0 ? 'var(--success)' : 'var(--error)'};">
+                    <td class={adjustment.amount >= 0 ? 'text-success' : 'text-error'}>
                       {adjustment.amount >= 0 ? '+' : ''}{formatCurrency(adjustment.amount)}
                     </td>
                     <td>{adjustment.comment || '-'}</td>
@@ -273,13 +273,13 @@
   /* Using global .stats-grid and .salary-grid classes */
   
   .stat-card {
-    background: var(--bg-muted);
-    border: 1px solid var(--border-muted);
-    border-radius: var(--radius);
+    background: color-mix(in oklab, var(--secondary) 12%, transparent);
+    border-radius: 1.5rem;
     padding: 1.5rem;
     display: flex;
     align-items: center;
     gap: 1rem;
+    box-shadow: 0 8px 32px color-mix(in oklab, var(--secondary) 20%, transparent);
   }
   
   .stat-card > div {
@@ -298,10 +298,10 @@
   }
   
   .salary-section {
-    background: var(--bg-muted);
-    border: 1px solid var(--border-muted);
-    border-radius: var(--radius);
+    background: color-mix(in oklab, var(--primary) 10%, transparent);
+    border-radius: 1.5rem;
     padding: 1.5rem;
+    box-shadow: 0 8px 32px color-mix(in oklab, var(--primary) 18%, transparent);
   }
   
   .salary-section h5 {

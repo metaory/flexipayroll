@@ -2,6 +2,7 @@
   import { config } from '../lib/stores.js';
   import { DEFAULT_CONFIG, formatCurrency } from '../lib/core.js';
   import Icon from '@iconify/svelte';
+  import { ICONS } from '../lib/icons.js';
 
   let localConfig = $state({ ...$config });
   let hasUnsavedChanges = $state(false);
@@ -110,7 +111,7 @@
 <div class="config-container">
   <header class="config-header">
     <div class="header-content">
-      <h2><Icon icon="solar:settings-bold" width="1.5em" height="1.5em" /> System Configuration</h2>
+      <h2><Icon icon={ICONS.settings} width="1.5em" height="1.5em" /> System Configuration</h2>
       <p>Configure payroll settings and system parameters that affect all salary calculations</p>
     </div>
   </header>
@@ -118,16 +119,16 @@
   {#if hasUnsavedChanges}
     <div class="save-banner-fixed">
       <div class="save-banner-content">
-        <Icon icon="solar:danger-triangle-bold" width="3em" height="3em" />
+        <Icon icon={ICONS.warning} width="3em" height="3em" />
         <span><strong>Unsaved Changes</strong> You have configuration changes that need to be saved</span>
       </div>
       <div class="save-actions">
         <button class="secondary" onclick={cancelChanges}>
-          <Icon icon="solar:close-circle-bold" width="1.2em" height="1.2em" />
+          <Icon icon={ICONS.cancel} width="1.2em" height="1.2em" />
           Cancel
         </button>
         <button class="primary" onclick={saveConfig}>
-          <Icon icon="solar:floppy-disk-bold" width="1.2em" height="1.2em" />
+          <Icon icon={ICONS.save} width="1.2em" height="1.2em" />
           Save Configuration
         </button>
       </div>
@@ -136,20 +137,20 @@
 
   {#if saveStatus}
     <div class="save-status" class:success={saveStatus.includes('saved')} class:warning={saveStatus.includes('cancelled') || saveStatus.includes('reset')}>
-      <Icon icon={saveStatus.includes('saved') ? 'solar:check-circle-bold' : 'solar:info-circle-bold'} width="1em" height="1em" />
+      <Icon icon={saveStatus.includes('saved') ? ICONS.success : ICONS.info} width="1em" height="1em" />
       {saveStatus}
     </div>
   {/if}
 
   <form class="config-form">
     <section class="config-section">
-      <h3><Icon icon="solar:clock-circle-bold" width="1.2em" height="1.2em" /> Working Time Settings</h3>
-      <p style="color: var(--fg-muted);">These settings determine how daily and hourly rates are calculated for all employees</p>
+      <h3><Icon icon={ICONS.time} width="1.2em" height="1.2em" /> Working Time Settings</h3>
+      <p class="text-muted">These settings determine how daily and hourly rates are calculated for all employees</p>
 
       <div class="form-group-horizontal">
         <div class="form-group-stacked">
           <label for="working-days">
-            <Icon icon="solar:calendar-bold" width="1em" height="1em" />
+            <Icon icon={ICONS.calendar} width="1em" height="1em" />
             Working Days per Month
           </label>
           <input
@@ -160,12 +161,12 @@
             min="1"
             max="31"
           />
-          <small style="color: var(--fg-muted);">Used to calculate daily rate: Monthly Salary ÷ Working Days</small>
+          <small class="text-muted">Used to calculate daily rate: Monthly Salary ÷ Working Days</small>
         </div>
 
         <div class="form-group-stacked">
           <label for="workday-hours">
-            <Icon icon="solar:clock-bold" width="1em" height="1em" />
+            <Icon icon={ICONS.clock} width="1em" height="1em" />
             Standard Workday Hours
           </label>
           <input
@@ -177,19 +178,19 @@
             max="24"
             step="0.5"
           />
-          <small style="color: var(--fg-muted);">Used to calculate hourly rate: Daily Rate ÷ Workday Hours</small>
+          <small class="text-muted">Used to calculate hourly rate: Daily Rate ÷ Workday Hours</small>
         </div>
       </div>
     </section>
 
     <section class="config-section">
-      <h3><Icon icon="solar:gift-bold" width="1.2em" height="1.2em" /> Bonus Configuration</h3>
-      <p style="color: var(--fg-muted);">Configure monthly bonuses that apply to all employees. These are added to basic salary before insurance deduction.</p>
+      <h3><Icon icon={ICONS.bonus} width="1.2em" height="1.2em" /> Bonus Configuration</h3>
+      <p class="text-muted">Configure monthly bonuses that apply to all employees. These are added to basic salary before insurance deduction.</p>
 
       <div class="form-group-horizontal">
         <div class="form-group-stacked">
           <label for="bonus-e">
-            <Icon icon="solar:star-bold" width="1em" height="1em" />
+            <Icon icon={ICONS.star} width="1em" height="1em" />
             Bonus E (Daily Rate Multiplier)
           </label>
           <input
@@ -200,12 +201,12 @@
             min="0"
             step="0.5"
           />
-          <small style="color: var(--fg-muted);">Applied as: {localConfig.bonuses.E.value} × Daily Rate</small>
+          <small class="text-muted">Applied as: {localConfig.bonuses.E.value} × Daily Rate</small>
         </div>
 
         <div class="form-group-stacked">
           <label for="bonus-s">
-            <Icon icon="solar:star-bold" width="1em" height="1em" />
+            <Icon icon={ICONS.star} width="1em" height="1em" />
             Bonus S (Daily Rate Multiplier)
           </label>
           <input
@@ -216,12 +217,12 @@
             min="0"
             step="0.5"
           />
-          <small style="color: var(--fg-muted);">Applied as: {localConfig.bonuses.S.value} × Daily Rate</small>
+          <small class="text-muted">Applied as: {localConfig.bonuses.S.value} × Daily Rate</small>
         </div>
 
         <div class="form-group-stacked">
           <label for="bonus-k">
-            <Icon icon="solar:star-bold" width="1em" height="1em" />
+            <Icon icon={ICONS.star} width="1em" height="1em" />
             Bonus K (Fixed Amount)
           </label>
           <input
@@ -231,12 +232,12 @@
             oninput={e => updateLocalConfig('bonuses.K.value', Number(e.currentTarget.value))}
             min="0"
           />
-          <small style="color: var(--fg-muted);">Fixed amount: {formatCurrency(localConfig.bonuses.K.value)}</small>
+          <small class="text-muted">Fixed amount: {formatCurrency(localConfig.bonuses.K.value)}</small>
         </div>
 
         <div class="form-group-stacked">
           <label for="bonus-m">
-            <Icon icon="solar:star-bold" width="1em" height="1em" />
+            <Icon icon={ICONS.star} width="1em" height="1em" />
             Bonus M (Fixed Amount)
           </label>
           <input
@@ -246,12 +247,12 @@
             oninput={e => updateLocalConfig('bonuses.M.value', Number(e.currentTarget.value))}
             min="0"
           />
-          <small style="color: var(--fg-muted);">Fixed amount: {formatCurrency(localConfig.bonuses.M.value)}</small>
+          <small class="text-muted">Fixed amount: {formatCurrency(localConfig.bonuses.M.value)}</small>
         </div>
 
         <div class="form-group-stacked">
           <label for="bonus-t">
-            <Icon icon="solar:heart-bold" width="1em" height="1em" />
+            <Icon icon={ICONS.heart} width="1em" height="1em" />
             Bonus T (Married Only)
           </label>
           <input
@@ -261,18 +262,18 @@
             oninput={e => updateLocalConfig('bonuses.T.value', Number(e.currentTarget.value))}
             min="0"
           />
-          <small style="color: var(--fg-muted);">Fixed amount: {formatCurrency(localConfig.bonuses.T.value)} (married employees only)</small>
+          <small class="text-muted">Fixed amount: {formatCurrency(localConfig.bonuses.T.value)} (married employees only)</small>
         </div>
       </div>
     </section>
 
     <section class="config-section">
-      <h3><Icon icon="solar:shield-bold" width="1.2em" height="1.2em" /> Insurance Deduction</h3>
-      <p style="color: var(--fg-muted);">Insurance deduction is calculated as a percentage of total salary (basic + bonuses + adjustments)</p>
+      <h3><Icon icon={ICONS.insurance} width="1.2em" height="1.2em" /> Insurance Deduction</h3>
+      <p class="text-muted">Insurance deduction is calculated as a percentage of total salary (basic + bonuses + adjustments)</p>
 
       <div class="form-group">
         <label for="insurance-rate">
-          <Icon icon="solar:percent-bold" width="1em" height="1em" />
+          <Icon icon={ICONS.percent} width="1em" height="1em" />
           Insurance Deduction Rate (%)
         </label>
         <input
@@ -284,13 +285,13 @@
           max="100"
           step="0.1"
         />
-        <small style="color: var(--fg-muted);">Applied as: {(localConfig.deductions.insurance.value * 100).toFixed(1)}% of total salary</small>
+        <small class="text-muted">Applied as: {(localConfig.deductions.insurance.value * 100).toFixed(1)}% of total salary</small>
       </div>
     </section>
 
     <section class="config-section">
-      <h3><Icon icon="solar:chart-bold" width="1.2em" height="1.2em" /> Current Configuration Summary</h3>
-      <p style="color: var(--fg-muted);">Overview of how current settings affect salary calculations</p>
+      <h3><Icon icon={ICONS.chart} width="1.2em" height="1.2em" /> Current Configuration Summary</h3>
+      <p class="text-muted">Overview of how current settings affect salary calculations</p>
 
       <dl class="horizontal">
         <dt>Working Days:</dt>
@@ -318,36 +319,36 @@
   </form>
 
   <section class="config-section">
-    <h3><Icon icon="solar:database-bold" width="1.2em" height="1.2em" /> Data Management</h3>
-    <p style="color: var(--fg-muted);">Backup and restore your payroll data, or clear all data to start fresh</p>
+    <h3><Icon icon={ICONS.database} width="1.2em" height="1.2em" /> Data Management</h3>
+    <p class="text-muted">Backup and restore your payroll data, or clear all data to start fresh</p>
 
     <div class="button-group">
       <button onclick={exportData}>
-        <Icon icon="solar:download-bold" width="1.2em" height="1.2em" />
+        <Icon icon={ICONS.export} width="1.2em" height="1.2em" />
         Export Data
       </button>
       <button onclick={resetToDefaults}>
-        <Icon icon="solar:refresh-bold" width="1.2em" height="1.2em" />
+        <Icon icon={ICONS.refresh} width="1.2em" height="1.2em" />
         Reset to Defaults
       </button>
       <button class="danger" onclick={clearAllData}>
-        <Icon icon="solar:trash-bin-trash-bold" width="1.2em" height="1.2em" />
+        <Icon icon={ICONS.delete} width="1.2em" height="1.2em" />
         Clear All Data
       </button>
     </div>
 
     <div class="form-group-stacked">
-      <label for="import-data">
-        <Icon icon="solar:upload-bold" width="1em" height="1em" />
-        Import Data from Backup
-      </label>
+              <label for="import-data">
+          <Icon icon={ICONS.import} width="1em" height="1em" />
+          Import Data from Backup
+        </label>
       <input
         id="import-data"
         type="file"
         accept=".json"
         onchange={importData}
       />
-      <small style="color: var(--fg-muted);">Select a backup file to restore employees, attendance, and configuration</small>
+      <small class="text-muted">Select a backup file to restore employees, attendance, and configuration</small>
     </div>
   </section>
 </div>
@@ -359,14 +360,16 @@
   }
 
   .config-header {
-    background: var(--bg);
-    border-bottom: 1px solid var(--border-muted);
+    background: color-mix(in oklab, var(--secondary) 15%, transparent);
     margin: -2.5rem -2.5rem 2rem -2.5rem;
     padding: 2rem 2.5rem 1rem 2.5rem;
+    border-radius: 0 0 1.5rem 1.5rem;
+    box-shadow: 0 4px 16px color-mix(in oklab, var(--secondary) 25%, transparent);
 
     @media (max-width: 768px) {
       margin: -1.5rem -1.5rem 1.5rem -1.5rem;
       padding: 1.5rem 1.5rem 1rem 1.5rem;
+      border-radius: 0 0 1rem 1rem;
     }
   }
 
@@ -383,10 +386,10 @@
     left: 0;
     right: 0;
     z-index: 1000;
-    background: rgb(230 210 20 / 20%);
+    background: color-mix(in oklab, var(--warning) 20%, transparent);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    color: #000;
+    color: var(--fg);
 
     border-radius: 0 0 1rem 1rem;
     padding: 1rem 2rem;
@@ -395,7 +398,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    box-shadow: 0 4px 40px #efe0cc;
+    box-shadow: 0 4px 40px color-mix(in oklab, var(--warning) 30%, transparent);
 
     @media (max-width: 768px) {
       flex-direction: column;
@@ -435,27 +438,27 @@
   }
 
   .save-actions button.primary {
-    background: #000;
-    color: #fff;
-    border: 1px solid #000;
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 2px 8px color-mix(in oklab, var(--primary) 30%, transparent);
   }
 
   .save-actions button.primary:hover {
-    background: #333;
+    background: color-mix(in oklab, var(--primary) 80%, black);
     transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 16px color-mix(in oklab, var(--primary) 40%, transparent);
   }
 
   .save-actions button.secondary {
-    background: rgba(255, 255, 255, 0.9);
-    color: #000;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: color-mix(in oklab, var(--bg-muted) 90%, transparent);
+    color: var(--fg);
+    box-shadow: 0 2px 8px color-mix(in oklab, var(--bg-muted) 30%, transparent);
   }
 
   .save-actions button.secondary:hover {
-    background: rgba(255, 255, 255, 1);
+    background: color-mix(in oklab, var(--bg-muted) 100%, transparent);
     transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 16px color-mix(in oklab, var(--bg-muted) 40%, transparent);
   }
 
   .config-form {
@@ -466,13 +469,14 @@
   }
 
   .config-section {
-    background: var(--bg-muted);
-    border: 1px solid var(--border-muted);
-    border-radius: var(--radius);
+    background: color-mix(in oklab, var(--primary) 10%, transparent);
+    border-radius: 1.5rem;
     padding: 2rem;
+    box-shadow: 0 8px 32px color-mix(in oklab, var(--primary) 18%, transparent);
 
     @media (max-width: 768px) {
       padding: 1.5rem;
+      border-radius: 1rem;
     }
   }
 
@@ -488,23 +492,26 @@
   }
 
   .save-status {
-    padding: 1rem;
-    border-radius: var(--radius);
+    padding: 1rem 1.5rem;
+    border-radius: 1rem;
     margin-bottom: 1rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
     font-weight: 500;
+    box-shadow: 0 4px 16px color-mix(in oklab, var(--bg-muted) 30%, transparent);
   }
 
   .save-status.success {
-    background: var(--success);
+    background: color-mix(in oklab, var(--success) 90%, transparent);
     color: white;
+    box-shadow: 0 4px 16px color-mix(in oklab, var(--success) 30%, transparent);
   }
 
   .save-status.warning {
-    background: var(--warning);
+    background: color-mix(in oklab, var(--warning) 90%, transparent);
     color: white;
+    box-shadow: 0 4px 16px color-mix(in oklab, var(--warning) 30%, transparent);
   }
 
   small {

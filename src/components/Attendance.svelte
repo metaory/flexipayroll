@@ -136,7 +136,7 @@
 
 <section>
   <h3><Icon icon="solar:document-add-bold" width="1.2em" height="1.2em" /> Record Daily Attendance</h3>
-  <p style="color: var(--fg-muted);">Record attendance for each employee. Different day types affect salary calculations differently.</p>
+      <p class="text-muted">Record attendance for each employee. Different day types affect salary calculations differently.</p>
   
   <form>
     <div class="form-group-horizontal">
@@ -176,7 +176,7 @@
             <option value={value}>{getDayTypeLabel(value)}</option>
           {/each}
         </select>
-        <small style="color: var(--fg-muted);">{dayTypeDescriptions[selectedType]}</small>
+        <small class="text-muted">{dayTypeDescriptions[selectedType]}</small>
       </div>
     </div>
     
@@ -193,7 +193,7 @@
             bind:value={entryTime}
             required
           />
-          <small style="color: var(--fg-muted);">When employee started work</small>
+          <small class="text-muted">When employee started work</small>
         </div>
         
         <div class="form-group-stacked">
@@ -207,7 +207,7 @@
             bind:value={exitTime}
             required
           />
-          <small style="color: var(--fg-muted);">When employee finished work</small>
+          <small class="text-muted">When employee finished work</small>
         </div>
         
         <div class="form-group-stacked">
@@ -230,7 +230,7 @@
 
 <section>
   <h3><Icon icon="solar:chart-bold" width="1.2em" height="1.2em" /> Monthly Attendance Records</h3>
-  <p style="color: var(--fg-muted);">Current month: {$currentPeriod.month}/{$currentPeriod.year}</p>
+      <p class="text-muted">Current month: {$currentPeriod.month}/{$currentPeriod.year}</p>
   
   {#if !hasEmployees}
     <div>
@@ -318,13 +318,13 @@
   /* Using global .stats-grid class */
   
   .stat-card {
-    background: var(--bg-muted);
-    border: 1px solid var(--border-muted);
-    border-radius: var(--radius);
+    background: color-mix(in oklab, var(--secondary) 12%, transparent);
+    border-radius: 1.5rem;
     padding: 1.5rem;
     display: flex;
     align-items: center;
     gap: 1rem;
+    box-shadow: 0 8px 32px color-mix(in oklab, var(--secondary) 20%, transparent);
   }
   
   .stat-card > div {
@@ -362,26 +362,31 @@
     border-radius: 1rem;
     font-size: 0.75rem;
     font-weight: 500;
+    box-shadow: 0 2px 8px color-mix(in oklab, var(--bg-muted) 30%, transparent);
   }
   
   .day-type-badge.regular {
     background: var(--primary);
     color: white;
+    box-shadow: 0 2px 8px color-mix(in oklab, var(--primary) 30%, transparent);
   }
   
   .day-type-badge.holiday {
     background: var(--warning);
     color: white;
+    box-shadow: 0 2px 8px color-mix(in oklab, var(--warning) 30%, transparent);
   }
   
   .day-type-badge.paid {
     background: var(--success);
     color: white;
+    box-shadow: 0 2px 8px color-mix(in oklab, var(--success) 30%, transparent);
   }
   
   .day-type-badge.unpaid {
     background: var(--error);
     color: white;
+    box-shadow: 0 2px 8px color-mix(in oklab, var(--error) 30%, transparent);
   }
   
   small {
