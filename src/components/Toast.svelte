@@ -44,6 +44,8 @@
 {/if}
 
 <style lang="sass">
+  @use "../styles.sass" as *
+
   .toast
     position: fixed
     top: 1rem
@@ -51,12 +53,11 @@
     z-index: 2000
     padding: 1rem 1.5rem
     border-radius: 1rem
-    backdrop-filter: blur(10px)
-    transition: all 0.2s ease
+    @extend %glass
+    @extend %transition
     max-width: 400px
     box-shadow: 0 8px 32px color-mix(in oklab, var(--primary) 20%, transparent)
-    display: flex
-    align-items: center
+    @extend %flex
     gap: 0.75rem
     font-weight: 500
     transform: translateX(100%)
@@ -66,7 +67,7 @@
       transform: translateX(0)
       opacity: 1
 
-    @media (max-width: 768px)
+    @media (max-width: $mobile)
       right: 0.5rem
       left: 0.5rem
       max-width: none
@@ -106,9 +107,8 @@
     color: var(--fg-muted)
     opacity: 0.7
     cursor: pointer
-    transition: all 0.2s ease
-    display: flex
-    align-items: center
+    @extend %transition
+    @extend %flex
     justify-content: center
     border: none
     font: inherit
@@ -116,4 +116,4 @@
     &:hover
       opacity: 1
       background: color-mix(in oklab, var(--bg-muted) 60%, transparent)
-</style> 
+</style>

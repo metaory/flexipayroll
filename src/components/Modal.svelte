@@ -58,6 +58,8 @@
 {/if}
 
 <style lang="sass">
+  @use "../styles.sass" as *
+
   .modal-overlay
     position: fixed
     top: 0
@@ -65,15 +67,15 @@
     right: 0
     bottom: 0
     background: color-mix(in oklab, var(--bg) 80%, transparent)
+    @extend %glass
     backdrop-filter: blur(8px)
     z-index: 1500
-    display: flex
-    align-items: center
+    @extend %flex
     justify-content: center
     padding: 1rem
     opacity: 0
     visibility: hidden
-    transition: all 0.2s ease
+    @extend %transition
 
     &.show
       opacity: 1
@@ -81,7 +83,7 @@
 
   .modal-content
     background: color-mix(in oklab, var(--primary) 8%, transparent)
-    backdrop-filter: blur(10px)
+    @extend %glass
     border-radius: 1.5rem
     padding: 2rem
     max-width: 500px
@@ -89,27 +91,24 @@
     max-height: 80vh
     overflow-y: auto
     transform: scale(0.9) translateY(20px)
-    transition: all 0.2s ease
+    @extend %transition
     box-shadow: 0 8px 32px color-mix(in oklab, var(--primary) 15%, transparent)
 
     .show &
       transform: scale(1) translateY(0)
 
-    @media (max-width: 768px)
+    @media (max-width: $mobile)
       padding: 1.5rem
       border-radius: 1rem
 
   .modal-header
-    display: flex
-    align-items: center
-    justify-content: space-between
+    @extend %flex-between
     margin-bottom: 1.5rem
     padding-bottom: 1rem
     border-bottom: 1px solid color-mix(in oklab, var(--border-muted) 50%, transparent)
 
   .modal-title
-    display: flex
-    align-items: center
+    @extend %flex
     gap: 0.75rem
 
     h3
@@ -119,7 +118,7 @@
       font-weight: 600
       font-size: 1.25rem
 
-      @media (max-width: 768px)
+      @media (max-width: $mobile)
         font-size: 1.1rem
 
   .close-btn
@@ -130,9 +129,8 @@
     background: color-mix(in oklab, var(--bg-muted) 40%, transparent)
     color: var(--fg-muted)
     cursor: pointer
-    transition: all 0.2s ease
-    display: flex
-    align-items: center
+    @extend %transition
+    @extend %flex
     justify-content: center
     border: none
     font: inherit
@@ -148,10 +146,8 @@
       color: var(--fg)
 
   .modal-actions
-    display: flex
-    align-items: center
-    flex-wrap: wrap
+    @extend %flex-wrap
     justify-content: flex-end
     gap: 0.75rem
     margin-top: 2rem
-</style> 
+</style>

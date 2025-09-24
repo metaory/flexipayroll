@@ -1,0 +1,9 @@
+lets review our files again
+
+we want the app svelte to have some of its related code and style
+
+the styles.sass should only be some resets, some theme variables and design tokens, and some global styles
+
+and all other svelte components to have their own styles contained unless its shared style, in that case its ok to be in styles,
+
+its ok if you want to create more svelte components or placeholders 

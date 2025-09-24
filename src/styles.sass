@@ -20,12 +20,12 @@ $success: color.adjust($base, $hue: 160deg)
 $warning: color.adjust($base, $hue: 45deg)
 $error: color.adjust($base, $hue: 0deg)
 
-// CSS Variables - Enhanced with better color mixing
+// CSS Variables
 :root
-  --bg: #{color.adjust($base, $hue: 45deg, $saturation: -80%, $lightness: 98%)}
-  --bg-muted: #{color.adjust($base, $hue: 45deg, $saturation: -60%, $lightness: 92%)}
-  --fg: #{color.adjust($base, $lightness: -85%)}
-  --fg-muted: #{color.adjust($base, $lightness: -45%)}
+  --bg: #fefefe
+  --bg-muted: #f8f9fa
+  --fg: #1f2937
+  --fg-muted: #6b7280
   --primary: #{$primary}
   --secondary: #{$secondary}
   --success: #{$success}
@@ -34,22 +34,22 @@ $error: color.adjust($base, $hue: 0deg)
   --info: #{$secondary}
   --radius: #{$radius}
   --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1)
-  --border-muted: #{color.adjust($base, $hue: 45deg, $saturation: -50%, $lightness: 40%, $alpha: 0.4)}
-  --border: #{color.adjust($base, $hue: 45deg, $saturation: -40%, $lightness: 80%, $alpha: 0.3)}
+  --border-muted: rgba(99, 102, 241, 0.15)
+  --border: rgba(99, 102, 241, 0.25)
 
-.dark
-  --bg: #{color.adjust($base, $hue: 25deg, $saturation: -70%, $lightness: -45%)}
-  --bg-muted: #{color.adjust($base, $hue: 25deg, $saturation: -50%, $lightness: -35%)}
-  --fg: #{color.adjust($base, $lightness: 55%)}
-  --fg-muted: #{color.adjust($base, $lightness: 35%)}
-  --primary: #{color.adjust($primary, $lightness: 25%)}
-  --secondary: #{color.adjust($secondary, $lightness: 25%)}
-  --success: #{color.adjust($success, $lightness: 25%)}
-  --warning: #{color.adjust($warning, $lightness: 25%)}
-  --error: #{color.adjust($error, $lightness: 25%)}
-  --info: #{color.adjust($secondary, $lightness: 25%)}
-  --border-muted: #{color.adjust($base, $hue: 25deg, $saturation: -40%, $lightness: -30%, $alpha: 0.4)}
-  --border: #{color.adjust($base, $hue: 25deg, $saturation: -30%, $lightness: 30%, $alpha: 0.3)}
+html.dark
+  --bg: #1a1625
+  --bg-muted: #2a2435
+  --fg: #e6e1ff
+  --fg-muted: #b8b1d0
+  --primary: #8b8cf7
+  --secondary: #7dd3fc
+  --success: #4ade80
+  --warning: #fbbf24
+  --error: #f87171
+  --info: #7dd3fc
+  --border-muted: rgba(139, 140, 247, 0.2)
+  --border: rgba(139, 140, 247, 0.3)
 
 // Reset & Base
 *
@@ -194,34 +194,96 @@ body
     outline: none
     box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 40%, transparent), 0 4px 20px color-mix(in oklab, var(--primary) 30%, transparent)
 
-// Global Grid Layout Areas
-.app-header
-  grid-area: header
-  height: 5rem
-  box-sizing: border-box
+// Component Placeholders
+%button-base
+  display: inline-flex
+  align-items: center
+  gap: 0.5rem
+  padding: 0.75rem 1rem
+  border-radius: var(--radius)
+  font-size: $font
+  font-weight: 500
+  cursor: pointer
+  @extend %transition
+  min-height: $min-height
+  white-space: nowrap
+  border: none
+  
+  &:disabled
+    opacity: 0.5
+    cursor: not-allowed
 
-  @media (max-width: $mobile)
-    height: 4rem
+%button-primary
+  @extend %button-base
+  background: var(--primary)
+  color: white
+  
+  &:hover:not(:disabled)
+    background: color-mix(in oklab, var(--primary) 90%, black)
 
-.app-content  
-  grid-area: content
-  overflow-y: auto
-  overflow-x: hidden
-  height: calc(100vh - 9rem)
-  box-sizing: border-box
+%button-secondary
+  @extend %button-base
+  background: color-mix(in oklab, var(--secondary) 10%, transparent)
+  color: var(--fg)
+  border: 1px solid var(--border-muted)
+  
+  &:hover:not(:disabled)
+    background: color-mix(in oklab, var(--secondary) 20%, transparent)
 
-  @media (max-width: $mobile)
-    height: calc(100vh - 7rem)
+%button-danger
+  @extend %button-base
+  background: var(--error)
+  color: white
+  
+  &:hover:not(:disabled)
+    background: color-mix(in oklab, var(--error) 90%, black)
 
-.app-footer
-  grid-area: footer
-  height: 4rem
-  box-sizing: border-box
+%input-base
+  padding: 0.75rem
+  border: 1px solid var(--border-muted)
+  border-radius: var(--radius)
+  background: color-mix(in oklab, var(--secondary) 8%, transparent)
+  color: var(--fg)
+  font-size: $font
+  min-height: $min-height
+  @extend %transition
+  
+  &:focus
+    outline: none
+    border-color: var(--primary)
+    background: color-mix(in oklab, var(--primary) 15%, transparent)
+  
+  &::placeholder
+    color: var(--fg-muted)
+    opacity: 0.7
 
-  @media (max-width: $mobile)
-    height: 3rem
+%card-base
+  background: color-mix(in oklab, var(--bg-muted) 30%, transparent)
+  padding: 2rem
+  border-radius: 1rem
+  border: 1px solid var(--border)
 
-// Basic Typography
+%table-base
+  width: 100%
+  background: color-mix(in oklab, var(--primary) 6%, transparent)
+  border-radius: 1rem
+  overflow: hidden
+  border: 1px solid var(--border-muted)
+  
+  th, td
+    padding: 0.75rem 1rem
+    text-align: left
+    border-bottom: 1px solid var(--border-muted)
+  
+  th
+    background: color-mix(in oklab, var(--primary) 12%, transparent)
+    font-weight: 600
+    color: var(--fg)
+  
+  tr:hover
+    background: color-mix(in oklab, var(--secondary) 8%, transparent)
+
+// Typography
 h1, h2, h3, h4, h5, h6
   font-family: 'Bungee', monospace
   line-height: 1.2
@@ -259,7 +321,7 @@ p
   color: var(--fg-muted)
   margin-bottom: 1rem
 
-// Basic Utilities
+// Utility Classes
 .text-muted
   color: var(--fg-muted)
 
@@ -277,84 +339,3 @@ p
 
 .mt-0
   margin-top: 0
-
-// Basic Button Styles
-button
-  display: inline-flex
-  align-items: center
-  gap: 0.5rem
-  padding: 0.75rem 1rem
-  border-radius: var(--radius)
-  font-size: $font
-  font-weight: 500
-  cursor: pointer
-  transition: all 0.2s ease
-  min-height: $min-height
-  white-space: nowrap
-
-  &:disabled
-    opacity: 0.5
-    cursor: not-allowed
-
-.primary
-  background: var(--primary)
-  color: white
-
-  &:hover:not(:disabled)
-    background: color-mix(in oklab, var(--primary) 90%, black)
-
-.secondary
-  background: color-mix(in oklab, var(--secondary) 10%, transparent)
-  color: var(--fg)
-  border: 1px solid var(--border-muted)
-
-  &:hover:not(:disabled)
-    background: color-mix(in oklab, var(--secondary) 20%, transparent)
-
-.danger
-  background: var(--error)
-  color: white
-
-  &:hover:not(:disabled)
-    background: color-mix(in oklab, var(--error) 90%, black)
-
-// Basic Form Element Styles
-input, select, textarea
-  padding: 0.75rem
-  border: 1px solid var(--border-muted)
-  border-radius: var(--radius)
-  background: color-mix(in oklab, var(--secondary) 8%, transparent)
-  color: var(--fg)
-  font-size: $font
-  min-height: $min-height
-  transition: all 0.2s ease
-
-  &:focus
-    outline: none
-    border-color: var(--primary)
-    background: color-mix(in oklab, var(--primary) 15%, transparent)
-
-  &::placeholder
-    color: var(--fg-muted)
-    opacity: 0.7
-
-// Basic Table Styles
-table
-  width: 100%
-  background: color-mix(in oklab, var(--primary) 6%, transparent)
-  border-radius: 1rem
-  overflow: hidden
-  border: 1px solid var(--border-muted)
-
-  th, td
-    padding: 0.75rem 1rem
-    text-align: left
-    border-bottom: 1px solid var(--border-muted)
-
-  th
-    background: color-mix(in oklab, var(--primary) 12%, transparent)
-    font-weight: 600
-    color: var(--fg)
-
-  tr:hover
-    background: color-mix(in oklab, var(--secondary) 8%, transparent)
