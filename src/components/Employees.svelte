@@ -1,7 +1,7 @@
 <script>
-  import { employees } from '../lib/stores.js'
-  import { settings } from '../lib/settings.js'
-  import { validateEmployee, EMPLOYEE_ATTRIBUTES, formatCurrency } from '../lib/core.js'
+  import { employees } from '../stores.js'
+  import { settings } from '../stores.js'
+  import { validateEmployee, EMPLOYEE_ATTRIBUTES, formatCurrency } from '../core.js'
   import { toasts } from '../lib/toast.js'
   import Modal from './Modal.svelte'
   import ToastContainer from './ToastContainer.svelte'

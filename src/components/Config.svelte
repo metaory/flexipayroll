@@ -1,9 +1,8 @@
 <script>
-  import { config } from '../lib/stores.js';
+  import { config, DEFAULT_CONFIG } from '../stores.js';
   import { t } from '../lib/i18n.js';
-  import { DEFAULT_CONFIG, formatCurrency } from '../lib/core.js';
+  import { formatCurrency, storage } from '../core.js';
   import { toasts } from '../lib/toast.js';
-  import { storage } from '../lib/stores.js';
   import Modal from './Modal.svelte';
   import ToastContainer from './ToastContainer.svelte';
   import Icon from '@iconify/svelte';

@@ -1,0 +1,27 @@
+start with a complete review
+
+we have several todo items:
+
+we have to use better, larger, colored, iconifgy, ideally from the solar collection
+
+study and read @BUSINESS_RULES.md at least two times carefully
+
+our process and workflow should be much more clear and distraction free
+
+our workflow should be like a few wizard like workflow along with some separate report views
+
+the main workflows the wizard one like should be extremely clear and transparent and focused to do only one thing and well, it should be extremely distraction free and extremely transparent,
+
+for example for each step of our config for business calculation rule it should be one dedicated view in the workflow, 
+and transparently in high size nice typography with custom nice fonts, what calculation is happening based on what rule and how in details
+
+lets build and finish the skeleton and even placeholders to have the ui ux of the workflow done and ready and then to move to bringing implementations and even have placeholders if need be
+
+this similar transparency in calculations should be on final workflow steps of giving the short and long report, for each employee final end of month salary payslip should have at least two reports, a short summary one, and a more detailed one, we can later on in future add more interesting reports, like heatmap,
+
+lets to those and we also need to review our i18n situation
+
+
+be extremely detailed in dont worry about how long this prompt resulotion and tokens gonna take
+
+also dont worry about completely changing some stractures or code

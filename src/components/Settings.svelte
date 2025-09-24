@@ -1,12 +1,12 @@
 <script>
-  import { settings, i18nLabels, resetSettings, DEFAULT_SETTINGS } from '../lib/settings.js';
-  import { formatCurrency } from '../lib/core.js';
+  import { settings, i18nLabels, resetSettings, DEFAULT_SETTINGS } from '../stores.js';
+  import { formatCurrency } from '../core.js';
   import { toasts } from '../lib/toast.js';
   import ToastContainer from './ToastContainer.svelte';
   import Modal from './Modal.svelte';
   import Icon from '@iconify/svelte';
   import { ICONS } from '../lib/icons.js';
-  import { generateFields, getGroups, g } from '../lib/i18n.js';
+  import { g } from '../lib/i18n.js';
 
   let localSettings = $state({ ...$settings });
   let localLabels = $state({ ...$i18nLabels });
@@ -72,8 +72,7 @@
     showResetModal = false;
   };
 
-  // Get groups for dynamic rendering
-  const groups = getGroups();
+  // Simplified settings - remove dynamic groups for now
 </script>
 
 <h2><Icon icon={ICONS.help} width="1.5em" height="1.5em" /> Application Settings</h2>
@@ -196,39 +195,8 @@
     </div>
   </section>
 
-  <!-- Dynamic Label Sections -->
-  {#each groups as group}
-    {@const fields = generateFields(group, localLabels, updateLocalLabel)}
-    
-    {#if fields.length > 0}
-      <section class="config-section">
-        <h3>
-          <Icon icon={ICONS[group] || ICONS.tag} width="1.2em" height="1.2em" /> 
-          {g[group]}
-        </h3>
-        <p class="text-muted">Customize the labels used for {group} throughout the application.</p>
-        
-        <div class="form-group-horizontal">
-          {#each fields as field}
-            <div class="form-group-stacked">
-              <label for={field.id}>
-                <Icon icon={ICONS[field.icon] || ICONS.tag} width="1em" height="1em" />
-                {field.label}
-              </label>
-              <input
-                id={field.id}
-                type="text"
-                value={field.value || ''}
-                oninput={e => field.onChange(e.currentTarget.value)}
-                maxlength="50"
-              />
-              <small class="text-muted">Label for {field.label.toLowerCase()}</small>
-            </div>
-          {/each}
-        </div>
-      </section>
-    {/if}
-  {/each}
+  <!-- Future: Dynamic Label Sections -->
+  <!-- Label customization will be added in a future version -->
 
   <section class="config-section">
     <h3><Icon icon={ICONS.help} width="1.2em" height="1.2em" /> Actions</h3>

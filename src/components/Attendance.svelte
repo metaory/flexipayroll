@@ -1,6 +1,6 @@
 <script>
-  import { employees, attendance, currentPeriod } from '../lib/stores.js';
-  import { validateAttendance } from '../lib/core.js';
+  import { employees, attendance, currentPeriod } from '../stores.js';
+  import { validateAttendance } from '../core.js';
   import { toasts } from '../lib/toast.js';
   import { t } from '../lib/i18n.js';
   import Modal from './Modal.svelte';

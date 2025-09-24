@@ -1,9 +1,9 @@
 <script>
-  import { employees, attendance, config, currentPeriod, salaryRecords } from '../lib/stores.js';
-  import { settings } from '../lib/settings.js';
-  import { calculateSalaryRecord, calculateAttendanceSummary, formatCurrency } from '../lib/core.js';
+  import { employees, attendance, config, currentPeriod, salaryRecords } from '../stores.js';
+  import { settings } from '../stores.js';
+  import { calculateSalaryRecord, calculateAttendanceSummary, formatCurrency } from '../core.js';
   import { t } from '../lib/i18n.js';
-  import { storage, storeSalaryRecord, getSalaryRecord, clearPeriodSalaryRecords, getPeriodSalaryRecords } from '../lib/stores.js';
+  import { storage, storeSalaryRecord, getSalaryRecord, clearPeriodSalaryRecords, getPeriodSalaryRecords } from '../stores.js';
   import { toasts } from '../lib/toast.js';
   import ToastContainer from './ToastContainer.svelte';
   import Icon from '@iconify/svelte';

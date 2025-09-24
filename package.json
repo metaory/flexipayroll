@@ -1,7 +1,7 @@
 {
   "name": "xpayroll",
   "private": true,
-  "version": "0.5.0",
+  "version": "3.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -17,6 +17,7 @@
   "dependencies": {
     "@fontsource/baloo-2": "^5.2.6",
     "@fontsource/bungee": "^5.2.6",
+    "@fontsource/jetbrains-mono": "^5.2.8",
     "@iconify/svelte": "^5.0.0"
   }
 }
