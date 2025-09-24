@@ -1,0 +1,13 @@
+lets have improve our layout with keeping in mind our distraction free concept,
+
+wi will have css grid layout for the page, on higher level we will have only three rows
+
+the top row would be the header
+the middle row would be the content,
+the bottom row would be the footer with actions,  for example the wizard steps and buttons,
+
+this whole thing wont have overflow y visible, 
+
+the top and bottom rows would have fixed height and the middle container can have overflow y visible 
+
+so the page wont have scrolls visible, but our middle container row can have scroll and we will be fine on any resolution

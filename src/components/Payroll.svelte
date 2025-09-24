@@ -75,7 +75,29 @@
     adjustments[empId] = adjustments[empId].filter(adj => adj.id !== adjId)
     adjustments = { ...adjustments }
   }
+
+  // Export footer actions to parent
+  let { footerActions = $bindable() } = $props()
+  
+  // Set footer actions snippet
+  $effect(() => {
+    footerActions = footerActionsSnippet
+  })
 </script>
+
+{#snippet footerActionsSnippet()}
+  <button class="secondary" onclick={prevStep} disabled={currentStep === 0}>
+    <Icon icon="solar:arrow-left-bold-duotone" width="1rem" height="1rem" />
+    Previous
+  </button>
+  
+  <span>{currentStep + 1} of {STEPS.length}</span>
+  
+  <button class="primary" onclick={nextStep} disabled={currentStep === STEPS.length - 1}>
+    Next
+    <Icon icon="solar:arrow-right-bold-duotone" width="1rem" height="1rem" />
+  </button>
+{/snippet}
 
 <main class="wizard">
   <header class="header">
@@ -307,26 +329,13 @@
     {/if}
   </section>
 
-  <footer class="footer">
-    <button class="secondary" onclick={prevStep} disabled={currentStep === 0}>
-      <Icon icon="solar:arrow-left-bold-duotone" width="1rem" height="1rem" />
-      Previous
-    </button>
-    
-    <span>{currentStep + 1} of {STEPS.length}</span>
-    
-    <button class="primary" onclick={nextStep} disabled={currentStep === STEPS.length - 1}>
-      Next
-      <Icon icon="solar:arrow-right-bold-duotone" width="1rem" height="1rem" />
-    </button>
-  </footer>
 </main>
 
 <style>
   .wizard {
     display: grid;
-    grid-template-rows: auto 1fr auto;
-    min-height: 100vh;
+    grid-template-rows: auto 1fr;
+    height: 100%;
   }
   
   .header {
@@ -664,20 +673,6 @@
     font-size: 1.1rem;
   }
   
-  .footer {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    align-items: center;
-    gap: 2rem;
-    padding: 1.5rem 2rem;
-    background: color-mix(in oklab, var(--bg-muted) 30%, transparent);
-    border-top: 1px solid var(--border);
-  }
-  
-  .footer span {
-    text-align: center;
-    color: var(--fg-muted);
-  }
   
   button {
     display: grid;
@@ -730,10 +725,6 @@
       grid-template-columns: 1fr;
     }
     
-    .footer {
-      grid-template-columns: 1fr;
-      gap: 1rem;
-    }
     
     .adj-item {
       grid-template-columns: 1fr;
