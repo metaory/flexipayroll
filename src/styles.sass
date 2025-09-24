@@ -12,44 +12,46 @@ $min-height: 2.5rem
 $mobile: 768px
 $tablet: 1024px
 
-// Colors - Improved palette with better contrast and harmony
+// Color system - single source of truth
 $base: #6366f1
-$primary: $base
-$secondary: color.adjust($base, $hue: 120deg)
-$success: color.adjust($base, $hue: 160deg)
-$warning: color.adjust($base, $hue: 45deg)
-$error: color.adjust($base, $hue: 0deg)
+$semantics: (success: 160deg, warning: 45deg, error: 0deg, info: 200deg, neutral: 220deg)
 
-// CSS Variables
-:root
-  --bg: #fefefe
-  --bg-muted: #f8f9fa
-  --fg: #1f2937
-  --fg-muted: #6b7280
-  --primary: #{$primary}
-  --secondary: #{$secondary}
-  --success: #{$success}
-  --warning: #{$warning}
-  --error: #{$error}
-  --info: #{$secondary}
-  --radius: #{$radius}
+@function adj($h: 0deg, $s: 0%, $l: 0%)
+  $result: color.adjust($base, $hue: $h, $saturation: $s, $lightness: $l)
+  @return rgb(round(color.red($result)), round(color.green($result)), round(color.blue($result)))
+
+@mixin generate-colors($dark: false)
+  @if $dark
+    --bg: #{adj(-15deg, 15%, -35%)}
+    --bg-muted: #{adj(-15deg, 10%, -25%)}
+    --fg: #{adj(15deg, 50%, 40%)}
+    --fg-muted: #{adj(10deg, 25%, 20%)}
+    --primary: #{adj(0deg, 0%, 20%)}
+  @else
+    --bg: #{adj(0deg, -25%, 25%)}
+    --bg-muted: #{adj(0deg, -20%, 20%)}
+    --fg: #{adj(0deg, -40%, -40%)}
+    --fg-muted: #{adj(0deg, -60%, -20%)}
+    --primary: #{$base}
+  
+  @each $name, $hue in $semantics
+    $semantic: color.adjust($base, $hue: $hue, $lightness: if($dark, 10%, 0%))
+    --#{$name}: #{$semantic}
+    --surface-#{$name}: #{color.mix($semantic, transparent, 12%)}
+    --on-#{$name}: #{if($dark, black, white)}
+  
+  $primary: if($dark, adj(0deg, 0%, 20%), $base)
+  --surface: #{color.mix($primary, transparent, 8%)}
+  --border: #{color.mix($primary, transparent, 25%)}
+  --border-muted: #{color.mix($primary, transparent, 15%)}
   --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1)
-  --border-muted: rgba(99, 102, 241, 0.15)
-  --border: rgba(99, 102, 241, 0.25)
+  --radius: #{$radius}
+
+:root
+  @include generate-colors(false)
 
 html.dark
-  --bg: #1a1625
-  --bg-muted: #2a2435
-  --fg: #e6e1ff
-  --fg-muted: #b8b1d0
-  --primary: #8b8cf7
-  --secondary: #7dd3fc
-  --success: #4ade80
-  --warning: #fbbf24
-  --error: #f87171
-  --info: #7dd3fc
-  --border-muted: rgba(139, 140, 247, 0.2)
-  --border: rgba(139, 140, 247, 0.3)
+  @include generate-colors(true)
 
 // Reset & Base
 *
@@ -151,7 +153,7 @@ html, body
 body
   font-family: 'Baloo 2', sans-serif
   line-height: 1.6
-  background: var(--bg)
+  background: var(--bg-muted)
   color: var(--fg)
   height: 100vh
   max-width: 1200px
@@ -223,12 +225,12 @@ body
 
 %button-secondary
   @extend %button-base
-  background: color-mix(in oklab, var(--secondary) 10%, transparent)
+  background: var(--surface)
   color: var(--fg)
   border: 1px solid var(--border-muted)
   
   &:hover:not(:disabled)
-    background: color-mix(in oklab, var(--secondary) 20%, transparent)
+    background: var(--bg-muted)
 
 %button-danger
   @extend %button-base
@@ -242,7 +244,7 @@ body
   padding: 0.75rem
   border: 1px solid var(--border-muted)
   border-radius: var(--radius)
-  background: color-mix(in oklab, var(--secondary) 8%, transparent)
+  background: var(--surface)
   color: var(--fg)
   font-size: $font
   min-height: $min-height
@@ -251,21 +253,21 @@ body
   &:focus
     outline: none
     border-color: var(--primary)
-    background: color-mix(in oklab, var(--primary) 15%, transparent)
+    background: var(--bg-muted)
   
   &::placeholder
     color: var(--fg-muted)
     opacity: 0.7
 
 %card-base
-  background: color-mix(in oklab, var(--bg-muted) 30%, transparent)
+  background: var(--surface)
   padding: 2rem
   border-radius: 1rem
   border: 1px solid var(--border)
 
 %table-base
   width: 100%
-  background: color-mix(in oklab, var(--primary) 6%, transparent)
+  background: var(--surface)
   border-radius: 1rem
   overflow: hidden
   border: 1px solid var(--border-muted)
@@ -276,12 +278,12 @@ body
     border-bottom: 1px solid var(--border-muted)
   
   th
-    background: color-mix(in oklab, var(--primary) 12%, transparent)
+    background: var(--bg-muted)
     font-weight: 600
     color: var(--fg)
   
   tr:hover
-    background: color-mix(in oklab, var(--secondary) 8%, transparent)
+    background: var(--bg-muted)
 
 // Typography
 h1, h2, h3, h4, h5, h6

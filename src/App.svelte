@@ -3,8 +3,6 @@
   import Icon from '@iconify/svelte'
   import { theme, toggleTheme } from './stores.js'
   
-  let footerActions = $state(null)
-  
   // Apply theme to document on mount and changes
   $effect(() => {
     const isDark = $theme.mode === 'dark'
@@ -14,7 +12,7 @@
 
 <header class="app-header">
   <a href="/" class="logo">
-    <img src="/logo.jpg" alt="XPayroll" width="48" height="48" />
+    <Icon icon="mynaui:chevron-up-left-square-solid" width="48" height="48" />
     <div>
       <span class="title">XPayroll</span>
       <span class="subtitle">Professional Payroll Management</span>
@@ -27,21 +25,11 @@
 </header>
 
 <main class="app-content">
-  <Payroll bind:footerActions />
+  <Payroll />
 </main>
 
 <footer class="app-footer">
-  <div class="footer-content">
-    <div class="footer-branding">
-      <span class="footer-text">© 2025 XPayroll</span>
-    </div>
-    
-    <div class="footer-actions">
-      {#if footerActions}
-        {@render footerActions()}
-      {/if}
-    </div>
-  </div>
+  <span class="footer-text">© 2025 XPayroll</span>
 </footer>
 
 <style lang="sass">
@@ -52,10 +40,9 @@
     @extend %grid
     grid-template-columns: 1fr auto
     align-items: center
-    gap: 2rem
-    padding: 1rem 2rem
-    background: color-mix(in oklab, var(--primary) 5%, transparent)
-    border-bottom: 1px solid var(--border)
+    gap: 3rem
+    padding: 1.5rem 3rem
+    background: var(--bg-muted)
     height: 5rem
     box-sizing: border-box
 
@@ -64,14 +51,15 @@
     overflow-y: auto
     overflow-x: hidden
     padding: 2rem
+    margin: auto 2em
     background: var(--bg)
     height: calc(100vh - 9rem)
     box-sizing: border-box
+    border-radius: 1.6em
 
   .app-footer
     grid-area: footer
-    background: color-mix(in oklab, var(--primary) 5%, transparent)
-    border-top: 1px solid var(--border)
+    background: var(--bg-muted)
     padding: 1rem 2rem
     height: 4rem
     box-sizing: border-box
@@ -80,11 +68,12 @@
     @extend %grid
     grid-template-columns: auto 1fr
     align-items: center
-    gap: 1rem
+    gap: 1.5rem
     text-decoration: none
     color: var(--fg)
     
-    img
+    :global(svg)
+      color: var(--primary)
       border-radius: 0.75rem
   
   .title
@@ -92,50 +81,36 @@
     color: var(--primary)
     font-weight: 600
     font-size: 1.5rem
+    line-height: 1.2
   
   .subtitle
-    font-size: 0.8rem
+    font-size: 0.85rem
     color: var(--fg-muted)
+    margin-top: 0.25rem
 
   .theme-toggle
     width: 3rem
     height: 3rem
     border-radius: 50%
     border: 1px solid var(--border)
-    background: color-mix(in oklab, var(--secondary) 10%, transparent)
+    background: var(--surface-light)
     cursor: pointer
     @extend %transition
     @extend %grid
     place-items: center
     
     &:hover
-      background: color-mix(in oklab, var(--secondary) 20%, transparent)
+      background: var(--surface-medium)
       transform: rotate(15deg)
     
     :global(svg)
       color: var(--secondary)
 
-  .footer-content
-    @extend %grid
-    grid-template-columns: auto 1fr
-    align-items: center
-    gap: 2rem
-    max-width: 1200px
-    margin: 0 auto
-    height: 100%
-
-  .footer-branding
-    @extend %flex
-  
   .footer-text
     font-size: 0.75rem
     color: var(--fg-muted)
     opacity: 0.7
-
-  .footer-actions
-    @extend %flex
-    justify-content: flex-end
-    gap: 1rem
+    text-align: center
   
   @media (max-width: $mobile)
     .app-header
@@ -153,7 +128,4 @@
       padding: 0.5rem 1rem
       height: 3rem
     
-    .footer-content
-      grid-template-columns: 1fr
-      text-align: center
 </style>

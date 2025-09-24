@@ -66,7 +66,7 @@
     left: 0
     right: 0
     bottom: 0
-    background: color-mix(in oklab, var(--bg) 80%, transparent)
+    background: var(--surface-medium)
     @extend %glass
     backdrop-filter: blur(8px)
     z-index: 1500
@@ -82,7 +82,7 @@
       visibility: visible
 
   .modal-content
-    background: color-mix(in oklab, var(--primary) 8%, transparent)
+    background: var(--surface-light)
     @extend %glass
     border-radius: 1.5rem
     padding: 2rem
@@ -92,7 +92,7 @@
     overflow-y: auto
     transform: scale(0.9) translateY(20px)
     @extend %transition
-    box-shadow: 0 8px 32px color-mix(in oklab, var(--primary) 15%, transparent)
+    box-shadow: 0 8px 32px var(--surface-medium)
 
     .show &
       transform: scale(1) translateY(0)
@@ -105,7 +105,7 @@
     @extend %flex-between
     margin-bottom: 1.5rem
     padding-bottom: 1rem
-    border-bottom: 1px solid color-mix(in oklab, var(--border-muted) 50%, transparent)
+    border-bottom: 1px solid var(--border-muted)
 
   .modal-title
     @extend %flex
@@ -126,7 +126,7 @@
     height: 2rem
     padding: 0
     border-radius: 50%
-    background: color-mix(in oklab, var(--bg-muted) 40%, transparent)
+    background: var(--surface-light)
     color: var(--fg-muted)
     cursor: pointer
     @extend %transition
@@ -136,7 +136,7 @@
     font: inherit
 
     &:hover
-      background: color-mix(in oklab, var(--bg-muted) 60%, transparent)
+      background: var(--surface-medium)
       color: var(--fg)
 
   .modal-body

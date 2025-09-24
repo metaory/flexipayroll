@@ -56,7 +56,7 @@
     @extend %glass
     @extend %transition
     max-width: 400px
-    box-shadow: 0 8px 32px color-mix(in oklab, var(--primary) 20%, transparent)
+    box-shadow: 0 8px 32px var(--surface-medium)
     @extend %flex
     gap: 0.75rem
     font-weight: 500
@@ -78,22 +78,22 @@
         transform: translateY(0)
 
     &.success
-      background: color-mix(in oklab, var(--success) 20%, transparent)
+      background: var(--surface-success)
       color: var(--success)
       border-left: 4px solid var(--success)
 
     &.error
-      background: color-mix(in oklab, var(--error) 20%, transparent)
+      background: var(--surface-error)
       color: var(--error)
       border-left: 4px solid var(--error)
 
     &.warning
-      background: color-mix(in oklab, var(--warning) 20%, transparent)
+      background: var(--surface-warning)
       color: var(--warning)
       border-left: 4px solid var(--warning)
 
     &.info
-      background: color-mix(in oklab, var(--secondary) 20%, transparent)
+      background: var(--surface-medium)
       color: var(--secondary)
       border-left: 4px solid var(--secondary)
 
@@ -103,7 +103,7 @@
     height: 1.5rem
     padding: 0
     border-radius: 50%
-    background: color-mix(in oklab, var(--bg-muted) 40%, transparent)
+    background: var(--surface-light)
     color: var(--fg-muted)
     opacity: 0.7
     cursor: pointer
@@ -115,5 +115,5 @@
 
     &:hover
       opacity: 1
-      background: color-mix(in oklab, var(--bg-muted) 60%, transparent)
+      background: var(--surface-medium)
 </style>
