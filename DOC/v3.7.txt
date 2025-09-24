@@ -1,0 +1,13 @@
+we dont like many html markup nesting, 
+we like to keep the dom nesting levels to minimum
+css grid layout helps with having fewer dom element nesting
+
+feel free to move, remove, rename, combine, create files
+
+we overall like less files and less complexity
+
+we like more functional and declarative code
+
+look for outdated, unused, redundant, or other improvements
+
+912 58 063 76

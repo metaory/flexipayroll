@@ -1,0 +1,24 @@
+so @v3.2.txt was our direction
+
+we need to improve our wizard 
+
+we need way more steps,
+
+basically every single @core.js business rule we have @BUSINESS_RULES.md 
+we should give it a dedicated step in our workflow wizard
+
+its purpose is to give the operator user clear view of every single calculation
+even if the user just have to sit and view the step and the step dont need user action
+
+for our setting configs that are involve in the workflow
+
+we should have one overview of the current configs settings, at the start as one of the first steps,
+
+and then as we go, in every step that has config settings involved, we should show it as editable, just like how user can currently change config
+
+and just as we have it that would take over and it be the latest config value for others moving forward
+
+and again just like our current plan each payslip would have meta data for all the configs values that the payslip was calculated based on
+
+since configs can change
+thisa is similar to what we want in the end of the wizard workflow to have both a summary short one and a detailed one with configs value and everything 
