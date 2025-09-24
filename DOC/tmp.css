@@ -1,0 +1,22 @@
+
+h1 {
+    font-size: 2rem;
+}
+
+h2 {
+    font-size: 1.5rem;
+}
+
+.box {
+    display: grid;
+}
+
+.glass {
+    background-color: hsl(220deg 50% 10% / 40%);
+    backdrop-filter: blur(8px);
+}
+
+button {
+    outline: none;
+    border: none;
+}

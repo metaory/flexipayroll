@@ -1,0 +1,1622 @@
+@use "sass:color"
+
+// Core Values
+$gap: 1rem
+$padding: 1.5rem
+$radius: 0.5rem
+$font: 0.875rem
+$spacing: 2rem
+$min-height: 2.5rem
+
+// Breakpoints
+$mobile: 768px
+$tablet: 1024px
+
+// Colors - Improved palette with better contrast and harmony
+$base: #6366f1
+$primary: $base
+$secondary: color.adjust($base, $hue: 120deg)
+$success: color.adjust($base, $hue: 160deg)
+$warning: color.adjust($base, $hue: 45deg)
+$error: color.adjust($base, $hue: 0deg)
+
+// CSS Variables - Enhanced with better color mixing
+:root
+  --bg: #{color.adjust($base, $hue: 45deg, $saturation: -80%, $lightness: 98%)}
+  --bg-muted: #{color.adjust($base, $hue: 45deg, $saturation: -60%, $lightness: 92%)}
+  --fg: #{color.adjust($base, $lightness: -85%)}
+  --fg-muted: #{color.adjust($base, $lightness: -45%)}
+  --primary: #{$primary}
+  --secondary: #{$secondary}
+  --success: #{$success}
+  --warning: #{$warning}
+  --error: #{$error}
+  --info: #{$secondary}
+  --radius: #{$radius}
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1)
+  --border-muted: #{color.adjust($base, $hue: 45deg, $saturation: -50%, $lightness: 40%, $alpha: 0.4)}
+
+.dark
+  --bg: #{color.adjust($base, $hue: 25deg, $saturation: -70%, $lightness: -45%)}
+  --bg-muted: #{color.adjust($base, $hue: 25deg, $saturation: -50%, $lightness: -35%)}
+  --fg: #{color.adjust($base, $lightness: 55%)}
+  --fg-muted: #{color.adjust($base, $lightness: 35%)}
+  --primary: #{color.adjust($primary, $lightness: 25%)}
+  --secondary: #{color.adjust($secondary, $lightness: 25%)}
+  --success: #{color.adjust($success, $lightness: 25%)}
+  --warning: #{color.adjust($warning, $lightness: 25%)}
+  --error: #{color.adjust($error, $lightness: 25%)}
+  --info: #{color.adjust($secondary, $lightness: 25%)}
+  --border-muted: #{color.adjust($base, $hue: 25deg, $saturation: -40%, $lightness: -30%, $alpha: 0.4)}
+
+// Reset & Base
+*
+  box-sizing: border-box
+  margin: 0
+  padding: 0
+
+// Remove default borders from all form elements and interactive components
+button, input, select, textarea, fieldset, legend, optgroup, option
+  border: none
+  outline: none
+  background: none
+  font-family: inherit
+  font-size: inherit
+  color: inherit
+
+// Remove default button styling
+button
+  cursor: pointer
+  padding: 0
+  margin: 0
+  border-radius: 0
+  background: transparent
+  border: none
+  font: inherit
+  color: inherit
+  text-decoration: none
+  display: inline-block
+  line-height: 1
+  text-align: center
+  vertical-align: middle
+  user-select: none
+  -webkit-appearance: none
+  -moz-appearance: none
+  appearance: none
+
+// Remove default input styling
+input, select, textarea
+  border: none
+  outline: none
+  background: transparent
+  font: inherit
+  color: inherit
+  padding: 0
+  margin: 0
+  border-radius: 0
+  -webkit-appearance: none
+  -moz-appearance: none
+  appearance: none
+
+// Remove default select styling
+select
+  background-image: none
+  -webkit-appearance: none
+  -moz-appearance: none
+  appearance: none
+
+// Remove default fieldset styling
+fieldset
+  border: none
+  padding: 0
+  margin: 0
+  min-width: 0
+
+// Remove default legend styling
+legend
+  border: none
+  padding: 0
+  margin: 0
+
+// Remove default list styling
+ul, ol
+  list-style: none
+  padding: 0
+  margin: 0
+
+// Remove default link styling
+a
+  color: inherit
+  text-decoration: none
+
+// Remove default table styling
+table
+  border-collapse: collapse
+  border-spacing: 0
+
+// Remove default image styling
+img
+  max-width: 100%
+  height: auto
+  border: none
+  vertical-align: middle
+
+html, body
+  overflow-x: hidden
+  max-width: 100vw
+
+body
+  font-family: 'Baloo 2', sans-serif
+  line-height: 1.6
+  background: var(--bg)
+  color: var(--fg)
+  min-height: 100vh
+  max-width: 1200px
+  margin: 0 auto
+  padding: 0
+  padding-top: 3rem
+  overflow-x: hidden
+
+  @media (max-width: $mobile)
+    padding: 0 1rem
+    padding-top: 2rem
+
+  @media (max-width: 480px)
+    padding-top: 4rem
+
+// Core Layout
+%flex
+  display: flex
+  align-items: center
+
+%flex-between
+  @extend %flex
+  justify-content: space-between
+
+%flex-wrap
+  @extend %flex
+  flex-wrap: wrap
+  gap: $gap
+
+%grid
+  display: grid
+  gap: $gap
+
+%grid-2
+  @extend %grid
+  grid-template-columns: 1fr 1fr
+
+%grid-3
+  @extend %grid
+  grid-template-columns: repeat(3, 1fr)
+
+%grid-4
+  @extend %grid
+  grid-template-columns: repeat(4, 1fr)
+
+// Responsive Grid Layouts
+%grid-responsive
+  @extend %grid
+  grid-template-columns: 1fr
+
+  @media (min-width: $mobile)
+    grid-template-columns: repeat(2, 1fr)
+
+  @media (min-width: $tablet)
+    grid-template-columns: repeat(4, 1fr)
+
+%grid-responsive-2
+  @extend %grid
+  grid-template-columns: 1fr
+
+  @media (min-width: $mobile)
+    grid-template-columns: repeat(2, 1fr)
+
+%grid-responsive-3
+  @extend %grid
+  grid-template-columns: 1fr
+
+  @media (min-width: $mobile)
+    grid-template-columns: repeat(2, 1fr)
+
+  @media (min-width: $tablet)
+    grid-template-columns: repeat(3, 1fr)
+
+// Form Layouts
+%form-horizontal
+  @extend %grid-responsive
+  align-items: start
+  gap: 2rem
+
+%form-stacked
+  @extend %grid
+  grid-template-columns: 1fr
+  gap: 1.5rem
+
+// Enhanced Form Groups
+%form-group
+  @extend %grid
+  grid-template-columns: 1fr
+  align-items: start
+  gap: 0.5rem
+  margin-bottom: 1rem
+
+  @media (min-width: $mobile)
+    grid-template-columns: 180px 1fr
+    gap: 1rem
+
+  label
+    grid-column: 1
+    justify-self: start
+    @extend %label-text
+
+    @media (min-width: $mobile)
+      justify-self: end
+
+  input, select, textarea
+    grid-column: 1
+
+    @media (min-width: $mobile)
+      grid-column: 2
+
+%form-group-stacked
+  @extend %grid
+  grid-template-columns: 1fr
+  gap: 0.5rem
+  margin-bottom: 1rem
+
+  label
+    @extend %label-text
+
+  input, select, textarea
+    width: 100%
+
+  small
+    @extend %text-muted
+    font-size: 0.75rem
+    line-height: 1.4
+
+%form-group-horizontal
+  @extend %grid
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr))
+  gap: 1.5rem
+  margin-bottom: 1.5rem
+
+  @media (max-width: $mobile)
+    grid-template-columns: 1fr
+    gap: 1rem
+
+  .form-group-stacked
+    margin-bottom: 0
+
+// Config Section Styling
+.config-section
+  @extend %card
+  border: 1px solid color-mix(in oklab, var(--primary) 10%, transparent)
+  background: color-mix(in oklab, var(--primary) 4%, transparent)
+
+  h3
+    @extend %flex
+    gap: 0.5rem
+    margin-bottom: 0.75rem
+    padding-bottom: 0.5rem
+    border-bottom: 1px solid color-mix(in oklab, var(--primary) 15%, transparent)
+
+  p
+    margin-bottom: 1rem
+
+  .form-group-horizontal
+    margin-bottom: 0.75rem
+
+  .form-group-stacked
+    padding: 0.75rem
+    background: color-mix(in oklab, var(--bg-muted) 20%, transparent)
+    border-radius: 0.5rem
+    border: 1px solid color-mix(in oklab, var(--primary) 8%, transparent)
+
+    &:hover
+      background: color-mix(in oklab, var(--bg-muted) 30%, transparent)
+      border-color: color-mix(in oklab, var(--primary) 15%, transparent)
+
+    label
+      margin-bottom: 0.25rem
+
+    input
+      margin-bottom: 0.25rem
+
+    small
+      display: block
+      margin-top: 0.125rem
+
+// Enhanced Form Field Styling
+%form-field
+  padding: 0.75rem 1rem
+  @extend %color-secondary
+  @extend %glass, %transition, %focus
+  border-radius: 1rem
+  color: var(--fg)
+  font-size: $font
+  min-height: $min-height
+  width: 100%
+  max-width: 100%
+  @extend %shadow-sm
+  border: 1px solid color-mix(in oklab, var(--primary) 8%, transparent)
+
+  &::placeholder
+    color: var(--fg-muted)
+    opacity: 0.7
+
+  &:hover
+    @extend %color-secondary-hover
+    @extend %shadow-md
+    @extend %button-hover
+    border-color: color-mix(in oklab, var(--primary) 15%, transparent)
+
+  &:focus
+    background: color-mix(in oklab, var(--primary) 20%, transparent)
+    @extend %shadow-xl
+    transform: translateY(-2px)
+    outline: none
+    border-color: color-mix(in oklab, var(--primary) 30%, transparent)
+
+  &:active
+    background: color-mix(in oklab, var(--primary) 30%, transparent)
+    box-shadow: 0 3px 12px color-mix(in oklab, var(--primary) 35%, transparent)
+    @extend %button-active
+
+  &:disabled
+    @extend %button-disabled
+    box-shadow: 0 1px 4px color-mix(in oklab, var(--bg-muted) 20%, transparent)
+    border-color: color-mix(in oklab, var(--bg-muted) 30%, transparent)
+
+    &:hover, &:focus
+      @extend %button-disabled
+      box-shadow: 0 1px 4px color-mix(in oklab, var(--bg-muted) 20%, transparent)
+
+  &:read-only
+    background: color-mix(in oklab, var(--bg-muted) 40%, transparent)
+    color: var(--fg-muted)
+    cursor: default
+    border-color: color-mix(in oklab, var(--bg-muted) 30%, transparent)
+
+    &:hover
+      background: color-mix(in oklab, var(--bg-muted) 40%, transparent)
+      transform: none
+      @extend %shadow-sm
+
+  &.error
+    background: color-mix(in oklab, var(--error) 20%, transparent)
+    box-shadow: 0 2px 8px color-mix(in oklab, var(--error) 30%, transparent)
+    border-color: color-mix(in oklab, var(--error) 30%, transparent)
+
+    &:hover
+      background: color-mix(in oklab, var(--error) 30%, transparent)
+      @extend %shadow-md
+
+    &:focus
+      background: color-mix(in oklab, var(--error) 35%, transparent)
+      @extend %shadow-xl
+
+// Enhanced Label Styling
+%label-text
+  @extend %flex
+  gap: 0.5rem
+  @extend %font-weight-bold
+  font-size: $font
+  color: var(--fg)
+  margin-bottom: 0.5rem
+  align-items: center
+
+  svg
+    color: var(--primary)
+    opacity: 0.8
+
+// Enhanced Card Styling
+%card
+  background: color-mix(in oklab, var(--primary) 6%, transparent)
+  @extend %glass, %transition
+  padding: 2.5rem
+  border-radius: 1.5rem
+  box-shadow: 0 8px 32px color-mix(in oklab, var(--primary) 12%, transparent)
+  margin-bottom: 2rem
+  border: 1px solid color-mix(in oklab, var(--primary) 8%, transparent)
+
+  @media (max-width: $mobile)
+    padding: 1.5rem
+    border-radius: 1rem
+
+// Enhanced Table Styling
+table
+  width: 100%
+  background: color-mix(in oklab, var(--primary) 6%, transparent)
+  @extend %glass, %shadow-card
+  overflow: hidden
+  border-radius: 1rem
+  border: 1px solid color-mix(in oklab, var(--primary) 8%, transparent)
+
+  th, td
+    padding: 0.75rem 1rem
+    text-align: left
+    word-wrap: break-word
+    overflow-wrap: break-word
+    border-bottom: 1px solid color-mix(in oklab, var(--primary) 8%, transparent)
+
+    @media (max-width: $mobile)
+      padding: 0.5rem 0.75rem
+      font-size: 0.8rem
+
+  th
+    background: color-mix(in oklab, var(--primary) 12%, transparent)
+    @extend %glass
+    @extend %font-weight-bold
+    font-size: $font
+    position: sticky
+    top: 0
+    z-index: 10
+    box-shadow: 0 2px 8px color-mix(in oklab, var(--primary) 20%, transparent)
+    border-bottom: 2px solid color-mix(in oklab, var(--primary) 15%, transparent)
+
+  tr
+    @extend %transition
+    &:hover
+      background: color-mix(in oklab, var(--secondary) 10%, transparent)
+      @extend %button-hover
+      @extend %shadow-md
+
+    &:last-child td
+      border-bottom: none
+
+  td button
+    @extend %button-small
+
+// Enhanced Description List Styling
+dl
+  display: grid
+  grid-template-columns: 1fr
+  gap: 0.75rem
+
+  @media (min-width: $mobile)
+    grid-template-columns: 200px 1fr
+    gap: 0.75rem 1.5rem
+
+  dt
+    @extend %font-weight-bold
+    @extend %text-muted
+    padding: 0.5rem 0
+    border-bottom: 1px solid color-mix(in oklab, var(--primary) 8%, transparent)
+
+  dd
+    color: var(--fg)
+    word-wrap: break-word
+    overflow-wrap: break-word
+    padding: 0.5rem 0
+    border-bottom: 1px solid color-mix(in oklab, var(--primary) 8%, transparent)
+
+dl.horizontal
+  @extend %form-horizontal
+
+
+
+// Enhanced Save Status Styling
+.save-status
+  @extend %flex
+  gap: 0.75rem
+  padding: 1rem 1.5rem
+  border-radius: 0.75rem
+  margin-bottom: 1.5rem
+  @extend %font-weight-medium
+  border: 1px solid
+
+  &.success
+    background: color-mix(in oklab, var(--success) 15%, transparent)
+    color: var(--success)
+    border-color: color-mix(in oklab, var(--success) 25%, transparent)
+
+  &.warning
+    background: color-mix(in oklab, var(--warning) 15%, transparent)
+    color: var(--warning)
+    border-color: color-mix(in oklab, var(--warning) 25%, transparent)
+
+// Enhanced Unsaved Changes Styling
+.unsaved-changes
+  @extend %flex-between
+  padding: 1rem 1.5rem
+  background: color-mix(in oklab, var(--warning) 15%, transparent)
+  color: var(--warning)
+  border-radius: 0.75rem
+  margin-bottom: 1.5rem
+  border: 1px solid color-mix(in oklab, var(--warning) 25%, transparent)
+
+  .warning-message
+    @extend %flex
+    gap: 0.75rem
+    @extend %font-weight-medium
+
+  .save-actions
+    @extend %flex
+    gap: 0.75rem
+
+// Config Notice Styling
+.config-notice
+  @extend %flex
+  gap: 0.75rem
+  padding: 1rem 1.5rem
+  background: color-mix(in oklab, var(--info) 10%, transparent)
+  color: var(--info)
+  border-radius: 1rem
+  margin-bottom: 1.5rem
+  font-size: 0.9rem
+  @extend %font-weight-medium
+  border: 1px solid color-mix(in oklab, var(--info) 20%, transparent)
+
+  button
+    background: color-mix(in oklab, var(--info) 20%, transparent)
+    color: var(--info)
+    border: 1px solid color-mix(in oklab, var(--info) 30%, transparent)
+    padding: 0.5rem 1rem
+    border-radius: 0.75rem
+    font-size: 0.8rem
+    @extend %font-weight-bold
+    @extend %flex
+    gap: 0.5rem
+    @extend %transition
+
+    &:hover
+      background: color-mix(in oklab, var(--info) 30%, transparent)
+
+// Config Version Styling
+.config-version
+  @extend %flex
+  gap: 0.75rem
+  padding: 0.75rem 1rem
+  background: color-mix(in oklab, var(--info) 5%, transparent)
+  color: var(--info)
+  border-radius: 0.75rem
+  margin-bottom: 1rem
+  font-size: 0.85rem
+  @extend %font-weight-medium
+  border: 1px solid color-mix(in oklab, var(--info) 15%, transparent)
+
+  div
+    display: flex
+    flex-direction: column
+    gap: 0.25rem
+
+// Config Differences Styling
+.config-differences
+  @extend %flex
+  gap: 0.75rem
+  padding: 1rem 1.25rem
+  background: color-mix(in oklab, var(--warning) 8%, transparent)
+  color: var(--warning)
+  border-radius: 0.75rem
+  margin-bottom: 1rem
+  font-size: 0.85rem
+  @extend %font-weight-medium
+  border: 1px solid color-mix(in oklab, var(--warning) 20%, transparent)
+
+  div
+    display: flex
+    flex-direction: column
+    gap: 0.5rem
+
+  ul
+    margin: 0
+    padding-left: 1.5rem
+
+  li
+    list-style: disc
+    margin-bottom: 0.25rem
+    font-size: 0.8rem
+
+// Spacing
+%spacing
+  > * + *
+    margin-top: $spacing
+
+// Transitions & Effects
+%transition
+  transition: all 0.2s ease
+
+%glass
+  backdrop-filter: blur(10px)
+
+%focus
+  &:focus
+    outline: none
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 40%, transparent), 0 4px 20px color-mix(in oklab, var(--primary) 30%, transparent)
+
+// Shared Shadow System
+%shadow-sm
+  box-shadow: 0 2px 8px color-mix(in oklab, var(--bg-muted) 20%, transparent)
+
+%shadow-md
+  box-shadow: 0 4px 16px color-mix(in oklab, var(--bg-muted) 30%, transparent)
+
+%shadow-lg
+  box-shadow: 0 8px 32px color-mix(in oklab, var(--bg-muted) 40%, transparent)
+
+%shadow-xl
+  box-shadow: 0 6px 24px color-mix(in oklab, var(--bg-muted) 50%, transparent)
+
+// Shared Color Mixing
+%color-primary
+  background: color-mix(in oklab, var(--primary) 80%, transparent)
+
+%color-primary-hover
+  background: color-mix(in oklab, var(--primary) 90%, transparent)
+
+%color-primary-active
+  background: color-mix(in oklab, var(--primary) 100%, transparent)
+
+%color-secondary
+  background: color-mix(in oklab, var(--secondary) 12%, transparent)
+
+%color-secondary-hover
+  background: color-mix(in oklab, var(--secondary) 20%, transparent)
+
+%color-secondary-active
+  background: color-mix(in oklab, var(--secondary) 30%, transparent)
+
+%color-error
+  background: color-mix(in oklab, var(--error) 80%, transparent)
+
+%color-error-hover
+  background: color-mix(in oklab, var(--error) 90%, transparent)
+
+%color-error-active
+  background: color-mix(in oklab, var(--error) 100%, transparent)
+
+%color-disabled
+  background: color-mix(in oklab, var(--bg-muted) 60%, transparent)
+  color: var(--fg-muted)
+  cursor: not-allowed
+  opacity: 0.6
+
+// Shared Button States
+%button-hover
+  transform: translateY(-2px)
+
+%button-active
+  transform: translateY(-1px)
+
+%button-disabled
+  @extend %color-disabled
+  transform: none
+
+// Colors & Backgrounds
+%bg-subtle
+  background: color-mix(in oklab, var(--bg-muted) 30%, transparent)
+
+%bg-muted
+  background: color-mix(in oklab, var(--bg-muted) 40%, transparent)
+
+%bg-primary
+  background: color-mix(in oklab, var(--primary) 90%, transparent)
+
+%bg-error
+  background: color-mix(in oklab, var(--error) 90%, transparent)
+
+// Hover Effects
+%hover-lift
+  &:hover
+    @extend %button-hover
+    @extend %shadow-lg
+
+%hover-opacity
+  &:hover
+    opacity: 1
+
+%hover-scale
+  &:hover
+    transform: scale(1.05)
+
+// Common Patterns
+%circular
+  width: $min-height
+  height: $min-height
+  padding: 0
+  border-radius: 50%
+
+%opacity-muted
+  opacity: 0.8
+
+%opacity-subtle
+  opacity: 0.6
+
+%shadow-card
+  border-radius: 1.5rem
+  @extend %shadow-lg
+
+%interactive
+  @extend %transition, %shadow-card
+  &:hover
+    @extend %hover-lift
+
+%form-field
+  padding: 1rem 1.25rem
+  @extend %color-secondary
+  @extend %glass, %transition, %focus
+  border-radius: 1rem
+  color: var(--fg)
+  font-size: $font
+  min-height: $min-height
+  width: 100%
+  max-width: 100%
+  @extend %shadow-sm
+
+  &::placeholder
+    color: var(--fg-muted)
+    opacity: 0.7
+
+  &:hover
+    @extend %color-secondary-hover
+    @extend %shadow-md
+    @extend %button-hover
+
+  &:focus
+    background: color-mix(in oklab, var(--primary) 20%, transparent)
+    @extend %shadow-xl
+    transform: translateY(-2px)
+    outline: none
+
+  &:active
+    background: color-mix(in oklab, var(--primary) 30%, transparent)
+    box-shadow: 0 3px 12px color-mix(in oklab, var(--primary) 35%, transparent)
+    @extend %button-active
+
+  &:disabled
+    @extend %button-disabled
+    box-shadow: 0 1px 4px color-mix(in oklab, var(--bg-muted) 20%, transparent)
+
+    &:hover, &:focus
+      @extend %button-disabled
+      box-shadow: 0 1px 4px color-mix(in oklab, var(--bg-muted) 20%, transparent)
+
+  &:read-only
+    background: color-mix(in oklab, var(--bg-muted) 40%, transparent)
+    color: var(--fg-muted)
+    cursor: default
+
+    &:hover
+      background: color-mix(in oklab, var(--bg-muted) 40%, transparent)
+      transform: none
+      @extend %shadow-sm
+
+  &.error
+    background: color-mix(in oklab, var(--error) 20%, transparent)
+    box-shadow: 0 2px 8px color-mix(in oklab, var(--error) 30%, transparent)
+
+    &:hover
+      background: color-mix(in oklab, var(--error) 30%, transparent)
+      @extend %shadow-md
+
+    &:focus
+      background: color-mix(in oklab, var(--error) 35%, transparent)
+      @extend %shadow-xl
+
+%font-weight-bold
+  font-weight: 600
+
+%font-weight-medium
+  font-weight: 500
+
+%margin-bottom
+  margin-bottom: 1rem
+
+%margin-top
+  margin-top: $spacing
+
+// Components
+%card
+  background: color-mix(in oklab, var(--primary) 6%, transparent)
+  @extend %glass, %transition
+  padding: 2.5rem
+  border-radius: 1.5rem
+  box-shadow: 0 8px 32px color-mix(in oklab, var(--primary) 12%, transparent)
+  margin-bottom: 2rem
+
+  @media (max-width: $mobile)
+    padding: 1.5rem
+    border-radius: 1rem
+
+%button-base
+  @extend %flex, %transition, %focus
+  gap: 0.5rem
+  padding: 0.75rem 1rem
+  border-radius: var(--radius)
+  font-size: $font
+  @extend %font-weight-medium
+  min-height: $min-height
+  white-space: nowrap
+
+  @media (max-width: $mobile)
+    padding: 0.5rem 0.75rem
+    font-size: 0.75rem
+    gap: 0.25rem
+
+%button-primary
+  @extend %button-base, %bg-primary, %glass
+  color: white
+  @extend %color-primary
+  box-shadow: 0 2px 8px color-mix(in oklab, var(--primary) 25%, transparent)
+
+  &:hover
+    @extend %color-primary-hover
+    @extend %button-hover
+    box-shadow: 0 6px 20px color-mix(in oklab, var(--primary) 40%, transparent)
+
+  &:active
+    @extend %color-primary-active
+    @extend %button-active
+    box-shadow: 0 3px 12px color-mix(in oklab, var(--primary) 35%, transparent)
+
+  &:disabled
+    @extend %button-disabled
+    box-shadow: 0 1px 4px color-mix(in oklab, var(--bg-muted) 20%, transparent)
+
+    &:hover
+      @extend %button-disabled
+      box-shadow: 0 1px 4px color-mix(in oklab, var(--bg-muted) 20%, transparent)
+
+%button-secondary
+  @extend %button-base, %bg-subtle, %glass
+  color: var(--fg)
+  @extend %color-secondary
+  @extend %shadow-sm
+
+  &:hover
+    @extend %color-secondary-hover
+    @extend %button-hover
+    box-shadow: 0 6px 20px color-mix(in oklab, var(--secondary) 35%, transparent)
+
+  &:active
+    @extend %color-secondary-active
+    @extend %button-active
+    box-shadow: 0 3px 12px color-mix(in oklab, var(--secondary) 35%, transparent)
+
+  &:disabled
+    @extend %button-disabled
+    box-shadow: 0 1px 4px color-mix(in oklab, var(--bg-muted) 20%, transparent)
+
+    &:hover
+      @extend %button-disabled
+      box-shadow: 0 1px 4px color-mix(in oklab, var(--bg-muted) 20%, transparent)
+
+%button-danger
+  @extend %button-base, %bg-error, %glass
+  color: white
+  @extend %color-error
+  box-shadow: 0 2px 8px color-mix(in oklab, var(--error) 25%, transparent)
+
+  &:hover
+    @extend %color-error-hover
+    @extend %button-hover
+    box-shadow: 0 6px 20px color-mix(in oklab, var(--error) 40%, transparent)
+
+  &:active
+    @extend %color-error-active
+    @extend %button-active
+    box-shadow: 0 3px 12px color-mix(in oklab, var(--error) 35%, transparent)
+
+  &:disabled
+    @extend %button-disabled
+    box-shadow: 0 1px 4px color-mix(in oklab, var(--bg-muted) 20%, transparent)
+
+    &:hover
+      @extend %button-disabled
+      box-shadow: 0 1px 4px color-mix(in oklab, var(--bg-muted) 20%, transparent)
+
+%button-circular
+  @extend %button-secondary, %circular
+
+%button-small
+  @extend %button-secondary
+  padding: 0.5rem
+  font-size: 0.75rem
+
+%input-base
+  @extend %form-field
+
+// Form Elements
+form
+  @extend %form-stacked
+
+fieldset
+  // Borders already reset globally
+
+label
+  @extend %label-text
+
+input, select, textarea
+  @extend %input-base
+
+// Typography
+%heading
+  font-family: 'Bungee', monospace
+  line-height: 1.2
+  @extend %font-weight-bold
+
+%heading-primary
+  @extend %heading
+  color: var(--primary)
+
+%text-muted
+  color: var(--fg-muted)
+
+%logo-text
+  font-family: 'Bungee', monospace
+  color: var(--primary)
+
+%label-text
+  @extend %flex
+  gap: 0.5rem
+  @extend %font-weight-bold
+  font-size: 0.875rem
+  color: var(--fg)
+  margin-bottom: 0.25rem
+
+%heading-size-large
+  font-size: 2rem
+
+  @media (max-width: $mobile)
+    font-size: 1.5rem
+
+%heading-size-medium
+  font-size: 1.5rem
+
+  @media (max-width: $mobile)
+    font-size: 1.25rem
+
+%heading-size-small
+  font-size: 1.25rem
+
+  @media (max-width: $mobile)
+    font-size: 1.1rem
+
+%heading-size-xs
+  font-size: 1rem
+
+// Layout Components - Improved header styling
+.header-fixed
+  position: fixed
+  top: 0
+  left: 0
+  right: 0
+  z-index: 1000
+  background: color-mix(in oklab, var(--bg) 95%, transparent)
+  backdrop-filter: blur(20px)
+  box-shadow: 0 4px 20px color-mix(in oklab, var(--primary) 10%, transparent)
+
+  .header-content
+    display: grid
+    grid-template-columns: auto 1fr auto
+    grid-template-areas: "logo nav theme"
+    align-items: center
+    max-width: 1200px
+    margin: 0 auto
+    padding: 0 $padding
+    height: 4rem
+    gap: 1rem
+
+    @media (max-width: $mobile)
+      grid-template-columns: auto 1fr auto
+      grid-template-areas: "logo nav theme"
+      padding: 0 1rem
+      height: 3.5rem
+      gap: 0.5rem
+
+    @media (max-width: 480px)
+      grid-template-columns: auto 1fr auto
+      grid-template-areas: "logo nav theme"
+      height: 3.5rem
+      padding: 0.5rem 1rem
+      gap: 0.25rem
+
+    .logo-link
+      grid-area: logo
+      @extend %flex
+      gap: 0.5rem
+      text-decoration: none
+      color: var(--fg)
+      @extend %font-weight-bold
+      font-size: 1.25rem
+      justify-self: start
+      &:hover
+        @extend %hover-lift
+
+      @media (max-width: $mobile)
+        font-size: 1rem
+        gap: 0.25rem
+
+      @media (max-width: 480px)
+        font-size: 0.9rem
+        gap: 0.2rem
+
+      img
+        @extend %interactive
+
+      .logo-text
+        @extend %logo-text
+
+    .main-nav
+      grid-area: nav
+      display: grid
+      grid-template-columns: repeat(auto-fit, minmax(60px, 1fr))
+      gap: 0.5rem
+      justify-items: center
+      align-items: center
+
+      @media (max-width: $mobile)
+        grid-template-columns: repeat(auto-fit, minmax(50px, 1fr))
+        gap: 0.25rem
+
+      @media (max-width: 480px)
+        grid-template-columns: repeat(5, 1fr)
+        gap: 0.25rem
+
+      button
+        position: relative
+
+        &::after
+          content: attr(data-tooltip)
+          position: absolute
+          bottom: -2.5rem
+          left: 50%
+          transform: translateX(-50%)
+          background: color-mix(in oklab, var(--primary) 90%, transparent)
+          color: white
+          padding: 0.5rem 0.75rem
+          border-radius: 0.5rem
+          font-size: 0.75rem
+          font-weight: 500
+          white-space: nowrap
+          opacity: 0
+          visibility: hidden
+          transition: all 0.2s ease
+          z-index: 1000
+          box-shadow: 0 4px 16px color-mix(in oklab, var(--primary) 30%, transparent)
+
+        &:hover::after
+          opacity: 1
+          visibility: visible
+          transform: translateX(-50%) translateY(-2px)
+
+      button
+        @extend %flex
+        padding: 0.75rem
+        @extend %color-secondary
+        color: var(--fg-muted)
+        border-radius: 0.75rem
+        @extend %transition
+        width: 100%
+        justify-content: center
+        align-items: center
+        @extend %shadow-sm
+
+        &:hover
+          @extend %color-secondary-hover
+          color: var(--fg)
+          @extend %button-hover
+          @extend %shadow-md
+
+        &.active
+          background: color-mix(in oklab, var(--primary) 25%, transparent)
+          color: var(--primary)
+          @extend %shadow-md
+          border-bottom: solid 4px var(--primary)
+
+        @media (max-width: $mobile)
+          padding: 0.5rem
+
+        @media (max-width: 480px)
+          padding: 0.4rem
+
+    .theme-toggle
+      grid-area: theme
+      @extend %button-circular
+      @extend %color-secondary
+      justify-self: end
+      &:hover
+        @extend %color-secondary-hover
+        transform: translateY(-2px) rotate(15deg)
+
+      @media (max-width: $mobile)
+        width: 2rem
+        height: 2rem
+        padding: 0
+
+      @media (max-width: 480px)
+        width: 1.75rem
+        height: 1.75rem
+        padding: 0
+
+main
+  @extend %spacing
+  min-height: 60vh
+  @extend %margin-top
+  overflow: hidden
+  padding: 0 2rem
+
+  @media (max-width: 480px)
+    padding-top: 1rem
+
+footer
+  @extend %spacing
+  @extend %margin-top
+  padding: 3rem 0
+  @extend %bg-subtle, %glass
+  text-align: center
+
+  @media (max-width: $mobile)
+    padding: 2rem 0
+
+  > img
+    justify-self: center
+    @extend %interactive
+    margin-bottom: 1rem
+
+  > p:first-of-type
+    @extend %text-muted
+    text-align: center
+    margin-bottom: 1rem
+    @extend %opacity-muted
+
+  > p:last-of-type
+    @extend %text-muted
+    text-align: center
+    font-size: $font
+    margin-top: 1rem
+    @extend %opacity-subtle
+
+// Components - Fixed section styling
+section
+  @extend %card
+  margin-bottom: 1.5rem
+
+  &:last-child
+    margin-bottom: 0
+
+h1, h2, h3, h4, h5, h6
+  @extend %heading
+
+h1
+  @extend %heading-size-large
+  @extend %heading-primary
+
+h2
+  @extend %heading-size-medium
+  @extend %heading-primary
+  @extend %margin-bottom
+
+h3
+  @extend %heading-size-small
+  @extend %heading-primary
+  @extend %margin-bottom
+
+h4
+  @extend %heading-size-xs
+  color: var(--fg)
+  margin: 1rem 0 0.5rem
+
+p
+  @extend %text-muted
+  margin-bottom: 1rem
+
+select
+  background-image: none
+  cursor: pointer
+
+  &:hover
+    @extend %color-secondary-hover
+
+  &:focus
+    background: color-mix(in oklab, var(--primary) 25%, transparent)
+
+input[type="file"]
+  padding: 0.5rem
+  cursor: pointer
+
+  &:hover
+    @extend %color-secondary-hover
+    @extend %shadow-md
+
+  &:focus
+    background: color-mix(in oklab, var(--primary) 25%, transparent)
+    @extend %shadow-xl
+
+// Form Groups - Using enhanced placeholders
+.form-group
+  @extend %form-group
+
+.form-group-stacked
+  @extend %form-group-stacked
+
+.form-group-horizontal
+  @extend %form-group-horizontal
+
+// Button Groups - Using enhanced styling
+.button-group
+  @extend %flex-wrap
+  gap: 0.75rem
+  padding: 1rem
+  background: color-mix(in oklab, var(--bg-muted) 20%, transparent)
+  border-radius: 0.75rem
+  border: 1px solid color-mix(in oklab, var(--primary) 8%, transparent)
+
+button
+  @extend %button-primary
+
+  &.secondary
+    @extend %button-secondary
+
+  &.danger
+    @extend %button-danger
+
+// Tables
+table
+  width: 100%
+  background: color-mix(in oklab, var(--primary) 6%, transparent)
+  @extend %glass, %shadow-card
+  overflow: hidden
+  border-radius: 1rem
+
+  th, td
+    padding: 0.75rem 1rem
+    text-align: left
+    word-wrap: break-word
+    overflow-wrap: break-word
+
+    @media (max-width: $mobile)
+      padding: 0.5rem 0.75rem
+      font-size: 0.8rem
+
+  th
+    background: color-mix(in oklab, var(--primary) 12%, transparent)
+    @extend %glass
+    @extend %font-weight-bold
+    font-size: $font
+    position: sticky
+    top: 0
+    z-index: 10
+    box-shadow: 0 2px 8px color-mix(in oklab, var(--primary) 20%, transparent)
+
+  tr
+    @extend %transition
+    &:hover
+      background: color-mix(in oklab, var(--secondary) 10%, transparent)
+      @extend %button-hover
+      @extend %shadow-md
+
+  td button
+    @extend %button-small
+
+// Description Lists
+dl
+  display: grid
+  grid-template-columns: 1fr
+  gap: 0.5rem
+
+  @media (min-width: $mobile)
+    grid-template-columns: 200px 1fr
+    gap: 0.5rem 1rem
+
+  dt
+    @extend %font-weight-bold
+    @extend %text-muted
+
+  dd
+    color: var(--fg)
+    word-wrap: break-word
+    overflow-wrap: break-word
+
+dl.horizontal
+  @extend %form-horizontal
+
+// Empty States
+div:has(> h4)
+  @extend %grid
+  place-items: center
+  @extend %text-muted
+  text-align: center
+  gap: 1.5rem
+  padding: 5rem 1rem
+
+  svg, .icon
+    @extend %opacity-subtle, %transition
+  &:hover svg, &:hover .icon
+    @extend %hover-opacity, %hover-scale
+
+// Utilities
+.mb-0
+  margin-bottom: 0
+
+.mt-0
+  margin-top: 0
+
+// Text Utilities
+.text-muted
+  @extend %text-muted
+
+.text-error
+  color: var(--error)
+
+.text-success
+  color: var(--success)
+
+.text-warning
+  color: var(--warning)
+
+// Error message styling
+.error-message
+  @extend %flex
+  gap: 0.5rem
+  padding: 1rem
+  background: color-mix(in oklab, var(--error) 15%, transparent)
+  color: var(--error)
+  border-radius: 0.75rem
+  margin-bottom: 1rem
+  @extend %font-weight-medium
+
+// Success message styling
+.success-message
+  @extend %flex
+  gap: 0.5rem
+  padding: 1rem
+  background: color-mix(in oklab, var(--success) 15%, transparent)
+  color: var(--success)
+  border-radius: 0.75rem
+  margin-bottom: 1rem
+  @extend %font-weight-medium
+
+// Responsive Utilities
+.stats-grid
+  display: grid
+  grid-template-columns: 1fr
+  gap: 1rem
+  margin-bottom: 2rem
+
+  @media (min-width: $mobile)
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr))
+
+.stat-card
+  @extend %flex
+  gap: 1rem
+  padding: 1.5rem
+  background: color-mix(in oklab, var(--primary) 8%, transparent)
+  @extend %glass, %shadow-card
+  border-radius: 1rem
+  @extend %transition
+
+  &:hover
+    @extend %button-hover
+    box-shadow: 0 8px 32px color-mix(in oklab, var(--primary) 20%, transparent)
+
+  > div
+    @extend %flex
+    flex-direction: column
+    gap: 0.25rem
+
+    strong
+      font-size: 1.5rem
+      @extend %font-weight-bold
+      color: var(--primary)
+
+    span
+      @extend %text-muted
+      font-size: 0.875rem
+
+  svg
+    color: var(--primary)
+    opacity: 0.8
+
+.salary-grid
+  display: grid
+  grid-template-columns: 1fr
+  gap: 2rem
+  margin: 1.5rem 0
+
+  @media (min-width: $tablet)
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr))
+
+  @media (max-width: $mobile)
+    gap: 1rem
+    margin: 1rem 0
+
+// Toast Notifications
+%toast-base
+  position: fixed
+  top: 1rem
+  right: 1rem
+  z-index: 2000
+  padding: 1rem 1.5rem
+  border-radius: 1rem
+  @extend %glass, %transition
+  max-width: 400px
+  box-shadow: 0 8px 32px color-mix(in oklab, var(--primary) 20%, transparent)
+  display: flex
+  align-items: center
+  gap: 0.75rem
+  font-weight: 500
+  transform: translateX(100%)
+  opacity: 0
+
+  &.show
+    transform: translateX(0)
+    opacity: 1
+
+  @media (max-width: $mobile)
+    right: 0.5rem
+    left: 0.5rem
+    max-width: none
+    transform: translateY(-100%)
+    top: 0.5rem
+
+    &.show
+      transform: translateY(0)
+
+%toast-success
+  @extend %toast-base
+  background: color-mix(in oklab, var(--success) 20%, transparent)
+  color: var(--success)
+  border-left: 4px solid var(--success)
+
+%toast-error
+  @extend %toast-base
+  background: color-mix(in oklab, var(--error) 20%, transparent)
+  color: var(--error)
+  border-left: 4px solid var(--error)
+
+%toast-warning
+  @extend %toast-base
+  background: color-mix(in oklab, var(--warning) 20%, transparent)
+  color: var(--warning)
+  border-left: 4px solid var(--warning)
+
+%toast-info
+  @extend %toast-base
+  background: color-mix(in oklab, var(--secondary) 20%, transparent)
+  color: var(--secondary)
+  border-left: 4px solid var(--secondary)
+
+// Modal/Dialog
+%modal-overlay
+  position: fixed
+  top: 0
+  left: 0
+  right: 0
+  bottom: 0
+  background: color-mix(in oklab, var(--bg) 80%, transparent)
+  backdrop-filter: blur(8px)
+  z-index: 1500
+  display: flex
+  align-items: center
+  justify-content: center
+  padding: 1rem
+  opacity: 0
+  visibility: hidden
+  @extend %transition
+
+  &.show
+    opacity: 1
+    visibility: visible
+
+%modal-content
+  background: color-mix(in oklab, var(--primary) 8%, transparent)
+  @extend %glass, %shadow-card
+  border-radius: 1.5rem
+  padding: 2rem
+  max-width: 500px
+  width: 100%
+  max-height: 80vh
+  overflow-y: auto
+  transform: scale(0.9) translateY(20px)
+  @extend %transition
+
+  .show &
+    transform: scale(1) translateY(0)
+
+  @media (max-width: $mobile)
+    padding: 1.5rem
+    border-radius: 1rem
+
+%modal-header
+  @extend %flex-between
+  margin-bottom: 1.5rem
+  padding-bottom: 1rem
+  border-bottom: 1px solid color-mix(in oklab, var(--border-muted) 50%, transparent)
+
+%modal-actions
+  @extend %flex-wrap
+  justify-content: flex-end
+  gap: 0.75rem
+  margin-top: 2rem
+
+// Animations
+@keyframes fadeIn
+  from
+    opacity: 0
+  to
+    opacity: 1
+
+@keyframes slideUp
+  from
+    opacity: 0
+    transform: translateY(20px)
+  to
+    opacity: 1
+    transform: translateY(0)
+
+@keyframes slideInRight
+  from
+    opacity: 0
+    transform: translateX(100%)
+  to
+    opacity: 1
+    transform: translateX(0)
+
+@keyframes slideInTop
+  from
+    opacity: 0
+    transform: translateY(-100%)
+  to
+    opacity: 1
+    transform: translateY(0)
+
+.fade-in
+  animation: fadeIn 0.3s ease-in
+
+.slide-up
+  animation: slideUp 0.3s ease-out
+
+.slide-in-right
+  animation: slideInRight 0.3s ease-out
+
+.slide-in-top
+  animation: slideInTop 0.3s ease-out
+
+// Print Styles
+@media print
+  // Hide non-essential elements
+  .header-fixed,
+  .main-nav,
+  .theme-toggle,
+  .button-group,
+  .payslip-actions,
+  .modal-actions,
+  .config-section,
+  .stats-grid
+    display: none !important
+  
+  // Reset backgrounds and colors for print
+  body
+    background: white !important
+    color: black !important
+    padding: 0 !important
+    margin: 0 !important
+  
+  // Ensure content is visible
+  .payslip-card,
+  .payslip-detail,
+  .modal-content
+    background: white !important
+    color: black !important
+    border: 1px solid #ccc !important
+    box-shadow: none !important
+    margin: 0 !important
+    padding: 20px !important
+  
+  // Optimize text for print
+  h1, h2, h3, h4, h5, h6
+    color: black !important
+    page-break-after: avoid
+  
+  // Prevent page breaks in tables
+  table
+    page-break-inside: avoid
+  
+  // Ensure proper spacing
+  .payslip-detail-grid
+    grid-template-columns: 1fr !important
+    gap: 1rem !important
+

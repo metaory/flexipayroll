@@ -1,0 +1,60 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="32" cy="32" r="30" fill="url(#gradient-bg)" stroke="url(#gradient-stroke)" stroke-width="2"/>
+  
+  <!-- Main geometric shapes -->
+  <!-- Dollar sign circle -->
+  <circle cx="32" cy="24" r="8" fill="url(#gradient-primary)"/>
+  
+  <!-- Dollar sign -->
+  <path d="M32 18v12M30 20h4M30 26h4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Bottom geometric elements -->
+  <!-- Left triangle -->
+  <path d="M16 44L24 36L32 44Z" fill="url(#gradient-secondary)"/>
+  
+  <!-- Right triangle -->
+  <path d="M32 44L40 36L48 44Z" fill="url(#gradient-accent)"/>
+  
+  <!-- Center rectangle -->
+  <rect x="28" y="44" width="8" height="6" rx="2" fill="url(#gradient-primary)"/>
+  
+  <!-- Decorative dots -->
+  <circle cx="20" cy="20" r="2" fill="url(#gradient-accent)"/>
+  <circle cx="44" cy="20" r="2" fill="url(#gradient-secondary)"/>
+  <circle cx="20" cy="48" r="2" fill="url(#gradient-secondary)"/>
+  <circle cx="44" cy="48" r="2" fill="url(#gradient-accent)"/>
+  
+  <!-- Gradients -->
+  <defs>
+    <!-- Background gradient -->
+    <linearGradient id="gradient-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#5533ff;stop-opacity:0.1"/>
+      <stop offset="100%" style="stop-color:#5533ff;stop-opacity:0.05"/>
+    </linearGradient>
+    
+    <!-- Stroke gradient -->
+    <linearGradient id="gradient-stroke" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#5533ff;stop-opacity:0.3"/>
+      <stop offset="100%" style="stop-color:#5533ff;stop-opacity:0.1"/>
+    </linearGradient>
+    
+    <!-- Primary gradient (blue) -->
+    <linearGradient id="gradient-primary" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#5533ff"/>
+      <stop offset="100%" style="stop-color:#7c5cff"/>
+    </linearGradient>
+    
+    <!-- Secondary gradient (green) -->
+    <linearGradient id="gradient-secondary" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#22c55e"/>
+      <stop offset="100%" style="stop-color:#16a34a"/>
+    </linearGradient>
+    
+    <!-- Accent gradient (orange) -->
+    <linearGradient id="gradient-accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f97316"/>
+      <stop offset="100%" style="stop-color:#ea580c"/>
+    </linearGradient>
+  </defs>
+</svg> 
