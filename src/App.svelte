@@ -112,7 +112,7 @@
       background: color-mix(in oklab, var(--secondary) 20%, transparent)
       transform: rotate(15deg)
     
-    svg
+    :global(svg)
       color: var(--secondary)
 
   .footer-content
