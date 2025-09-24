@@ -1,32 +1,31 @@
 <script>
-  import Setup from './components/Setup.svelte'
-  import Settings from './components/Settings.svelte'
+  import PayrollManager from './components/PayrollManager.svelte'
+  import ReportsManager from './components/ReportsManager.svelte'
   import Icon from '@iconify/svelte'
   import { theme, toggleTheme } from './stores.js'
-  import { ICONS } from './lib/icons.js'
   
   const workflows = [
     { 
-      id: 'setup', 
-      label: 'Setup', 
-      icon: ICONS.settings, 
-      component: Setup,
-      description: 'Configure business rules and calculations'
+      id: 'payroll', 
+      label: 'Payroll', 
+      icon: 'solar:calculator-bold-duotone', 
+      component: PayrollManager,
+      description: 'Employee management and salary calculations'
     },
     { 
-      id: 'settings', 
-      label: 'Settings', 
-      icon: ICONS.help, 
-      component: Settings,
-      description: 'System preferences and data management'
+      id: 'reports', 
+      label: 'Reports', 
+      icon: 'solar:document-text-bold-duotone', 
+      component: ReportsManager,
+      description: 'Payslips and salary reports'
     }
   ]
   
-  // Get initial workflow from URL or default to setup
+  // Get initial workflow from URL or default to payroll
   const getInitialWorkflow = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const workflow = urlParams.get('workflow');
-    return workflow && workflows.find(w => w.id === workflow) ? workflow : 'setup';
+    return workflow && workflows.find(w => w.id === workflow) ? workflow : 'payroll';
   };
   
   let activeWorkflow = $state(getInitialWorkflow());
@@ -87,7 +86,7 @@
       </div>
       
       <button class="theme-toggle" onclick={toggleTheme} aria-label="Toggle color scheme">
-        <Icon icon={$theme.mode === 'dark' ? ICONS.themeLight : ICONS.themeDark} width="1.5rem" height="1.5rem" />
+        <Icon icon={$theme.mode === 'dark' ? 'solar:sun-bold-duotone' : 'solar:moon-bold-duotone'} width="1.5rem" height="1.5rem" />
       </button>
     </div>
   </div>
