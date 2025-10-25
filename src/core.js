@@ -86,32 +86,11 @@ export const calculateHourlyRate = (dailyRate, workdayHours = 8) =>
 export const calculateBaseSalary = (hoursWorked, hourlyRate) => 
   hoursWorked * hourlyRate
 
-export const calculateBonuses = (employee, config) => {
-  const dailyRate = calculateDailyRate(employee.monthlySalary, config.workingDaysPerMonth)
-  
-  return {
-    bonusE: dailyRate * config.bonusE,
-    bonusS: dailyRate * config.bonusS,
-    bonusK: config.bonusK,
-    bonusM: config.bonusM,
-    bonusT: employee.maritalStatus === 'married' ? config.bonusT : 0
-  }
-}
+// calculateBonuses removed - now handled by rules engine
 
-export const calculateDeductions = (grossSalary, insuranceRate = 0.07) => ({
-  insurance: grossSalary * insuranceRate
-})
+// calculateDeductions removed - now handled by rules engine
 
-export const calculateFinalSalary = (baseSalary, bonuses, deductions, adjustments = 0) => {
-  const grossSalary = baseSalary + Object.values(bonuses).reduce((sum, bonus) => sum + bonus, 0) + adjustments
-  const totalDeductions = Object.values(deductions).reduce((sum, deduction) => sum + deduction, 0)
-  
-  return {
-    grossSalary,
-    totalDeductions,
-    finalSalary: grossSalary - totalDeductions
-  }
-}
+// calculateFinalSalary removed - now handled by rules engine
 
 // ============================================================================
 // ATTENDANCE UTILITIES
@@ -298,43 +277,7 @@ export const calculateWorkingHours = (entryTime, exitTime) => {
   return diffMs / (1000 * 60 * 60) // Convert to hours
 }
 
-export const calculateSalaryRecord = (employee, attendance, adjustments = [], config = DEFAULT_CONFIG) => {
-  const dailyRate = calculateDailyRate(employee.monthlySalary, config.workingDaysPerMonth)
-  const hourlyRate = calculateHourlyRate(dailyRate, config.workdayHours)
-  
-  // Calculate total hours from attendance
-  let totalHours = 0
-  Object.values(attendance || {}).forEach(dayData => {
-    if (dayData.type === 'regular' && dayData.entryTime && dayData.exitTime) {
-      totalHours += calculateWorkingHours(dayData.entryTime, dayData.exitTime)
-    } else if (dayData.type === 'holiday') {
-      totalHours += config.workdayHours // Holiday credited as full day
-    }
-  })
-  
-  const basicSalary = calculateBaseSalary(totalHours, hourlyRate)
-  const bonuses = calculateBonuses(employee, config)
-  const grossSalary = basicSalary + Object.values(bonuses).reduce((sum, bonus) => sum + bonus, 0)
-  const deductions = calculateDeductions(grossSalary, config.insuranceRate)
-  
-  const adjustmentTotal = adjustments.reduce((sum, adj) => sum + adj.amount, 0)
-  const finalSalary = calculateFinalSalary(basicSalary, bonuses, deductions, adjustmentTotal)
-  
-  return {
-    employee,
-    period: getCurrentPeriod(),
-    hoursWorked: totalHours,
-    components: {
-      basicSalary,
-      ...bonuses,
-      insuranceDeduction: deductions.insurance
-    },
-    adjustments,
-    adjustmentTotal,
-    finalSalary,
-    configSnapshot: config
-  }
-}
+// calculateSalaryRecord removed - now handled by rules engine in payroll.js
 
 export const calculateAttendanceSummary = (attendance, config = DEFAULT_CONFIG) => {
   let totalDays = 0

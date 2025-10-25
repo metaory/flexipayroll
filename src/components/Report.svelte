@@ -3,6 +3,28 @@
   import { formatCurrency, formatHours } from '../core.js'
   
   let { results = [], period = '' } = $props()
+  
+  // Helper function to get applied rules by category
+  const getAppliedRules = (result) => {
+    const applied = { bonuses: [], deductions: [], adjustments: [] }
+    
+    Object.entries(result.ruleResults).forEach(([category, rules]) => {
+      if (category === 'bonuses' || category === 'deductions' || category === 'adjustments') {
+        Object.entries(rules).forEach(([ruleId, ruleData]) => {
+          if (ruleData.value > 0) {
+            applied[category].push({
+              id: ruleId,
+              label: ruleData.rule.label,
+              value: ruleData.value,
+              type: ruleData.rule.type
+            })
+          }
+        })
+      }
+    })
+    
+    return applied
+  }
 </script>
 
 {#if results.length === 0}
@@ -24,14 +46,43 @@
             <span>Hours Worked:</span>
             <span>{formatHours(result.totalHours)}</span>
           </div>
+          
+          <div class="line">
+            <span>Base Salary:</span>
+            <span>{formatCurrency(result.baseSalary)}</span>
+          </div>
+          
+          <!-- Dynamic Bonuses -->
+          {#each getAppliedRules(result).bonuses as bonus}
+            <div class="line">
+              <span>{bonus.label}:</span>
+              <span class="bonus">+{formatCurrency(bonus.value)}</span>
+            </div>
+          {/each}
+          
+          <!-- Dynamic Deductions -->
+          {#each getAppliedRules(result).deductions as deduction}
+            <div class="line">
+              <span>{deduction.label}:</span>
+              <span class="deduction">-{formatCurrency(deduction.value)}</span>
+            </div>
+          {/each}
+          
+          <!-- Manual Adjustments -->
+          {#if result.adjustmentTotal !== 0}
+            <div class="line">
+              <span>Adjustments:</span>
+              <span class={result.adjustmentTotal > 0 ? 'bonus' : 'deduction'}>
+                {result.adjustmentTotal > 0 ? '+' : ''}{formatCurrency(result.adjustmentTotal)}
+              </span>
+            </div>
+          {/if}
+          
           <div class="line">
             <span>Gross Salary:</span>
             <span>{formatCurrency(result.grossSalary)}</span>
           </div>
-          <div class="line">
-            <span>Insurance:</span>
-            <span class="deduction">-{formatCurrency(result.insuranceDeduction)}</span>
-          </div>
+          
           <div class="line final">
             <span>Take-Home:</span>
             <span class="final-amount">{formatCurrency(result.finalSalary)}</span>
@@ -83,6 +134,9 @@
       font-weight: 600
       color: var(--fg)
       
+      &.bonus
+        color: var(--success)
+        
       &.deduction
         color: var(--error)
         

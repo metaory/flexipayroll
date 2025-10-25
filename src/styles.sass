@@ -1,65 +1,118 @@
 @use "sass:color"
 
-// Core Values
 $gap: 1rem
 $padding: 1.5rem
-$radius: 0.5rem
-$font: 0.875rem
+$radius: 1rem
+$font: 0.8rem
 $spacing: 2rem
 $min-height: 2.5rem
 
-// Breakpoints
+$bg-filter-light: blur(8em) brightness(1.1) opacity(0.3)
+$bg-filter-dark: blur(8em) brightness(1.0) opacity(0.9)
+
 $mobile: 768px
 $tablet: 1024px
 
-// Color system - single source of truth
 $base: #6366f1
-$semantics: (success: 160deg, warning: 45deg, error: 0deg, info: 200deg, neutral: 220deg)
+$reach: #0d0f51
+$dark-bg: hsl(225deg 70% 6% / 70%)
+$light-bg: hsl(0deg 0% 100% / 70%)
 
 @function adj($h: 0deg, $s: 0%, $l: 0%)
   $result: color.adjust($base, $hue: $h, $saturation: $s, $lightness: $l)
-  @return rgb(round(color.red($result)), round(color.green($result)), round(color.blue($result)))
+  $hue: round(color.hue($result))
+  $sat: round(color.saturation($result))
+  $light: round(color.lightness($result))
+  @return hsl($hue, $sat, $light)
+
+@function semantic-color($name, $dark: false)
+  $colors: (
+    success: (hue: 142deg, sat: 85%, light: if($dark, 35%, 40%)),
+    warning: (hue: 38deg, sat: 95%, light: if($dark, 40%, 45%)),
+    error: (hue: 0deg, sat: 90%, light: if($dark, 40%, 45%)),
+    info: (hue: 217deg, sat: 90%, light: if($dark, 40%, 45%)),
+    neutral: (hue: 220deg, sat: 25%, light: if($dark, 40%, 40%))
+  )
+  $color-data: map-get($colors, $name)
+  $hue: round(map-get($color-data, hue))
+  $sat: round(map-get($color-data, sat))
+  $light: round(map-get($color-data, light))
+  @return hsl($hue, $sat, $light)
 
 @mixin generate-colors($dark: false)
+  --base: #{$base}
+  --brand: #{adj(120deg, 30%, 15%)}
   @if $dark
-    --bg: #{adj(-15deg, 15%, -35%)}
-    --bg-muted: #{adj(-15deg, 10%, -25%)}
-    --fg: #{adj(15deg, 50%, 40%)}
-    --fg-muted: #{adj(10deg, 25%, 20%)}
-    --primary: #{adj(0deg, 0%, 20%)}
+    $primary: adj(30deg, 30%, 7%)
+    $secondary: adj(120deg, 40%, 12%)
+    --based: #0d0f51;
+    --bg: #{$dark-bg}
+    --bg-muted: #{color.mix($dark-bg, transparent, 80%)}
+    --fg: #{adj(15deg, 60%, 45%)}
+    --fg-muted: #{adj(10deg, 35%, 25%)}
+    --primary: #{$primary}
+    --secondary: #{$secondary}
+    --surface: #{color.mix($primary, transparent, 8%)}
+    --surface-secondary: #{color.mix($secondary, transparent, 8%)}
+    --border: #{color.mix($primary, transparent, 25%)}
+    --border-muted: #{color.mix($primary, transparent, 15%)}
   @else
-    --bg: #{adj(0deg, -25%, 25%)}
-    --bg-muted: #{adj(0deg, -20%, 20%)}
-    --fg: #{adj(0deg, -40%, -40%)}
-    --fg-muted: #{adj(0deg, -60%, -20%)}
-    --primary: #{$base}
-  
-  @each $name, $hue in $semantics
-    $semantic: color.adjust($base, $hue: $hue, $lightness: if($dark, 10%, 0%))
+    $primary: adj(0deg, 25%, 22%)
+    $secondary: adj(120deg, 35%, 17%)
+    --based: #dedeed;
+    --bg: #{$light-bg}
+    --bg-muted: #{color.mix($light-bg, transparent, 80%)}
+    --fg: #{adj(0deg, -30%, -35%)}
+    --fg-muted: #{adj(0deg, -50%, -15%)}
+    --primary: #{$primary}
+    --secondary: #{$secondary}
+    --surface: #{color.mix($primary, transparent, 8%)}
+    --surface-secondary: #{color.mix($secondary, transparent, 8%)}
+    --border: #{color.mix($primary, transparent, 25%)}
+    --border-muted: #{color.mix($primary, transparent, 15%)}
+
+  @each $name in success, warning, error, info, neutral
+    $semantic: semantic-color($name, $dark)
     --#{$name}: #{$semantic}
     --surface-#{$name}: #{color.mix($semantic, transparent, 12%)}
     --on-#{$name}: #{if($dark, black, white)}
-  
-  $primary: if($dark, adj(0deg, 0%, 20%), $base)
-  --surface: #{color.mix($primary, transparent, 8%)}
-  --border: #{color.mix($primary, transparent, 25%)}
-  --border-muted: #{color.mix($primary, transparent, 15%)}
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1)
-  --radius: #{$radius}
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1)
+    --radius: #{$radius}
+
 
 :root
   @include generate-colors(false)
 
+@mixin generate-bitgrid-colors($dark: false)
+  --grid-primary: var(--brand)
+  --grid-bg: var(--bg)
+  --grid-cell-bg: var(--based)
+  --grid-text: var(--fg)
+  --grid-text-muted: var(--fg-muted)
+  --grid-header-bg: var(--bg-muted)
+  --grid-hover-bg: var(--secondary)
+  --grid-selection-bg: var(--primary)
+  --grid-selection-active-bg: var(--primary)
+  --grid-cell-size: 28px
+  --grid-header-width: 80px
+  --grid-cell-spacing: 4px
+  --grid-cell-radius: 8px
+  --grid-radius: 12px
+
+bit-grid
+  @include generate-bitgrid-colors(false)
+
 html.dark
   @include generate-colors(true)
+  
+  bit-grid
+    @include generate-bitgrid-colors(true)
 
-// Reset & Base
 *
   box-sizing: border-box
   margin: 0
   padding: 0
 
-// Remove default borders from all form elements and interactive components
 button, input, select, textarea, fieldset, legend, optgroup, option
   border: none
   outline: none
@@ -68,7 +121,6 @@ button, input, select, textarea, fieldset, legend, optgroup, option
   font-size: inherit
   color: inherit
 
-// Remove default button styling
 button
   cursor: pointer
   padding: 0
@@ -88,7 +140,6 @@ button
   -moz-appearance: none
   appearance: none
 
-// Remove default input styling
 input, select, textarea
   border: none
   outline: none
@@ -102,43 +153,36 @@ input, select, textarea
   -moz-appearance: none
   appearance: none
 
-// Remove default select styling
 select
   background-image: none
   -webkit-appearance: none
   -moz-appearance: none
   appearance: none
 
-// Remove default fieldset styling
 fieldset
   border: none
   padding: 0
   margin: 0
   min-width: 0
 
-// Remove default legend styling
 legend
   border: none
   padding: 0
   margin: 0
 
-// Remove default list styling
 ul, ol
   list-style: none
   padding: 0
   margin: 0
 
-// Remove default link styling
 a
   color: inherit
   text-decoration: none
 
-// Remove default table styling
 table
   border-collapse: collapse
   border-spacing: 0
 
-// Remove default image styling
 img
   max-width: 100%
   height: auto
@@ -153,7 +197,7 @@ html, body
 body
   font-family: 'Baloo 2', sans-serif
   line-height: 1.6
-  background: var(--bg-muted)
+  background: var(--based)
   color: var(--fg)
   height: 100vh
   max-width: 1200px
@@ -167,7 +211,6 @@ body
   @media (max-width: $mobile)
     grid-template-rows: 4rem calc(100vh - 7rem) 3rem
 
-// Core Layout Placeholders
 %flex
   display: flex
   align-items: center
@@ -196,7 +239,6 @@ body
     outline: none
     box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 40%, transparent), 0 4px 20px color-mix(in oklab, var(--primary) 30%, transparent)
 
-// Component Placeholders
 %button-base
   display: inline-flex
   align-items: center
@@ -210,7 +252,7 @@ body
   min-height: $min-height
   white-space: nowrap
   border: none
-  
+
   &:disabled
     opacity: 0.5
     cursor: not-allowed
@@ -219,16 +261,24 @@ body
   @extend %button-base
   background: var(--primary)
   color: white
-  
+
   &:hover:not(:disabled)
     background: color-mix(in oklab, var(--primary) 90%, black)
 
 %button-secondary
   @extend %button-base
+  background: var(--secondary)
+  color: white
+
+  &:hover:not(:disabled)
+    background: color-mix(in oklab, var(--secondary) 90%, black)
+
+%button-outline
+  @extend %button-base
   background: var(--surface)
   color: var(--fg)
-  border: 1px solid var(--border-muted)
-  
+  border: 4px solid var(--border-muted)
+
   &:hover:not(:disabled)
     background: var(--bg-muted)
 
@@ -236,25 +286,25 @@ body
   @extend %button-base
   background: var(--error)
   color: white
-  
+
   &:hover:not(:disabled)
     background: color-mix(in oklab, var(--error) 90%, black)
 
 %input-base
   padding: 0.75rem
-  border: 1px solid var(--border-muted)
+  border: 6px solid var(--border-muted)
   border-radius: var(--radius)
   background: var(--surface)
   color: var(--fg)
   font-size: $font
   min-height: $min-height
   @extend %transition
-  
+
   &:focus
     outline: none
     border-color: var(--primary)
     background: var(--bg-muted)
-  
+
   &::placeholder
     color: var(--fg-muted)
     opacity: 0.7
@@ -263,29 +313,27 @@ body
   background: var(--surface)
   padding: 2rem
   border-radius: 1rem
-  border: 1px solid var(--border)
 
 %table-base
   width: 100%
   background: var(--surface)
   border-radius: 1rem
   overflow: hidden
-  border: 1px solid var(--border-muted)
-  
+  border: 4px solid var(--border-muted)
+
   th, td
     padding: 0.75rem 1rem
     text-align: left
-    border-bottom: 1px solid var(--border-muted)
-  
+    border-bottom: 4px solid var(--border-muted)
+
   th
     background: var(--bg-muted)
     font-weight: 600
     color: var(--fg)
-  
+
   tr:hover
     background: var(--bg-muted)
 
-// Typography
 h1, h2, h3, h4, h5, h6
   font-family: 'Bungee', monospace
   line-height: 1.2
@@ -323,9 +371,14 @@ p
   color: var(--fg-muted)
   margin-bottom: 1rem
 
-// Utility Classes
 .text-muted
   color: var(--fg-muted)
+
+.text-primary
+  color: var(--primary)
+
+.text-secondary
+  color: var(--secondary)
 
 .text-error
   color: var(--error)
@@ -341,3 +394,23 @@ p
 
 .mt-0
   margin-top: 0
+
+::-webkit-scrollbar
+  width: 8px
+  height: 8px
+
+::-webkit-scrollbar-track
+  background: var(--bg-muted)
+  border-radius: 4px
+
+::-webkit-scrollbar-thumb
+  background: var(--border)
+  border-radius: 4px
+  transition: background 0.2s ease
+
+  &:hover
+    background: var(--primary)
+
+*
+  scrollbar-width: thin
+  scrollbar-color: var(--border) var(--bg-muted)

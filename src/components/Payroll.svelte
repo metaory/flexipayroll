@@ -1,17 +1,17 @@
 <script>
   import Wizard from './Wizard.svelte'
-  import Config from './Config.svelte'
+  import Rules from './Rules.svelte'
   import Employees from './Employees.svelte'
   import Report from './Report.svelte'
   import Icon from '@iconify/svelte'
   
-  import { employees, config, currentPeriod, attendance, updateConfig, addEmployee, updateEmployee, removeEmployee } from '../stores.js'
+  import { employees, rules, basicConfig, currentPeriod, attendance, addEmployee, updateEmployee, removeEmployee } from '../stores.js'
   import { generateEmployeeId } from '../core.js'
   import { toasts } from '../lib/toast.js'
+  import { confirmDialog } from '../lib/dialog.js'
   import { STEPS, calculateEmployeePayroll } from '../payroll.js'
   
   let currentStep = $state(0)
-  let wizardConfig = $state({ ...$config })
   let employeeForm = $state({ name: '', gender: 'male', maritalStatus: 'single', monthlySalary: '' })
   let isEditing = $state(false)
   let editingId = $state(null)
@@ -23,22 +23,17 @@
     emp, 
     $attendance[$currentPeriod]?.[emp.id] || {}, 
     [], 
-    wizardConfig
+    $rules,
+    $basicConfig
   )))
   
   // Wizard navigation
   const handleNext = () => {
-    if (currentStep === 0) updateConfig(wizardConfig)
     if (currentStep < STEPS.length - 1) currentStep++
   }
   
   const handlePrev = () => {
     if (currentStep > 0) currentStep--
-  }
-  
-  // Config handlers
-  const handleConfigUpdate = (event) => {
-    wizardConfig = { ...wizardConfig, ...event.detail }
   }
   
   // Employee handlers
@@ -68,9 +63,9 @@
     editingId = emp.id
   }
   
-  const handleEmployeeDelete = (event) => {
+  const handleEmployeeDelete = async (event) => {
     const id = event.detail
-    if (confirm('Delete employee?')) {
+    if (await confirmDialog('Delete employee?')) {
       removeEmployee(id)
       toasts.success('Employee deleted')
     }
@@ -91,7 +86,7 @@
 <Wizard {currentStep} on:next={handleNext} on:prev={handlePrev}>
   
   {#if currentStepData.id === 'config'}
-    <Config config={wizardConfig} on:update={handleConfigUpdate} />
+    <Rules basicConfigData={$basicConfig} />
   
   {:else if currentStepData.id === 'employees'}
     <Employees 

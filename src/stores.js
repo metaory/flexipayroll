@@ -5,6 +5,7 @@
 
 import { writable, derived } from 'svelte/store'
 import { storage } from './core.js'
+import { DEFAULT_RULES, createRule, validateRule, getNextOrder } from './rules.js'
 
 // ============================================================================
 // STORAGE KEYS
@@ -14,7 +15,8 @@ const KEYS = {
   EMPLOYEES: 'xpayroll_employees',
   ATTENDANCE: 'xpayroll_attendance', 
   PAYROLL: 'xpayroll_payroll',
-  CONFIG: 'xpayroll_config',
+  RULES: 'xpayroll_rules',
+  BASIC_CONFIG: 'xpayroll_basic_config',
   THEME: 'xpayroll_theme',
   SETTINGS: 'xpayroll_settings',
   I18N_LABELS: 'xpayroll_i18n_labels'
@@ -24,15 +26,9 @@ const KEYS = {
 // DEFAULT DATA
 // ============================================================================
 
-const DEFAULT_CONFIG = {
+const DEFAULT_BASIC_CONFIG = {
   workdayHours: 8,
-  workingDaysPerMonth: 22,
-  bonusE: 5,
-  bonusS: 2.5,
-  bonusK: 100000,
-  bonusM: 200000,
-  bonusT: 150000,
-  insuranceRate: 0.07
+  workingDaysPerMonth: 22
 }
 
 const DEFAULT_THEME = {
@@ -59,9 +55,13 @@ export const DEFAULT_SETTINGS = {
 export const theme = writable(storage.get(KEYS.THEME, DEFAULT_THEME))
 theme.subscribe(value => storage.set(KEYS.THEME, value))
 
-// Config store  
-export const config = writable(storage.get(KEYS.CONFIG, DEFAULT_CONFIG))
-config.subscribe(value => storage.set(KEYS.CONFIG, value))
+// Rules store
+export const rules = writable(storage.get(KEYS.RULES, DEFAULT_RULES))
+rules.subscribe(value => storage.set(KEYS.RULES, value))
+
+// Basic config store (workdayHours, workingDaysPerMonth)
+export const basicConfig = writable(storage.get(KEYS.BASIC_CONFIG, DEFAULT_BASIC_CONFIG))
+basicConfig.subscribe(value => storage.set(KEYS.BASIC_CONFIG, value))
 
 // Employees store
 export const employees = writable(storage.get(KEYS.EMPLOYEES, []))
@@ -197,13 +197,72 @@ export const removePayroll = (period, employeeId) => {
   })
 }
 
-// Config actions
-export const updateConfig = (updates) => {
-  config.update(current => ({ ...current, ...updates }))
+// Rules actions
+export const addRule = (ruleData) => {
+  const rule = createRule(ruleData)
+  const errors = validateRule(rule)
+  if (errors) {
+    throw new Error(`Invalid rule: ${Object.values(errors).join(', ')}`)
+  }
+  
+  rules.update(current => {
+    const newRule = { ...rule, order: getNextOrder(current) }
+    return [...current, newRule]
+  })
 }
 
-export const resetConfig = () => {
-  config.set(DEFAULT_CONFIG)
+export const updateRule = (id, updates) => {
+  rules.update(current => 
+    current.map(rule => {
+      if (rule.id === id) {
+        const updatedRule = { ...rule, ...updates }
+        const errors = validateRule(updatedRule)
+        if (errors) {
+          throw new Error(`Invalid rule: ${Object.values(errors).join(', ')}`)
+        }
+        return updatedRule
+      }
+      return rule
+    })
+  )
+}
+
+export const removeRule = (id) => {
+  rules.update(current => current.filter(rule => rule.id !== id))
+}
+
+export const toggleRule = (id) => {
+  rules.update(current => 
+    current.map(rule => 
+      rule.id === id ? { ...rule, enabled: !rule.enabled } : rule
+    )
+  )
+}
+
+export const reorderRules = (ruleIds) => {
+  rules.update(current => {
+    const reordered = ruleIds.map((id, index) => {
+      const rule = current.find(r => r.id === id)
+      return rule ? { ...rule, order: index + 1 } : null
+    }).filter(Boolean)
+    
+    // Keep any rules not in the reorder list at the end
+    const remaining = current.filter(rule => !ruleIds.includes(rule.id))
+    return [...reordered, ...remaining]
+  })
+}
+
+export const resetRules = () => {
+  rules.set(DEFAULT_RULES)
+}
+
+// Basic config actions
+export const updateBasicConfig = (updates) => {
+  basicConfig.update(current => ({ ...current, ...updates }))
+}
+
+export const resetBasicConfig = () => {
+  basicConfig.set(DEFAULT_BASIC_CONFIG)
 }
 
 // Settings actions
