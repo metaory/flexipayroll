@@ -2,10 +2,12 @@
   import Wizard from './Wizard.svelte'
   import Rules from './Rules.svelte'
   import Employees from './Employees.svelte'
+  import Attendance from './Attendance.svelte'
+  import Adjustments from './Adjustments.svelte'
   import Report from './Report.svelte'
   import Icon from '@iconify/svelte'
   
-  import { employees, rules, basicConfig, currentPeriod, attendance, addEmployee, updateEmployee, removeEmployee } from '../stores.js'
+  import { employees, rules, basicConfig, currentPeriod, attendance, adjustments, addEmployee, updateEmployee, removeEmployee } from '../stores.js'
   import { generateEmployeeId } from '../core.js'
   import { toasts } from '../lib/toast.js'
   import { confirmDialog } from '../lib/dialog.js'
@@ -22,7 +24,7 @@
   const results = $derived($employees.map(emp => calculateEmployeePayroll(
     emp, 
     $attendance[$currentPeriod]?.[emp.id] || {}, 
-    [], 
+    $adjustments[$currentPeriod]?.[emp.id] || [],
     $rules,
     $basicConfig
   )))
@@ -43,7 +45,16 @@
       return
     }
     
-    const data = { ...employeeForm, monthlySalary: parseInt(employeeForm.monthlySalary) }
+    // Calculate hourly rate using current basicConfig
+    const monthlySalaryNum = Number(employeeForm.monthlySalary)
+    const dailyRate = monthlySalaryNum / ($basicConfig.workingDaysPerMonth || 22)
+    const hourlyRate = dailyRate / ($basicConfig.workdayHours || 8)
+    
+    const data = { 
+      ...employeeForm, 
+      monthlySalary: parseInt(employeeForm.monthlySalary),
+      hourlyRate: hourlyRate
+    }
     
     if (isEditing) {
       updateEmployee(editingId, data)
@@ -98,6 +109,19 @@
       on:delete={handleEmployeeDelete}
       on:update-form={handleEmployeeFormUpdate}
       on:reset-form={resetEmployeeForm}
+    />
+  
+  {:else if currentStepData.id === 'attendance'}
+    <Attendance 
+      employees={$employees} 
+      period={$currentPeriod}
+      basicConfig={$basicConfig}
+    />
+  
+  {:else if currentStepData.id === 'adjustments'}
+    <Adjustments 
+      employees={$employees} 
+      period={$currentPeriod}
     />
   
   {:else if currentStepData.id === 'report'}

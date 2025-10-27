@@ -73,6 +73,7 @@
     h1
       margin: 0
       font-size: 1.5rem
+      @extend %gradient-text
 
     p
       margin: 0
@@ -111,6 +112,9 @@
     padding-top: calc(2rem + 5rem)
     padding-bottom: calc(2rem + 5rem)
     overflow-y: auto
+    overflow-x: hidden
+    height: 100%
+    box-sizing: border-box
 
   .wizard-footer
     position: absolute

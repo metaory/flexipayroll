@@ -66,7 +66,10 @@
             <div class="employee-info">
               <h4>{employee.name}</h4>
               <p>{employee.gender} • {employee.maritalStatus}</p>
-              <p class="salary">Rp {employee.monthlySalary?.toLocaleString()}</p>
+              <p class="salary">$ {employee.monthlySalary?.toLocaleString()}</p>
+              {#if employee.hourlyRate}
+                <p class="hourly-rate">$ {employee.hourlyRate.toLocaleString()}/hr</p>
+              {/if}
             </div>
 
             <div class="employee-actions">
@@ -160,6 +163,11 @@
       &.salary
         font-weight: 600
         color: var(--fg)
+        
+      &.hourly-rate
+        font-weight: 600
+        color: var(--fg-muted)
+        font-size: 0.8rem
 
   .employee-actions
     @extend %flex

@@ -17,6 +17,7 @@ const KEYS = {
   PAYROLL: 'xpayroll_payroll',
   RULES: 'xpayroll_rules',
   BASIC_CONFIG: 'xpayroll_basic_config',
+  ADJUSTMENTS: 'xpayroll_adjustments',
   THEME: 'xpayroll_theme',
   SETTINGS: 'xpayroll_settings',
   I18N_LABELS: 'xpayroll_i18n_labels'
@@ -28,7 +29,10 @@ const KEYS = {
 
 const DEFAULT_BASIC_CONFIG = {
   workdayHours: 8,
-  workingDaysPerMonth: 22
+  workingDaysPerMonth: 22,
+  currencySymbol: '$',
+  monthDays: 30,
+  firstDayWeekday: 'Saturday'
 }
 
 const DEFAULT_THEME = {
@@ -70,6 +74,10 @@ employees.subscribe(value => storage.set(KEYS.EMPLOYEES, value))
 // Attendance store
 export const attendance = writable(storage.get(KEYS.ATTENDANCE, {}))
 attendance.subscribe(value => storage.set(KEYS.ATTENDANCE, value))
+
+// Adjustments store
+export const adjustments = writable(storage.get(KEYS.ADJUSTMENTS, {}))
+adjustments.subscribe(value => storage.set(KEYS.ADJUSTMENTS, value))
 
 // Payroll store
 export const payroll = writable(storage.get(KEYS.PAYROLL, {}))
@@ -174,6 +182,50 @@ export const removeAttendance = (period, employeeId, date) => {
     }
     return updated
   })
+}
+
+// Adjustment actions
+export const addAdjustment = (period, employeeId, adjustment) => {
+  adjustments.update(current => ({
+    ...current,
+    [period]: {
+      ...current[period],
+      [employeeId]: [
+        ...(current[period]?.[employeeId] || []),
+        { id: `adj_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`, ...adjustment }
+      ]
+    }
+  }))
+}
+
+export const updateAdjustment = (period, employeeId, adjustmentId, updates) => {
+  adjustments.update(current => ({
+    ...current,
+    [period]: {
+      ...current[period],
+      [employeeId]: (current[period]?.[employeeId] || []).map(adj => 
+        adj.id === adjustmentId ? { ...adj, ...updates } : adj
+      )
+    }
+  }))
+}
+
+export const removeAdjustment = (period, employeeId, adjustmentId) => {
+  adjustments.update(current => ({
+    ...current,
+    [period]: {
+      ...current[period],
+      [employeeId]: (current[period]?.[employeeId] || []).filter(adj => adj.id !== adjustmentId)
+    }
+  }))
+}
+
+export const getAdjustments = (period, employeeId) => {
+  let result = []
+  adjustments.subscribe(current => {
+    result = current[period]?.[employeeId] || []
+  })()
+  return result
 }
 
 // Payroll actions

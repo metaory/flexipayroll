@@ -123,7 +123,13 @@ export const getDefaultHours = (dayType, workdayHours = 8) => {
 // FORMAT UTILITIES
 // ============================================================================
 
-export const formatCurrency = (amount, locale = 'id-ID', currency = 'IDR') => {
+export const formatCurrency = (amount, locale = 'id-ID', currency = 'IDR', currencySymbol = null) => {
+  if (currencySymbol) {
+    return `${currencySymbol} ${amount.toLocaleString(locale, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    })}`
+  }
   return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
@@ -149,6 +155,29 @@ export const formatDate = (date, locale = 'en-US') => {
 export const formatTime = (time) => {
   if (!time) return ''
   return time.substring(0, 5) // HH:MM format
+}
+
+// Get weekday name based on day number and first day of month weekday
+export const getWeekdayName = (dayNumber, firstDayWeekday) => {
+  if (!firstDayWeekday) return 'Mon' // Default fallback
+  
+  // Map full weekday names to short names
+  const weekdayMap = {
+    'Saturday': 'Sat',
+    'Sunday': 'Sun', 
+    'Monday': 'Mon',
+    'Tuesday': 'Tue',
+    'Wednesday': 'Wed',
+    'Thursday': 'Thu',
+    'Friday': 'Fri'
+  }
+  
+  const weekdayNames = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+  const shortName = weekdayMap[firstDayWeekday] || 'Sat' // Default to Sat if not found
+  const firstDayIndex = weekdayNames.indexOf(shortName)
+  
+  const dayIndex = (firstDayIndex + dayNumber - 1) % 7
+  return weekdayNames[dayIndex]
 }
 
 // ============================================================================

@@ -10,7 +10,8 @@
 export const RULE_TYPES = {
   FIXED: 'fixed',
   DAYS_MULTIPLIER: 'days_multiplier', 
-  PERCENTAGE: 'percentage',
+  PERCENTAGE_MONTHLY: 'percentage_monthly',
+  PERCENTAGE_BASE: 'percentage_base',
   HOURLY_MULTIPLIER: 'hourly_multiplier'
 }
 
@@ -46,7 +47,7 @@ export const DEFAULT_RULES = [
   {
     id: 'insurance',
     label: 'Insurance Deduction',
-    type: RULE_TYPES.PERCENTAGE,
+    type: RULE_TYPES.PERCENTAGE_MONTHLY,
     value: 0.07,
     criteria: { appliesTo: [CRITERIA_TYPES.ALL] },
     category: RULE_CATEGORIES.DEDUCTION,
@@ -158,8 +159,12 @@ export const calculateRuleValue = (rule, employee, attendance, config) => {
     case RULE_TYPES.DAYS_MULTIPLIER:
       return dailyRate * rule.value
       
-    case RULE_TYPES.PERCENTAGE:
-      // This will be applied to gross salary later
+    case RULE_TYPES.PERCENTAGE_MONTHLY:
+      // Percentage of monthly salary (fixed amount)
+      return employee.monthlySalary * rule.value
+      
+    case RULE_TYPES.PERCENTAGE_BASE:
+      // This will be applied to base salary later
       return rule.value
       
     case RULE_TYPES.HOURLY_MULTIPLIER:
@@ -192,7 +197,22 @@ export const applyRules = (employee, attendance, rules, config) => {
   // Sort rules by order
   const sortedRules = [...rules].sort((a, b) => a.order - b.order)
   
-  let grossSalary = 0
+  // Calculate base salary first
+  const dailyRate = employee.monthlySalary / config.workingDaysPerMonth
+  const hourlyRate = dailyRate / config.workdayHours
+  
+  const totalHours = Object.values(attendance || {}).reduce((sum, dayData) => {
+    if (dayData.type === 'regular' && dayData.entryTime && dayData.exitTime) {
+      return sum + calculateWorkingHours(dayData.entryTime, dayData.exitTime)
+    }
+    if (dayData.type === 'holiday') {
+      return sum + config.workdayHours
+    }
+    return sum
+  }, 0)
+  
+  const baseSalary = totalHours * hourlyRate
+  let grossSalary = baseSalary
   
   // First pass: calculate bonuses and deductions
   sortedRules.forEach(rule => {
@@ -202,17 +222,17 @@ export const applyRules = (employee, attendance, rules, config) => {
     
     if (value > 0) {
       if (rule.category === RULE_CATEGORIES.BONUS) {
-        if (rule.type === RULE_TYPES.PERCENTAGE) {
-          // Store percentage for later application to gross
-          results.bonuses[rule.id] = { rule, value, percentage: true }
+        if (rule.type === RULE_TYPES.PERCENTAGE_BASE) {
+          // Store percentage for later application to base salary
+          results.bonuses[rule.id] = { rule, value, percentage: true, percentageType: 'base' }
         } else {
           results.bonuses[rule.id] = { rule, value, percentage: false }
           grossSalary += value
         }
       } else if (rule.category === RULE_CATEGORIES.DEDUCTION) {
-        if (rule.type === RULE_TYPES.PERCENTAGE) {
-          // Store percentage for later application to gross
-          results.deductions[rule.id] = { rule, value, percentage: true }
+        if (rule.type === RULE_TYPES.PERCENTAGE_BASE) {
+          // Store percentage for later application to base salary
+          results.deductions[rule.id] = { rule, value, percentage: true, percentageType: 'base' }
         } else {
           results.deductions[rule.id] = { rule, value, percentage: false }
           grossSalary -= value
@@ -221,27 +241,35 @@ export const applyRules = (employee, attendance, rules, config) => {
     }
   })
   
-  // Second pass: apply percentage-based bonuses to gross salary
+  // Second pass: apply percentage-based bonuses to base salary
   Object.values(results.bonuses).forEach(item => {
-    if (item.percentage) {
-      const bonus = grossSalary * item.value
+    if (item.percentage && item.percentageType === 'base') {
+      const bonus = baseSalary * item.value
       item.finalValue = bonus
       grossSalary += bonus
     }
   })
   
-  // Third pass: apply percentage-based deductions to gross salary
+  // Third pass: apply percentage-based deductions to base salary
   Object.values(results.deductions).forEach(item => {
-    if (item.percentage) {
-      const deduction = grossSalary * item.value
+    if (item.percentage && item.percentageType === 'base') {
+      const deduction = baseSalary * item.value
       item.finalValue = deduction
       grossSalary -= deduction
     }
   })
   
+  // Calculate gross salary (before deductions)
+  const grossSalaryBeforeDeductions = baseSalary + Object.values(results.bonuses)
+    .filter(item => !item.percentage)
+    .reduce((sum, item) => sum + item.value, 0) + Object.values(results.bonuses)
+    .filter(item => item.percentage && item.percentageType === 'base')
+    .reduce((sum, item) => sum + item.finalValue, 0)
+  
   return {
     ...results,
-    grossSalary,
+    baseSalary,
+    grossSalary: grossSalaryBeforeDeductions,
     finalSalary: grossSalary
   }
 }
@@ -293,6 +321,6 @@ const calculateWorkingHours = (entryTime, exitTime) => {
   
   if (exit <= entry) return 0
   
-  const diffMs = exit - entry
+  const diffMs = exit.getTime() - entry.getTime()
   return diffMs / (1000 * 60 * 60) // Convert to hours
 }

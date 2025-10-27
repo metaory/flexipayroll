@@ -33,16 +33,17 @@ export async function confirmDialog(message, title = 'Confirm') {
       border: none;
       border-radius: 1rem;
       padding: 0;
+      margin: auto;
       max-width: 500px;
       width: 90%;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      background: var(--bg);
     `;
 
     // Style the content
     const content = dialog.querySelector('.dialog-content');
     content.style.cssText = `
       padding: 2rem;
-      background: var(--surface-light, #ffffff);
       border-radius: 1rem;
     `;
 
@@ -98,17 +99,29 @@ export async function confirmDialog(message, title = 'Confirm') {
     const style = document.createElement('style');
     style.textContent = `
       dialog::backdrop {
-        background: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(4px);
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(6px);
       }
     `;
     document.head.appendChild(style);
 
     // Event handlers
+    const cleanup = () => {
+      try {
+        if (style.parentNode) {
+          document.head.removeChild(style);
+        }
+        if (dialog.parentNode) {
+          document.body.removeChild(dialog);
+        }
+      } catch (e) {
+        // Ignore cleanup errors
+      }
+    };
+
     const handleAction = (action) => {
       dialog.close();
-      document.head.removeChild(style);
-      document.body.removeChild(dialog);
+      cleanup();
       resolve(action === 'confirm');
     };
 
@@ -117,8 +130,7 @@ export async function confirmDialog(message, title = 'Confirm') {
 
     // Handle ESC key (native dialog behavior)
     dialog.addEventListener('close', () => {
-      document.head.removeChild(style);
-      document.body.removeChild(dialog);
+      cleanup();
       resolve(false);
     });
 

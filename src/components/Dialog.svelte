@@ -99,8 +99,8 @@
       display: none
     
     &::backdrop
-      background: rgba(0, 0, 0, 0.5)
-      backdrop-filter: blur(4px)
+      background: rgba(0, 0, 0, 0.7)
+      backdrop-filter: blur(6px)
     
     &.size-small
       max-width: 400px
@@ -164,6 +164,7 @@
     padding: 2rem
     flex: 1
     overflow-y: auto
+    max-height: calc(95vh - 10rem)
     
     // Remove padding if no header
     .dialog:not(:has(.dialog-header)) &

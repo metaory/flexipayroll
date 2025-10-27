@@ -68,6 +68,20 @@
     updateBasicConfig({ [field]: value })
   }
 
+  // Clear all storage data
+  const resetAllStorage = async () => {
+    if (!await confirmDialog('DANGEROUS: This will clear ALL data (employees, attendance, payroll, rules, config). This cannot be undone. Continue?')) {
+      return
+    }
+    
+    // Clear all local storage
+    localStorage.clear()
+    toasts.success('All data cleared. Page will reload.')
+    
+    // Reload page after short delay
+    setTimeout(() => window.location.reload(), 1000)
+  }
+
   // Rule form handlers
   const startAddRule = () => {
     newRule = {
@@ -212,7 +226,7 @@
               max="24"
               step="0.5"
               value={basicConfigData.workdayHours}
-              oninput={(e) => updateBasicConfigField('workdayHours', +e.target.value)}
+              oninput={(e) => updateBasicConfigField('workdayHours', +e.target.value || 8)}
             />
       </label>
       <label class="field">
@@ -222,9 +236,49 @@
           min="1"
           max="31"
           value={basicConfigData.workingDaysPerMonth}
-          oninput={(e) => updateBasicConfigField('workingDaysPerMonth', +e.target.value)}
+          oninput={(e) => updateBasicConfigField('workingDaysPerMonth', +e.target.value || 22)}
         />
       </label>
+      <label class="field">
+        <span>Currency Symbol</span>
+        <input
+          type="text"
+          value={basicConfigData.currencySymbol || '$'}
+          oninput={(e) => updateBasicConfigField('currencySymbol', e.target.value || '$')}
+        />
+      </label>
+      <label class="field">
+        <span>Days in Month</span>
+        <input
+          type="number"
+          min="28"
+          max="31"
+          value={basicConfigData.monthDays || 30}
+          oninput={(e) => updateBasicConfigField('monthDays', +e.target.value || 30)}
+        />
+      </label>
+      <label class="field">
+        <span>First Day Weekday</span>
+        <select
+          value={basicConfigData.firstDayWeekday || 'Saturday'}
+          onchange={(e) => updateBasicConfigField('firstDayWeekday', e.target.value || 'Saturday')}
+        >
+          <option value="Saturday">Saturday</option>
+          <option value="Sunday">Sunday</option>
+          <option value="Monday">Monday</option>
+          <option value="Tuesday">Tuesday</option>
+          <option value="Wednesday">Wednesday</option>
+          <option value="Thursday">Thursday</option>
+          <option value="Friday">Friday</option>
+        </select>
+      </label>
+    </div>
+    
+    <div class="config-actions">
+      <button class="danger" onclick={resetAllStorage}>
+        <Icon icon="solar:danger-triangle-bold" width="1rem" height="1rem" />
+        Reset Storage (DANGEROUS)
+      </button>
     </div>
   </section>
 
@@ -233,13 +287,13 @@
     <div class="rules-header">
       <h3>Calculation Rules</h3>
       <div class="rules-actions">
-        <button class="primary" onclick={startAddRule}>
-          <Icon icon="solar:add-circle-bold" width="1rem" height="1rem" />
-          Add Rule
-        </button>
         <button class="secondary" onclick={handleResetRules}>
           <Icon icon="solar:refresh-bold" width="1rem" height="1rem" />
           Reset to Defaults
+        </button>
+        <button class="primary" onclick={startAddRule}>
+          <Icon icon="solar:add-circle-bold" width="1rem" height="1rem" />
+          Add Rule
         </button>
       </div>
     </div>
@@ -321,7 +375,8 @@
             >
               <option value={RULE_TYPES.FIXED}>Fixed Amount</option>
               <option value={RULE_TYPES.DAYS_MULTIPLIER}>Days Multiplier</option>
-              <option value={RULE_TYPES.PERCENTAGE}>Percentage</option>
+              <option value={RULE_TYPES.PERCENTAGE_MONTHLY}>Percentage of Monthly Salary</option>
+              <option value={RULE_TYPES.PERCENTAGE_BASE}>Percentage of Base Salary</option>
               <option value={RULE_TYPES.HOURLY_MULTIPLIER}>Hourly Multiplier</option>
             </select>
           </label>
@@ -331,7 +386,7 @@
             <input
               type="number"
               min="0"
-              step={newRule.type === RULE_TYPES.PERCENTAGE ? "0.01" : "1"}
+              step={newRule.type === RULE_TYPES.PERCENTAGE_MONTHLY || newRule.type === RULE_TYPES.PERCENTAGE_BASE ? "0.01" : "1"}
               value={newRule.value}
               oninput={(e) => newRule.value = +e.target.value}
             />
@@ -348,20 +403,20 @@
             </select>
           </label>
 
-          <label class="field criteria-field">
+          <div class="field criteria-field">
             <span>Applies To (Select all that apply)</span>
             <div id="criteria-grid-container" class="criteria-grid-container"></div>
-          </label>
+          </div>
         </div>
 
         <div class="form-actions">
-          <button class="primary" onclick={saveRule}>
-            <Icon icon="solar:check-circle-bold" width="1rem" height="1rem" />
-            {editingRule ? 'Update' : 'Add'} Rule
-          </button>
           <button class="secondary" onclick={cancelRuleForm}>
             <Icon icon="solar:close-circle-bold" width="1rem" height="1rem" />
             Cancel
+          </button>
+          <button class="primary" onclick={saveRule}>
+            <Icon icon="solar:check-circle-bold" width="1rem" height="1rem" />
+            {editingRule ? 'Update' : 'Add'} Rule
           </button>
         </div>
   </Dialog>
@@ -396,6 +451,20 @@
 
     input, select
       @extend %input-base
+
+  .config-actions
+    @extend %flex
+    justify-content: flex-end
+    margin-top: 1rem
+
+    button.danger
+      @extend %button-base
+      background: var(--error)
+      color: white
+      border: 2px solid var(--error)
+
+      &:hover
+        background: color-mix(in oklab, var(--error) 90%, black)
 
   .rules-header
     @extend %flex-between

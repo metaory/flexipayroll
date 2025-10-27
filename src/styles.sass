@@ -1,4 +1,5 @@
 @use "sass:color"
+@use "sass:math"
 
 $gap: 1rem
 $padding: 1.5rem
@@ -8,36 +9,34 @@ $spacing: 2rem
 $min-height: 2.5rem
 
 $bg-filter-light: blur(8em) brightness(1.1) opacity(0.3)
-$bg-filter-dark: blur(8em) brightness(1.0) opacity(0.9)
+$bg-filter-dark: blur(8em) saturate(0.4) opacity(0.9)
 
 $mobile: 768px
 $tablet: 1024px
 
 $base: #6366f1
-$reach: #0d0f51
 $dark-bg: hsl(225deg 70% 6% / 70%)
 $light-bg: hsl(0deg 0% 100% / 70%)
 
 @function adj($h: 0deg, $s: 0%, $l: 0%)
   $result: color.adjust($base, $hue: $h, $saturation: $s, $lightness: $l)
-  $hue: round(color.hue($result))
-  $sat: round(color.saturation($result))
-  $light: round(color.lightness($result))
+  $hue: math.round(color.channel($result, "hue", $space: hsl))
+  $sat: math.round(color.channel($result, "saturation", $space: hsl))
+  $light: math.round(color.channel($result, "lightness", $space: hsl))
   @return hsl($hue, $sat, $light)
 
 @function semantic-color($name, $dark: false)
-  $colors: (
-    success: (hue: 142deg, sat: 85%, light: if($dark, 35%, 40%)),
-    warning: (hue: 38deg, sat: 95%, light: if($dark, 40%, 45%)),
-    error: (hue: 0deg, sat: 90%, light: if($dark, 40%, 45%)),
-    info: (hue: 217deg, sat: 90%, light: if($dark, 40%, 45%)),
-    neutral: (hue: 220deg, sat: 25%, light: if($dark, 40%, 40%))
-  )
-  $color-data: map-get($colors, $name)
-  $hue: round(map-get($color-data, hue))
-  $sat: round(map-get($color-data, sat))
-  $light: round(map-get($color-data, light))
-  @return hsl($hue, $sat, $light)
+  @if $name == success
+    @return hsl(142, 85%, if($dark, 35%, 40%))
+  @if $name == warning
+    @return hsl(38, 95%, if($dark, 40%, 45%))
+  @if $name == error
+    @return hsl(0, 90%, if($dark, 40%, 45%))
+  @if $name == info
+    @return hsl(217, 90%, if($dark, 40%, 45%))
+  @if $name == neutral
+    @return hsl(220, 25%, if($dark, 40%, 40%))
+  @return hsl(0, 0%, 50%)
 
 @mixin generate-colors($dark: false)
   --base: #{$base}
@@ -45,7 +44,7 @@ $light-bg: hsl(0deg 0% 100% / 70%)
   @if $dark
     $primary: adj(30deg, 30%, 7%)
     $secondary: adj(120deg, 40%, 12%)
-    --based: #0d0f51;
+    --based: #22232f
     --bg: #{$dark-bg}
     --bg-muted: #{color.mix($dark-bg, transparent, 80%)}
     --fg: #{adj(15deg, 60%, 45%)}
@@ -59,7 +58,7 @@ $light-bg: hsl(0deg 0% 100% / 70%)
   @else
     $primary: adj(0deg, 25%, 22%)
     $secondary: adj(120deg, 35%, 17%)
-    --based: #dedeed;
+    --based: #dedeed
     --bg: #{$light-bg}
     --bg-muted: #{color.mix($light-bg, transparent, 80%)}
     --fg: #{adj(0deg, -30%, -35%)}
@@ -104,7 +103,7 @@ bit-grid
 
 html.dark
   @include generate-colors(true)
-  
+
   bit-grid
     @include generate-bitgrid-colors(true)
 
@@ -113,62 +112,45 @@ html.dark
   margin: 0
   padding: 0
 
-button, input, select, textarea, fieldset, legend, optgroup, option
+%form-reset
   border: none
   outline: none
   background: none
   font-family: inherit
   font-size: inherit
   color: inherit
-
-button
-  cursor: pointer
   padding: 0
   margin: 0
   border-radius: 0
+  -webkit-appearance: none
+  -moz-appearance: none
+  appearance: none
+
+button, input, select, textarea, fieldset, legend, optgroup, option
+  @extend %form-reset
+
+button
+  cursor: pointer
   background: transparent
-  border: none
-  font: inherit
-  color: inherit
   text-decoration: none
   display: inline-block
   line-height: 1
   text-align: center
   vertical-align: middle
   user-select: none
-  -webkit-appearance: none
-  -moz-appearance: none
-  appearance: none
 
 input, select, textarea
-  border: none
-  outline: none
   background: transparent
-  font: inherit
-  color: inherit
-  padding: 0
-  margin: 0
-  border-radius: 0
-  -webkit-appearance: none
-  -moz-appearance: none
-  appearance: none
 
 select
   background-image: none
-  -webkit-appearance: none
-  -moz-appearance: none
-  appearance: none
 
 fieldset
-  border: none
-  padding: 0
-  margin: 0
+  @extend %form-reset
   min-width: 0
 
 legend
-  border: none
-  padding: 0
-  margin: 0
+  @extend %form-reset
 
 ul, ol
   list-style: none
@@ -194,6 +176,9 @@ html, body
   max-width: 100vw
   height: 100vh
 
+#app
+  height: 100vh
+
 body
   font-family: 'Baloo 2', sans-serif
   line-height: 1.6
@@ -211,16 +196,19 @@ body
   @media (max-width: $mobile)
     grid-template-rows: 4rem calc(100vh - 7rem) 3rem
 
-%flex
+%flex-base
   display: flex
   align-items: center
 
+%flex
+  @extend %flex-base
+
 %flex-between
-  @extend %flex
+  @extend %flex-base
   justify-content: space-between
 
 %flex-wrap
-  @extend %flex
+  @extend %flex-base
   flex-wrap: wrap
   gap: $gap
 
@@ -231,8 +219,15 @@ body
 %transition
   transition: all 0.2s ease
 
+%gradient-text
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 90%)
+  background-clip: text
+  -webkit-background-clip: text
+  color: transparent
+  -webkit-text-fill-color: transparent
+
 %glass
-  backdrop-filter: blur(10px)
+  backdrop-filter: blur(14px)
 
 %focus
   &:focus
@@ -257,21 +252,22 @@ body
     opacity: 0.5
     cursor: not-allowed
 
-%button-primary
+@mixin button-variant($bg-var, $text-color: white, $hover-mix: true)
   @extend %button-base
-  background: var(--primary)
-  color: white
+  background: var(--#{$bg-var})
+  color: $text-color
 
   &:hover:not(:disabled)
-    background: color-mix(in oklab, var(--primary) 90%, black)
+    @if $hover-mix
+      background: color-mix(in oklab, var(--#{$bg-var}) 90%, black)
+    @else
+      background: var(--bg-muted)
+
+%button-primary
+  @include button-variant(primary)
 
 %button-secondary
-  @extend %button-base
-  background: var(--secondary)
-  color: white
-
-  &:hover:not(:disabled)
-    background: color-mix(in oklab, var(--secondary) 90%, black)
+  @include button-variant(secondary)
 
 %button-outline
   @extend %button-base
@@ -283,12 +279,7 @@ body
     background: var(--bg-muted)
 
 %button-danger
-  @extend %button-base
-  background: var(--error)
-  color: white
-
-  &:hover:not(:disabled)
-    background: color-mix(in oklab, var(--error) 90%, black)
+  @include button-variant(error)
 
 %input-base
   padding: 0.75rem
@@ -374,26 +365,17 @@ p
 .text-muted
   color: var(--fg-muted)
 
-.text-primary
-  color: var(--primary)
+$text-colors: primary, secondary, error, success, warning
 
-.text-secondary
-  color: var(--secondary)
+@each $color in $text-colors
+  .text-#{$color}
+    color: var(--#{$color})
 
-.text-error
-  color: var(--error)
+$margin-utils: (mb: bottom, mt: top)
 
-.text-success
-  color: var(--success)
-
-.text-warning
-  color: var(--warning)
-
-.mb-0
-  margin-bottom: 0
-
-.mt-0
-  margin-top: 0
+@each $prop, $side in $margin-utils
+  .#{$prop}-0
+    margin-#{$side}: 0
 
 ::-webkit-scrollbar
   width: 8px

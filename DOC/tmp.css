@@ -20,3 +20,14 @@ button {
     outline: none;
     border: none;
 }
+
+
+
+.gradient-text {
+background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 90%);
+-webkit-background-clip: text;
+color: transparent;
+-webkit-text-fill-color: transparent; /* for Safari */
+}
+  
+`
