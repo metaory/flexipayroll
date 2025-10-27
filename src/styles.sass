@@ -1,0 +1,398 @@
+@use "sass:color"
+@use "sass:math"
+
+$gap: 1rem
+$padding: 1.5rem
+$radius: 1rem
+$font: 0.8rem
+$spacing: 2rem
+$min-height: 2.5rem
+
+$bg-filter-light: blur(8em) brightness(1.1) opacity(0.3)
+$bg-filter-dark: blur(8em) saturate(0.4) opacity(0.9)
+
+$mobile: 768px
+$tablet: 1024px
+
+$base: #6366f1
+$dark-bg: hsl(225deg 70% 6% / 70%)
+$light-bg: hsl(0deg 0% 100% / 70%)
+
+@function adj($h: 0deg, $s: 0%, $l: 0%)
+  $result: color.adjust($base, $hue: $h, $saturation: $s, $lightness: $l)
+  $hue: math.round(color.channel($result, "hue", $space: hsl))
+  $sat: math.round(color.channel($result, "saturation", $space: hsl))
+  $light: math.round(color.channel($result, "lightness", $space: hsl))
+  @return hsl($hue, $sat, $light)
+
+@function semantic-color($name, $dark: false)
+  @if $name == success
+    @return hsl(142, 85%, if($dark, 35%, 40%))
+  @if $name == warning
+    @return hsl(38, 95%, if($dark, 40%, 45%))
+  @if $name == error
+    @return hsl(0, 90%, if($dark, 40%, 45%))
+  @if $name == info
+    @return hsl(217, 90%, if($dark, 40%, 45%))
+  @if $name == neutral
+    @return hsl(220, 25%, if($dark, 40%, 40%))
+  @return hsl(0, 0%, 50%)
+
+@mixin generate-colors($dark: false)
+  --base: #{$base}
+  --brand: #{adj(120deg, 30%, 15%)}
+  @if $dark
+    $primary: adj(30deg, 30%, 7%)
+    $secondary: adj(120deg, 40%, 12%)
+    --based: #22232f
+    --bg: #{$dark-bg}
+    --bg-muted: #{color.mix($dark-bg, transparent, 80%)}
+    --fg: #{adj(15deg, 60%, 45%)}
+    --fg-muted: #{adj(10deg, 35%, 25%)}
+    --primary: #{$primary}
+    --secondary: #{$secondary}
+    --surface: #{color.mix($primary, transparent, 8%)}
+    --surface-secondary: #{color.mix($secondary, transparent, 8%)}
+    --border: #{color.mix($primary, transparent, 25%)}
+    --border-muted: #{color.mix($primary, transparent, 15%)}
+  @else
+    $primary: adj(0deg, 25%, 22%)
+    $secondary: adj(120deg, 35%, 17%)
+    --based: #dedeed
+    --bg: #{$light-bg}
+    --bg-muted: #{color.mix($light-bg, transparent, 80%)}
+    --fg: #{adj(0deg, -30%, -35%)}
+    --fg-muted: #{adj(0deg, -50%, -15%)}
+    --primary: #{$primary}
+    --secondary: #{$secondary}
+    --surface: #{color.mix($primary, transparent, 8%)}
+    --surface-secondary: #{color.mix($secondary, transparent, 8%)}
+    --border: #{color.mix($primary, transparent, 25%)}
+    --border-muted: #{color.mix($primary, transparent, 15%)}
+
+  @each $name in success, warning, error, info, neutral
+    $semantic: semantic-color($name, $dark)
+    --#{$name}: #{$semantic}
+    --surface-#{$name}: #{color.mix($semantic, transparent, 12%)}
+    --on-#{$name}: #{if($dark, black, white)}
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1)
+    --radius: #{$radius}
+
+
+:root
+  @include generate-colors(false)
+
+@mixin generate-bitgrid-colors($dark: false)
+  --grid-primary: var(--brand)
+  --grid-bg: var(--bg)
+  --grid-cell-bg: var(--based)
+  --grid-text: var(--fg)
+  --grid-text-muted: var(--fg-muted)
+  --grid-header-bg: var(--bg-muted)
+  --grid-hover-bg: var(--secondary)
+  --grid-selection-bg: var(--primary)
+  --grid-selection-active-bg: var(--primary)
+  --grid-cell-size: 28px
+  --grid-header-width: 80px
+  --grid-cell-spacing: 4px
+  --grid-cell-radius: 8px
+  --grid-radius: 12px
+
+bit-grid
+  @include generate-bitgrid-colors(false)
+
+html.dark
+  @include generate-colors(true)
+
+  bit-grid
+    @include generate-bitgrid-colors(true)
+
+*
+  box-sizing: border-box
+  margin: 0
+  padding: 0
+
+%form-reset
+  border: none
+  outline: none
+  background: none
+  font-family: inherit
+  font-size: inherit
+  color: inherit
+  padding: 0
+  margin: 0
+  border-radius: 0
+  -webkit-appearance: none
+  -moz-appearance: none
+  appearance: none
+
+button, input, select, textarea, fieldset, legend, optgroup, option
+  @extend %form-reset
+
+button
+  cursor: pointer
+  background: transparent
+  text-decoration: none
+  display: inline-block
+  line-height: 1
+  text-align: center
+  vertical-align: middle
+  user-select: none
+
+input, select, textarea
+  background: transparent
+
+select
+  background-image: none
+
+fieldset
+  @extend %form-reset
+  min-width: 0
+
+legend
+  @extend %form-reset
+
+ul, ol
+  list-style: none
+  padding: 0
+  margin: 0
+
+a
+  color: inherit
+  text-decoration: none
+
+table
+  border-collapse: collapse
+  border-spacing: 0
+
+img
+  max-width: 100%
+  height: auto
+  border: none
+  vertical-align: middle
+
+html, body
+  overflow: hidden
+  max-width: 100vw
+  height: 100vh
+
+#app
+  height: 100vh
+
+body
+  font-family: 'Baloo 2', sans-serif
+  line-height: 1.6
+  background: var(--based)
+  color: var(--fg)
+  height: 100vh
+  max-width: 1200px
+  margin: 0 auto
+  padding: 0
+  overflow: hidden
+  display: grid
+  grid-template-rows: 5rem calc(100vh - 9rem) 4rem
+  grid-template-areas: "header" "content" "footer"
+
+  @media (max-width: $mobile)
+    grid-template-rows: 4rem calc(100vh - 7rem) 3rem
+
+%flex-base
+  display: flex
+  align-items: center
+
+%flex
+  @extend %flex-base
+
+%flex-between
+  @extend %flex-base
+  justify-content: space-between
+
+%flex-wrap
+  @extend %flex-base
+  flex-wrap: wrap
+  gap: $gap
+
+%grid
+  display: grid
+  gap: $gap
+
+%transition
+  transition: all 0.2s ease
+
+%gradient-text
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 90%)
+  background-clip: text
+  -webkit-background-clip: text
+  color: transparent
+  -webkit-text-fill-color: transparent
+
+%glass
+  backdrop-filter: blur(14px)
+
+%focus
+  &:focus
+    outline: none
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 40%, transparent), 0 4px 20px color-mix(in oklab, var(--primary) 30%, transparent)
+
+%button-base
+  display: inline-flex
+  align-items: center
+  gap: 0.5rem
+  padding: 0.75rem 1rem
+  border-radius: var(--radius)
+  font-size: $font
+  font-weight: 500
+  cursor: pointer
+  @extend %transition
+  min-height: $min-height
+  white-space: nowrap
+  border: none
+
+  &:disabled
+    opacity: 0.5
+    cursor: not-allowed
+
+@mixin button-variant($bg-var, $text-color: white, $hover-mix: true)
+  @extend %button-base
+  background: var(--#{$bg-var})
+  color: $text-color
+
+  &:hover:not(:disabled)
+    @if $hover-mix
+      background: color-mix(in oklab, var(--#{$bg-var}) 90%, black)
+    @else
+      background: var(--bg-muted)
+
+%button-primary
+  @include button-variant(primary)
+
+%button-secondary
+  @include button-variant(secondary)
+
+%button-outline
+  @extend %button-base
+  background: var(--surface)
+  color: var(--fg)
+  border: 4px solid var(--border-muted)
+
+  &:hover:not(:disabled)
+    background: var(--bg-muted)
+
+%button-danger
+  @include button-variant(error)
+
+%input-base
+  padding: 0.75rem
+  border: 6px solid var(--border-muted)
+  border-radius: var(--radius)
+  background: var(--surface)
+  color: var(--fg)
+  font-size: $font
+  min-height: $min-height
+  @extend %transition
+
+  &:focus
+    outline: none
+    border-color: var(--primary)
+    background: var(--bg-muted)
+
+  &::placeholder
+    color: var(--fg-muted)
+    opacity: 0.7
+
+%card-base
+  background: var(--surface)
+  padding: 2rem
+  border-radius: 1rem
+
+%table-base
+  width: 100%
+  background: var(--surface)
+  border-radius: 1rem
+  overflow: hidden
+  border: 4px solid var(--border-muted)
+
+  th, td
+    padding: 0.75rem 1rem
+    text-align: left
+    border-bottom: 4px solid var(--border-muted)
+
+  th
+    background: var(--bg-muted)
+    font-weight: 600
+    color: var(--fg)
+
+  tr:hover
+    background: var(--bg-muted)
+
+h1, h2, h3, h4, h5, h6
+  font-family: 'Bungee', monospace
+  line-height: 1.2
+  font-weight: 600
+
+h1
+  font-size: 2rem
+  color: var(--primary)
+
+  @media (max-width: $mobile)
+    font-size: 1.5rem
+
+h2
+  font-size: 1.5rem
+  color: var(--primary)
+  margin-bottom: 1rem
+
+  @media (max-width: $mobile)
+    font-size: 1.25rem
+
+h3
+  font-size: 1.25rem
+  color: var(--primary)
+  margin-bottom: 1rem
+
+  @media (max-width: $mobile)
+    font-size: 1.1rem
+
+h4
+  font-size: 1rem
+  color: var(--fg)
+  margin: 1rem 0 0.5rem
+
+p
+  color: var(--fg-muted)
+  margin-bottom: 1rem
+
+.text-muted
+  color: var(--fg-muted)
+
+$text-colors: primary, secondary, error, success, warning
+
+@each $color in $text-colors
+  .text-#{$color}
+    color: var(--#{$color})
+
+$margin-utils: (mb: bottom, mt: top)
+
+@each $prop, $side in $margin-utils
+  .#{$prop}-0
+    margin-#{$side}: 0
+
+::-webkit-scrollbar
+  width: 8px
+  height: 8px
+
+::-webkit-scrollbar-track
+  background: var(--bg-muted)
+  border-radius: 4px
+
+::-webkit-scrollbar-thumb
+  background: var(--border)
+  border-radius: 4px
+  transition: background 0.2s ease
+
+  &:hover
+    background: var(--primary)
+
+*
+  scrollbar-width: thin
+  scrollbar-color: var(--border) var(--bg-muted)
