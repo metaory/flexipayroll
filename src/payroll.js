@@ -320,5 +320,6 @@ export const EMPLOYEE_FIELDS = [
   { key: 'name', label: 'Name', type: 'text', required: true },
   { key: 'gender', label: 'Gender', type: 'select', options: [{ value: 'male', label: 'Male' }, { value: 'female', label: 'Female' }] },
   { key: 'maritalStatus', label: 'Marital Status', type: 'select', options: [{ value: 'single', label: 'Single' }, { value: 'married', label: 'Married' }] },
-  { key: 'monthlySalary', label: 'Monthly Salary', type: 'number', required: true, min: 0 }
+  { key: 'monthlySalary', label: 'Monthly Salary', type: 'number', required: true, min: 0 },
+  { key: 'yearsOfExperience', label: 'Years of Experience', type: 'number', min: 0, step: 0.1 }
 ]

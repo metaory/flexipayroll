@@ -30,6 +30,15 @@
                 <option value={option.value}>{option.label}</option>
               {/each}
             </select>
+          {:else if field.type === 'number' && field.step === 0.1}
+            <input
+              {...field}
+              value={form[field.key] || ''}
+              oninput={(e) => {
+                const value = parseFloat(e.target.value) || 0
+                updateForm(field.key, Math.max(0, value))
+              }}
+            />
           {:else}
             <input
               {...field}

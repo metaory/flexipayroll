@@ -1,11 +1,10 @@
 <script>
   import Icon from '@iconify/svelte'
-  import { createEventDispatcher, tick } from 'svelte'
+  import { createEventDispatcher } from 'svelte'
   import { rules, basicConfig, addRule, updateRule, removeRule, toggleRule, reorderRules, resetRules, updateBasicConfig } from '../stores.js'
   import { RULE_TYPES, RULE_CATEGORIES, CRITERIA_TYPES, createRule, validateRule } from '../rules.js'
   import { toasts } from '../lib/toast.js'
   import { confirmDialog } from '../lib/dialog.js'
-  import BitGrid from 'bit-grid-component'
   import Dialog from './Dialog.svelte'
 
   const dispatch = createEventDispatcher()
@@ -15,34 +14,35 @@
   // Form state
   let showRuleDialog = $state(false)
   let editingRule = $state(null)
+  let errors = $state({ label: false, value: false, gender: false, marital: false })
   let newRule = $state({
     label: '',
     type: RULE_TYPES.FIXED,
     value: 0,
-    criteria: { appliesTo: [CRITERIA_TYPES.ALL] },
+    criteria: { appliesTo: [] },
     category: RULE_CATEGORIES.BONUS
   })
 
-  // Criteria options for BitGrid
-  const criteriaOptions = [
-    { value: CRITERIA_TYPES.ALL, label: 'All' },
-    { value: CRITERIA_TYPES.MARRIED, label: 'Married' },
-    { value: CRITERIA_TYPES.SINGLE, label: 'Single' },
+  // Gender options
+  const genderOptions = [
     { value: CRITERIA_TYPES.MALE, label: 'Male' },
     { value: CRITERIA_TYPES.FEMALE, label: 'Female' }
   ]
 
-  // BitGrid reference
-  let criteriaGrid = $state(null)
+  // Marital status options
+  const maritalStatusOptions = [
+    { value: CRITERIA_TYPES.SINGLE, label: 'Single' },
+    { value: CRITERIA_TYPES.MARRIED, label: 'Married' }
+  ]
 
-  // Watch for dialog opening and initialize BitGrid
-  $effect(() => {
-    if (showRuleDialog) {
-      tick().then(() => {
-        initializeCriteriaGrid()
-      })
-    }
-  })
+  // Helper to get current selection
+  const getGenderSelection = () => {
+    return newRule.criteria.appliesTo.find(c => c === CRITERIA_TYPES.MALE || c === CRITERIA_TYPES.FEMALE) || ''
+  }
+
+  const getMaritalSelection = () => {
+    return newRule.criteria.appliesTo.find(c => c === CRITERIA_TYPES.SINGLE || c === CRITERIA_TYPES.MARRIED) || ''
+  }
 
   // Handle dialog close
   const handleDialogClose = () => {
@@ -52,13 +52,8 @@
       label: '',
       type: RULE_TYPES.FIXED,
       value: 0,
-      criteria: { appliesTo: [CRITERIA_TYPES.ALL] },
+      criteria: { appliesTo: [] },
       category: RULE_CATEGORIES.BONUS
-    }
-    // Clean up BitGrid
-    if (criteriaGrid) {
-      criteriaGrid.remove()
-      criteriaGrid = null
     }
   }
 
@@ -88,7 +83,7 @@
       label: '',
       type: RULE_TYPES.FIXED,
       value: 0,
-      criteria: { appliesTo: [CRITERIA_TYPES.ALL] },
+      criteria: { appliesTo: [] },
       category: RULE_CATEGORIES.BONUS
     }
     showRuleDialog = true
@@ -101,6 +96,33 @@
   }
 
   const saveRule = () => {
+    errors = { label: false, value: false, gender: false, marital: false }
+    
+    if (!newRule.label || newRule.label.trim() === '') {
+      errors.label = true
+    }
+    
+    if (!newRule.value || newRule.value === 0) {
+      errors.value = true
+    }
+    
+    const hasGender = newRule.criteria.appliesTo.includes(CRITERIA_TYPES.MALE) || 
+                       newRule.criteria.appliesTo.includes(CRITERIA_TYPES.FEMALE)
+    if (!hasGender) {
+      errors.gender = true
+    }
+    
+    const hasMarital = newRule.criteria.appliesTo.includes(CRITERIA_TYPES.SINGLE) || 
+                        newRule.criteria.appliesTo.includes(CRITERIA_TYPES.MARRIED)
+    if (!hasMarital) {
+      errors.marital = true
+    }
+    
+    if (errors.label || errors.value || errors.gender || errors.marital) {
+      toasts.error('Please fix the errors below')
+      return
+    }
+    
     try {
       if (editingRule) {
         updateRule(editingRule.id, newRule)
@@ -110,6 +132,7 @@
         toasts.success('Rule added')
       }
       cancelRuleForm()
+      errors = { label: false, value: false, gender: false, marital: false }
     } catch (error) {
       toasts.error(error.message)
     }
@@ -118,17 +141,13 @@
   const cancelRuleForm = () => {
     showRuleDialog = false
     editingRule = null
+    errors = { label: false, value: false, gender: false, marital: false }
     newRule = {
       label: '',
       type: RULE_TYPES.FIXED,
       value: 0,
-      criteria: { appliesTo: [CRITERIA_TYPES.ALL] },
+      criteria: { appliesTo: [] },
       category: RULE_CATEGORIES.BONUS
-    }
-    // Clean up BitGrid
-    if (criteriaGrid) {
-      criteriaGrid.remove()
-      criteriaGrid = null
     }
   }
 
@@ -148,37 +167,6 @@
       resetRules()
       toasts.success('Rules reset to defaults')
     }
-  }
-
-  // BitGrid initialization
-  const initializeCriteriaGrid = () => {
-    const container = document.getElementById('criteria-grid-container')
-    if (!container) return
-
-    // Clean up existing grid
-    if (criteriaGrid) {
-      criteriaGrid.remove()
-    }
-
-    // Create data array - single row with columns for each criteria option
-    const data = [criteriaOptions.map(option =>
-      newRule.criteria.appliesTo.includes(option.value)
-    )]
-
-    // Create BitGrid with rule name as row, criteria options as columns
-    criteriaGrid = new BitGrid({
-      data: data,
-      rowLabels: [newRule.label || 'Rule'],
-      colLabels: criteriaOptions.map(opt => opt.label),
-      onChange: (newData) => {
-        // Update criteria based on grid selection
-        newRule.criteria.appliesTo = criteriaOptions
-          .filter((_, index) => newData[0][index])
-          .map(opt => opt.value)
-      }
-    })
-
-    container.appendChild(criteriaGrid)
   }
 
   // Sortable rules list
@@ -322,7 +310,9 @@
               <p><strong>Value:</strong> {rule.value}</p>
               <p><strong>Applies to:</strong>
                 {#each rule.criteria.appliesTo as criteria}
-                  <span class="criteria-badge">{criteriaOptions.find(opt => opt.value === criteria)?.label || criteria}</span>
+                  <span class="criteria-badge">
+                    {[genderOptions, maritalStatusOptions].flat().find(opt => opt.value === criteria)?.label || criteria}
+                  </span>
                 {/each}
               </p>
               <p><strong>Order:</strong> {rule.order}</p>
@@ -357,12 +347,15 @@
   >
 
         <div class="form-grid">
-          <label class="field">
+          <label class="field" class:error={errors.label}>
             <span>Rule Label</span>
             <input
               type="text"
               value={newRule.label}
-              oninput={(e) => newRule.label = e.target.value}
+              oninput={(e) => {
+                newRule.label = e.target.value
+                if (errors.label) errors.label = false
+              }}
               placeholder="e.g., Performance Bonus"
             />
           </label>
@@ -381,14 +374,17 @@
             </select>
           </label>
 
-          <label class="field">
+          <label class="field" class:error={errors.value}>
             <span>Value</span>
             <input
               type="number"
               min="0"
               step={newRule.type === RULE_TYPES.PERCENTAGE_MONTHLY || newRule.type === RULE_TYPES.PERCENTAGE_BASE ? "0.01" : "1"}
               value={newRule.value}
-              oninput={(e) => newRule.value = +e.target.value}
+              oninput={(e) => {
+                newRule.value = +e.target.value
+                if (errors.value) errors.value = false
+              }}
             />
           </label>
 
@@ -404,8 +400,57 @@
           </label>
 
           <div class="field criteria-field">
-            <span>Applies To (Select all that apply)</span>
-            <div id="criteria-grid-container" class="criteria-grid-container"></div>
+            <span>Applies To</span>
+            
+            <div class="radio-groups-grid">
+              <div class="radio-group" class:error={errors.gender}>
+                <span class="group-label">Gender</span>
+                <div class="radio-options">
+                  {#each genderOptions as option}
+                    <label class="radio-label">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value={option.value}
+                        checked={getGenderSelection() === option.value}
+                        onchange={() => {
+                          const filtered = newRule.criteria.appliesTo.filter(c => 
+                            c !== CRITERIA_TYPES.MALE && c !== CRITERIA_TYPES.FEMALE
+                          )
+                          newRule.criteria.appliesTo = [...filtered, option.value]
+                          if (errors.gender) errors.gender = false
+                        }}
+                      />
+                      <span>{option.label}</span>
+                    </label>
+                  {/each}
+                </div>
+              </div>
+
+              <div class="radio-group" class:error={errors.marital}>
+                <span class="group-label">Marital Status</span>
+                <div class="radio-options">
+                  {#each maritalStatusOptions as option}
+                    <label class="radio-label">
+                      <input
+                        type="radio"
+                        name="marital"
+                        value={option.value}
+                        checked={getMaritalSelection() === option.value}
+                        onchange={() => {
+                          const filtered = newRule.criteria.appliesTo.filter(c => 
+                            c !== CRITERIA_TYPES.SINGLE && c !== CRITERIA_TYPES.MARRIED
+                          )
+                          newRule.criteria.appliesTo = [...filtered, option.value]
+                          if (errors.marital) errors.marital = false
+                        }}
+                      />
+                      <span>{option.label}</span>
+                    </label>
+                  {/each}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -416,7 +461,7 @@
           </button>
           <button class="primary" onclick={saveRule}>
             <Icon icon="solar:check-circle-bold" width="1rem" height="1rem" />
-            {editingRule ? 'Update' : 'Add'} Rule
+            Save
           </button>
         </div>
   </Dialog>
@@ -451,6 +496,15 @@
 
     input, select
       @extend %input-base
+
+    &.error input
+      background: var(--error-bg)
+      border-color: var(--error)
+      color: var(--error)
+
+      &:focus
+        border-color: var(--error)
+        box-shadow: 0 0 0 2px var(--error-bg)
 
   .config-actions
     @extend %flex
@@ -599,15 +653,63 @@
   .criteria-field
     grid-column: 1 / -1
 
-    .criteria-grid-container
-      margin-top: 0.5rem
-      border: 2px solid var(--border-muted)
-      border-radius: var(--radius)
+  .radio-groups-grid
+    margin-top: 1rem
+    display: grid
+    grid-template-columns: repeat(2, 1fr)
+    gap: 1.5rem
+
+  .radio-group
+    .group-label
+      display: block
+      font-size: 0.875rem
+      font-weight: 600
+      color: var(--fg)
+      margin-bottom: 0.75rem
+
+    &.error .group-label
+      color: var(--error)
+
+    &.error
       padding: 1rem
-      padding-right: 50px
-      background: var(--surface)
-      height: 200px
-      overflow: auto
+      border-radius: var(--radius)
+      background: var(--error-bg)
+
+  .radio-options
+    display: flex
+    gap: 0.5rem
+
+  .radio-label
+    display: flex
+    align-items: center
+    gap: 0.5rem
+    cursor: pointer
+    padding: 0.75rem 1rem
+    border-radius: var(--radius)
+    background: var(--surface-muted)
+    @extend %transition
+
+    &:hover
+      background: var(--surface-medium)
+
+    input[type="radio"]
+      width: 1.25rem
+      height: 1.25rem
+      cursor: pointer
+      accent-color: var(--primary)
+
+    span
+      font-size: 0.875rem
+      color: var(--fg)
+      user-select: none
+
+  .radio-label:has(input:checked)
+    background: var(--primary)
+    border: none
+
+    span
+      color: white
+      font-weight: 600
 
   .criteria-badge
     display: inline-block
