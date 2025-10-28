@@ -1,12 +1,17 @@
 <script>
   import Payroll from './components/Payroll.svelte'
   import Icon from '@iconify/svelte'
-  import { theme, toggleTheme } from './stores.js'
+  import { theme, toggleTheme, language, toggleLanguage } from './stores.js'
 
   // Apply theme to document on mount and changes
   $effect(() => {
     const isDark = $theme.mode === 'dark'
     document.documentElement.classList.toggle('dark', isDark)
+  });
+
+  // Apply language to document on mount and changes
+  $effect(() => {
+    document.documentElement.lang = $language
   });
 </script>
 
@@ -19,9 +24,16 @@
     </div>
   </a>
 
-  <button class="theme-toggle" onclick={toggleTheme} aria-label="Toggle color scheme">
-    <Icon icon={$theme.mode === 'dark' ? 'line-md:moon-filled-to-sunny-filled-transition' : 'line-md:sunny-outline-to-moon-alt-loop-transition'} width="1.5rem" height="1.5rem" />
-  </button>
+  <div class="header-controls">
+    <button class="language-toggle" onclick={toggleLanguage} aria-label="Toggle language">
+      <Icon icon="solar:translation-bold" width="1.5rem" height="1.5rem" />
+      <span class="language-code">{$language.toUpperCase()}</span>
+    </button>
+    
+    <button class="theme-toggle" onclick={toggleTheme} aria-label="Toggle color scheme">
+      <Icon icon={$theme.mode === 'dark' ? 'line-md:moon-filled-to-sunny-filled-transition' : 'line-md:sunny-outline-to-moon-alt-loop-transition'} width="1.5rem" height="1.5rem" />
+    </button>
+  </div>
 </header>
 
 <main class="app-content">
@@ -69,6 +81,10 @@
     position: relative
     z-index: 1
 
+  .header-controls
+    @extend %flex
+    gap: 1rem
+
   .app-content
     grid-area: content
     overflow: hidden
@@ -115,7 +131,7 @@
     margin-left: 1rem
     opacity: 0.8
 
-  .theme-toggle
+  .language-toggle, .theme-toggle
     width: 3rem
     height: 3rem
     border-radius: 50%
@@ -128,6 +144,16 @@
       background: var(--bg)
 
     :global(svg)
+      color: var(--primary)
+
+  .language-toggle
+    @extend %flex
+    flex-direction: column
+    gap: 0.25rem
+
+    .language-code
+      font-size: 0.6rem
+      font-weight: 600
       color: var(--primary)
 
   .footer-text

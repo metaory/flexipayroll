@@ -7,5 +7,17 @@ import '@styles'
 
 import { mount } from 'svelte'
 import App from './App.svelte'
+import { language, setLanguage } from './stores.js'
+
+// Handle URL language parameter on page load
+const urlParams = new URLSearchParams(window.location.search)
+const urlLang = urlParams.get('lang')
+
+if (urlLang && (urlLang === 'en' || urlLang === 'fa')) {
+  setLanguage(urlLang)
+} else {
+  // Default to English if no language parameter
+  setLanguage('en')
+}
 
 mount(App, { target: document.getElementById('app') }) 

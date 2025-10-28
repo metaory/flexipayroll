@@ -19,6 +19,7 @@ const KEYS = {
   BASIC_CONFIG: 'xpayroll_basic_config',
   ADJUSTMENTS: 'xpayroll_adjustments',
   THEME: 'xpayroll_theme',
+  LANGUAGE: 'xpayroll_language',
   SETTINGS: 'xpayroll_settings',
   I18N_LABELS: 'xpayroll_i18n_labels'
 }
@@ -39,6 +40,8 @@ const DEFAULT_THEME = {
   mode: 'light'
 }
 
+const DEFAULT_LANGUAGE = 'en'
+
 export const DEFAULT_SETTINGS = {
   currency: 'IDR',
   locale: 'id-ID',
@@ -58,6 +61,10 @@ export const DEFAULT_SETTINGS = {
 // Theme store
 export const theme = writable(storage.get(KEYS.THEME, DEFAULT_THEME))
 theme.subscribe(value => storage.set(KEYS.THEME, value))
+
+// Language store
+export const language = writable(storage.get(KEYS.LANGUAGE, DEFAULT_LANGUAGE))
+language.subscribe(value => storage.set(KEYS.LANGUAGE, value))
 
 // Rules store
 export const rules = writable(storage.get(KEYS.RULES, DEFAULT_RULES))
@@ -126,6 +133,26 @@ export const toggleTheme = () => {
     ...current,
     mode: current.mode === 'dark' ? 'light' : 'dark'
   }))
+}
+
+// Language actions
+export const toggleLanguage = () => {
+  language.update(current => {
+    const newLang = current === 'en' ? 'fa' : 'en'
+    // Update URL parameter and reload page
+    const url = new URL(window.location)
+    url.searchParams.set('lang', newLang)
+    window.location.href = url.toString()
+    return newLang
+  })
+}
+
+export const setLanguage = (lang) => {
+  language.set(lang)
+  // Update URL parameter
+  const url = new URL(window.location)
+  url.searchParams.set('lang', lang)
+  window.history.replaceState({}, '', url)
 }
 
 // Employee actions
