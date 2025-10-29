@@ -177,8 +177,7 @@
   @use "../styles.sass" as *
   
   .report-grid
-    @extend %grid
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr))
+    @include auto-grid(280px)
     gap: 2rem
     
   .report-card
@@ -194,9 +193,10 @@
       h3
         margin: 0
         color: var(--primary)
+        font-size: 2rem
         
       span
-        font-size: 0.875rem
+        font-size: 1.1rem
         color: var(--fg-muted)
         
   .summary
@@ -206,7 +206,7 @@
   .line
     @extend %flex-between
     padding: 0.35rem 0
-    font-size: 0.9rem
+    font-size: 1.1rem
     
     span:first-child
       color: var(--fg-muted)
@@ -223,7 +223,7 @@
         
       &.final-amount
         color: var(--success)
-        font-size: 1.1rem
+        font-size: 1.4rem
         
     &.final
       border-top: 1px solid var(--border-muted)
@@ -255,7 +255,7 @@
     border-radius: var(--radius)
     font-weight: 600
     cursor: pointer
-    font-size: 0.875rem
+    font-size: 1.1rem
     @extend %transition
 
     &:hover
@@ -272,7 +272,7 @@
   .summary-line
     @extend %flex-between
     padding: 0.35rem 0
-    font-size: 0.9rem
+    font-size: 1.1rem
     
     span:first-child
       color: var(--fg-muted)
@@ -289,7 +289,7 @@
         
       &.final-amount
         color: var(--success)
-        font-size: 1.1rem
+        font-size: 1.4rem
         
     &.final
       border-top: 1px solid var(--border-muted)

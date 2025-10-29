@@ -275,30 +275,39 @@
     gap: 1rem
 
   .employee-cards
-    @extend %grid
+    @include auto-grid(280px)
     gap: 1rem
 
   .employee-card
-    @extend %flex-between
-    padding: 1.5rem
+    display: flex
+    align-items: flex-start
+    justify-content: space-between
+    gap: 1rem
+    padding: 1rem
     background: var(--surface)
     border-radius: var(--radius)
     border: 2px solid var(--border-muted)
     @extend %transition
+    min-width: 0
 
     &:hover
       border-color: var(--primary)
 
+    
+
   .employee-info
     flex: 1
+    min-width: 0
+    overflow: hidden
 
     h4
       margin: 0 0 0.5rem 0
       color: var(--primary)
+      font-size: 1.5rem
 
     p
       margin: 0.25rem 0
-      font-size: 0.875rem
+      font-size: 1.1rem
       color: var(--fg-muted)
 
       &.salary
@@ -308,15 +317,16 @@
       &.hourly-rate
         font-weight: 600
         color: var(--fg-muted)
-        font-size: 0.8rem
+        font-size: 1rem
 
       &.experience
-        font-size: 0.8rem
+        font-size: 1rem
         color: var(--fg-muted)
 
   .employee-actions
     @extend %flex
     gap: 0.5rem
+    flex-shrink: 0
 
   .edit-btn, .delete-btn
     width: 2.5rem
@@ -343,8 +353,7 @@
     border-color: var(--error)
 
   .form-grid
-    @extend %grid
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr))
+    @include auto-grid(200px)
     gap: 1.5rem
     margin-bottom: 2rem
 

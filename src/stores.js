@@ -19,8 +19,7 @@ const KEYS = {
   BASIC_CONFIG: 'xpayroll_basic_config',
   ADJUSTMENTS: 'xpayroll_adjustments',
   THEME: 'xpayroll_theme',
-  SETTINGS: 'xpayroll_settings',
-  I18N_LABELS: 'xpayroll_i18n_labels'
+  SETTINGS: 'xpayroll_settings'
 }
 
 // ============================================================================
@@ -47,8 +46,7 @@ export const DEFAULT_SETTINGS = {
   numberFormat: {
     decimal: ',',
     thousands: '.'
-  },
-  labels: {}
+  }
 }
 
 // ============================================================================
@@ -86,9 +84,6 @@ payroll.subscribe(value => storage.set(KEYS.PAYROLL, value))
 // Settings store
 export const settings = writable(storage.get(KEYS.SETTINGS, DEFAULT_SETTINGS))
 settings.subscribe(value => storage.set(KEYS.SETTINGS, value))
-
-// I18n labels store
-export const i18nLabels = writable(storage.get(KEYS.I18N_LABELS, {}))
 
 // Salary records store
 export const salaryRecords = writable(storage.get('xpayroll_salary_records', {}))
@@ -324,7 +319,6 @@ export const updateSettings = (updates) => {
 
 export const resetSettings = () => {
   settings.set(DEFAULT_SETTINGS)
-  i18nLabels.set({})
 }
 
 // Salary record actions

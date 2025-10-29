@@ -292,6 +292,7 @@
         <div
           class="rule-card"
           class:disabled={!rule.enabled}
+          data-category={rule.category}
           draggable="true"
           role="listitem"
           ondragstart={(e) => handleDragStart(e, rule)}
@@ -482,8 +483,7 @@
       color: var(--primary)
 
   .config-grid
-    @extend %grid
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr))
+    @include auto-grid(200px)
     gap: 1.5rem
 
   .field
@@ -538,17 +538,21 @@
         @extend %button-secondary
 
   .rules-list
-    @extend %grid
+    @include auto-grid(280px)
     gap: 1rem
 
   .rule-card
-    @extend %flex-between
-    padding: 1.5rem
+    display: flex
+    align-items: flex-start
+    justify-content: space-between
+    gap: 1rem
+    padding: 1rem
     background: var(--surface)
     border-radius: var(--radius)
     border: 2px solid var(--border-muted)
     cursor: move
     @extend %transition
+    min-width: 0
 
     &:hover
       border-color: var(--primary)
@@ -557,16 +561,29 @@
       opacity: 0.6
       background: var(--surface-muted)
 
+    &[data-category="bonus"]
+      background: var(--surface-success)
+
+    &[data-category="deduction"]
+      background: color-mix(in oklab, var(--error) 12%, transparent)
+
+    
+
   .rule-info
     flex: 1
+    min-width: 0
+    overflow: hidden
 
     .rule-header
       @extend %flex-between
       margin-bottom: 0.5rem
+      flex-wrap: wrap
+      gap: 0.5rem
 
       h4
         margin: 0
         color: var(--primary)
+        font-size: 1.5rem
 
     .rule-badges
       @extend %flex
@@ -575,7 +592,7 @@
     .badge
       padding: 0.25rem 0.5rem
       border-radius: var(--radius-sm)
-      font-size: 0.75rem
+      font-size: 1rem
       font-weight: 600
 
       &.category-bonus
@@ -590,7 +607,7 @@
     .rule-details
       p
         margin: 0.25rem 0
-        font-size: 0.875rem
+        font-size: 1.1rem
         color: var(--fg-muted)
         display: flex
         flex-wrap: wrap
@@ -600,6 +617,7 @@
   .rule-actions
     @extend %flex
     gap: 0.5rem
+    flex-shrink: 0
 
   .toggle-btn, .edit-btn, .delete-btn
     width: 2.5rem
@@ -631,8 +649,7 @@
     border-color: var(--error)
 
   .form-grid
-    @extend %grid
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr))
+    @include auto-grid(200px)
     gap: 1.5rem
     margin-bottom: 2rem
 

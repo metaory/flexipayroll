@@ -136,7 +136,7 @@
               </div>
             {:else}
               {#each (adjustmentsData[employee.id] || []) as adjustment}
-                <div class="adjustment-item">
+                <div class="adjustment-item" data-positive={adjustment.amount > 0}>
                   <div class="adjustment-info">
                     <span class="adjustment-label">{adjustment.label}</span>
                     <span class="adjustment-amount" class:positive={adjustment.amount > 0} class:negative={adjustment.amount < 0}>
@@ -233,12 +233,12 @@
         color: var(--info)
 
   .adjustments-grid
-    @extend %grid
+    @include auto-grid(280px)
     gap: 1.5rem
 
   .employee-adjustments
     @extend %card-base
-    padding: 1.5rem
+    padding: 1rem
 
   .employee-header
     @extend %flex-between
@@ -249,6 +249,7 @@
     h4
       margin: 0
       color: var(--primary)
+      font-size: 1.5rem
 
   .employee-meta
     @extend %flex
@@ -258,11 +259,12 @@
 
     span:first-child
       color: var(--fg-muted)
-      font-size: 0.875rem
+      font-size: 1.1rem
 
     .total-adjustments
       font-weight: 600
       color: var(--fg)
+      font-size: 1.1rem
 
   .current-adjustments
     @extend %grid
@@ -287,6 +289,12 @@
     border-radius: var(--radius)
     border: 1px solid var(--border-muted)
 
+    &[data-positive="true"]
+      background: var(--surface-success)
+
+    &[data-positive="false"]
+      background: color-mix(in oklab, var(--error) 12%, transparent)
+
   .adjustment-info
     @extend %flex
     flex-direction: column
@@ -295,10 +303,11 @@
     .adjustment-label
       font-weight: 600
       color: var(--fg)
+      font-size: 1.1rem
 
     .adjustment-amount
       font-weight: 600
-      font-size: 0.875rem
+      font-size: 1.1rem
 
       &.positive
         color: var(--success)

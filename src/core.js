@@ -3,8 +3,6 @@
  * Clean, functional, dynamic approach
  */
 
-import { t } from './lib/i18n.js'
-
 // ============================================================================
 // CONSTANTS
 // ============================================================================
@@ -41,19 +39,19 @@ export const validateEmployee = (data) => {
   const errors = {}
   
   if (!data.name || data.name.length < 2) {
-    errors.name = t.nameRequired
+    errors.name = 'Name must be at least 2 characters'
   }
   
   if (!data.monthlySalary || data.monthlySalary <= 0) {
-    errors.monthlySalary = t.salaryRequired
+    errors.monthlySalary = 'Monthly salary must be greater than 0'
   }
   
   if (!['male', 'female'].includes(data.gender)) {
-    errors.gender = t.invalidGender
+    errors.gender = 'Invalid gender'
   }
   
   if (!['single', 'married'].includes(data.maritalStatus)) {
-    errors.maritalStatus = t.invalidMaritalStatus
+    errors.maritalStatus = 'Invalid marital status'
   }
   
   return Object.keys(errors).length === 0 ? null : errors
@@ -63,11 +61,11 @@ export const validateAttendance = (data) => {
   const errors = {}
   
   if (data.type === 'regular' && (!data.entryTime || !data.exitTime)) {
-    errors.entryExitTimes = t.entryExitRequired
+    errors.entryExitTimes = 'Entry and exit times required for regular days'
   }
   
   if (data.entryTime && data.exitTime && data.exitTime <= data.entryTime) {
-    errors.timeOrder = t.exitAfterEntry
+    errors.timeOrder = 'Exit time must be after entry time'
   }
   
   return Object.keys(errors).length === 0 ? null : errors
