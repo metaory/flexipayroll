@@ -182,31 +182,26 @@
     
   .report-card
     @extend %card-base
-    padding: 1rem
     
     header
       @extend %flex-between
-      margin-bottom: 1rem
-      padding-bottom: 0.75rem
-      border-bottom: 1px solid var(--border-muted)
+      margin-bottom: 1.25rem
+      padding-bottom: 1rem
       
       h3
-        margin: 0
-        color: var(--primary)
-        font-size: 2rem
+        @include card-title(2.2rem)
         
       span
-        font-size: 1.1rem
-        color: var(--fg-muted)
+        @include card-text(1.3rem)
         
   .summary
     @extend %grid
-    gap: 0.5rem
+    gap: 0.65rem
     
   .line
     @extend %flex-between
-    padding: 0.35rem 0
-    font-size: 1.1rem
+    padding: 0.5rem 0
+    @include card-text(1.3rem)
     
     span:first-child
       color: var(--fg-muted)
@@ -223,10 +218,9 @@
         
       &.final-amount
         color: var(--success)
-        font-size: 1.4rem
+        font-size: 1.65rem
         
     &.final
-      border-top: 1px solid var(--border-muted)
       margin-top: 0.5rem
       padding-top: 1rem
       
@@ -289,10 +283,9 @@
         
       &.final-amount
         color: var(--success)
-        font-size: 1.4rem
+        font-size: 1.65rem
         
     &.final
-      border-top: 1px solid var(--border-muted)
       margin-top: 0.5rem
       padding-top: 1rem
 

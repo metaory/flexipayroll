@@ -542,20 +542,7 @@
     gap: 1rem
 
   .rule-card
-    display: flex
-    align-items: flex-start
-    justify-content: space-between
-    gap: 1rem
-    padding: 1rem
-    background: var(--surface)
-    border-radius: var(--radius)
-    border: 2px solid var(--border-muted)
-    cursor: move
-    @extend %transition
-    min-width: 0
-
-    &:hover
-      border-color: var(--primary)
+    @include card-draggable(1rem)
 
     &.disabled
       opacity: 0.6
@@ -567,12 +554,8 @@
     &[data-category="deduction"]
       background: color-mix(in oklab, var(--error) 12%, transparent)
 
-    
-
   .rule-info
-    flex: 1
-    min-width: 0
-    overflow: hidden
+    @include card-content
 
     .rule-header
       @extend %flex-between
@@ -581,18 +564,16 @@
       gap: 0.5rem
 
       h4
-        margin: 0
-        color: var(--primary)
-        font-size: 1.5rem
+        @include card-title(1.85rem)
 
     .rule-badges
       @extend %flex
       gap: 0.5rem
 
     .badge
-      padding: 0.25rem 0.5rem
+      padding: 0.35rem 0.65rem
       border-radius: var(--radius-sm)
-      font-size: 1rem
+      font-size: 1.15rem
       font-weight: 600
 
       &.category-bonus
@@ -606,13 +587,11 @@
 
     .rule-details
       p
-        margin: 0.25rem 0
-        font-size: 1.1rem
-        color: var(--fg-muted)
+        @include card-text(1.3rem)
         display: flex
         flex-wrap: wrap
         align-items: center
-        gap: 0.25rem
+        gap: 0.35rem
 
   .rule-actions
     @extend %flex
@@ -620,15 +599,7 @@
     flex-shrink: 0
 
   .toggle-btn, .edit-btn, .delete-btn
-    width: 2.5rem
-    height: 2.5rem
-    border-radius: 50%
-    border: 2px solid var(--border-muted)
-    background: var(--border-muted)
-    cursor: pointer
-    @extend %transition
-    @extend %grid
-    place-items: center
+    @include card-action-btn
 
     &:hover
       background: var(--surface-medium)
@@ -636,17 +607,14 @@
     &.enabled
       background: var(--success-bg)
       color: var(--success)
-      border-color: var(--success)
 
   .edit-btn:hover
     background: var(--primary-bg)
     color: var(--primary)
-    border-color: var(--primary)
 
   .delete-btn:hover
     background: var(--error-bg)
     color: var(--error)
-    border-color: var(--error)
 
   .form-grid
     @include auto-grid(200px)

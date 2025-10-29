@@ -279,49 +279,29 @@
     gap: 1rem
 
   .employee-card
-    display: flex
-    align-items: flex-start
-    justify-content: space-between
-    gap: 1rem
-    padding: 1rem
-    background: var(--surface)
-    border-radius: var(--radius)
-    border: 2px solid var(--border-muted)
-    @extend %transition
-    min-width: 0
-
-    &:hover
-      border-color: var(--primary)
-
-    
+    @include card-interactive(1rem)
 
   .employee-info
-    flex: 1
-    min-width: 0
-    overflow: hidden
+    @include card-content
 
     h4
-      margin: 0 0 0.5rem 0
-      color: var(--primary)
-      font-size: 1.5rem
+      @include card-title(1.85rem)
 
     p
-      margin: 0.25rem 0
-      font-size: 1.1rem
-      color: var(--fg-muted)
+      @include card-text(1.3rem)
 
       &.salary
         font-weight: 600
         color: var(--fg)
+        font-size: 1.4rem
         
       &.hourly-rate
         font-weight: 600
         color: var(--fg-muted)
-        font-size: 1rem
+        @include card-subtext(1.15rem)
 
       &.experience
-        font-size: 1rem
-        color: var(--fg-muted)
+        @include card-subtext(1.15rem)
 
   .employee-actions
     @extend %flex
@@ -329,15 +309,7 @@
     flex-shrink: 0
 
   .edit-btn, .delete-btn
-    width: 2.5rem
-    height: 2.5rem
-    border-radius: 50%
-    border: 2px solid var(--border-muted)
-    background: var(--border-muted)
-    cursor: pointer
-    @extend %transition
-    @extend %grid
-    place-items: center
+    @include card-action-btn
 
     &:hover
       background: var(--surface-medium)
@@ -345,12 +317,10 @@
   .edit-btn:hover
     background: var(--primary-bg)
     color: var(--primary)
-    border-color: var(--primary)
 
   .delete-btn:hover
     background: var(--error-bg)
     color: var(--error)
-    border-color: var(--error)
 
   .form-grid
     @include auto-grid(200px)

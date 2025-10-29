@@ -238,18 +238,14 @@
 
   .employee-adjustments
     @extend %card-base
-    padding: 1rem
 
   .employee-header
     @extend %flex-between
     margin-bottom: 1.5rem
     padding-bottom: 1rem
-    border-bottom: 1px solid var(--border-muted)
 
     h4
-      margin: 0
-      color: var(--primary)
-      font-size: 1.5rem
+      @include card-title(1.85rem)
 
   .employee-meta
     @extend %flex
@@ -258,13 +254,12 @@
     gap: 0.5rem
 
     span:first-child
-      color: var(--fg-muted)
-      font-size: 1.1rem
+      @include card-text(1.3rem)
 
     .total-adjustments
       font-weight: 600
       color: var(--fg)
-      font-size: 1.1rem
+      font-size: 1.35rem
 
   .current-adjustments
     @extend %grid
@@ -284,10 +279,9 @@
 
   .adjustment-item
     @extend %flex-between
-    padding: 1rem
+    padding: 0.75rem
     background: var(--surface-secondary)
     border-radius: var(--radius)
-    border: 1px solid var(--border-muted)
 
     &[data-positive="true"]
       background: var(--surface-success)
@@ -303,11 +297,11 @@
     .adjustment-label
       font-weight: 600
       color: var(--fg)
-      font-size: 1.1rem
+      @include card-text(1.3rem)
 
     .adjustment-amount
       font-weight: 600
-      font-size: 1.1rem
+      font-size: 1.35rem
 
       &.positive
         color: var(--success)
@@ -320,15 +314,7 @@
     gap: 0.5rem
 
   .edit-btn, .delete-btn
-    width: 2rem
-    height: 2rem
-    border-radius: 50%
-    border: 1px solid var(--border-muted)
-    background: var(--surface)
-    cursor: pointer
-    @extend %transition
-    @extend %grid
-    place-items: center
+    @include card-action-btn
 
     &:hover
       background: var(--surface-medium)
