@@ -137,7 +137,7 @@ export const buildCalculationSteps = (result) => {
         formula: 'Fixed Amount',
         formulaWithValues: `${ruleData.value.toLocaleString()}`,
         result: ruleData.value,
-        explanation: `A fixed bonus amount that applies to ${ruleData.rule.criteria.appliesTo.includes('all') ? 'all employees' : 'specific employee criteria'}.`,
+        explanation: `A fixed bonus amount that applies to ${(!ruleData.rule.criteria.appliesTo || ruleData.rule.criteria.appliesTo.length === 0) ? 'all employees' : 'specific employee criteria'}.`,
         inputs: { amount: ruleData.value },
         type: 'bonus'
       })
@@ -225,7 +225,7 @@ export const buildCalculationSteps = (result) => {
         formula: 'Fixed Amount',
         formulaWithValues: `${ruleData.value.toLocaleString()}`,
         result: ruleData.value,
-        explanation: `A fixed deduction amount that applies to ${ruleData.rule.criteria.appliesTo.includes('all') ? 'all employees' : 'specific employee criteria'}.`,
+        explanation: `A fixed deduction amount that applies to ${(!ruleData.rule.criteria.appliesTo || ruleData.rule.criteria.appliesTo.length === 0) ? 'all employees' : 'specific employee criteria'}.`,
         inputs: { amount: ruleData.value },
         type: 'deduction'
       })

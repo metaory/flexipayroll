@@ -81,6 +81,9 @@ $light-bg: hsl(0deg 0% 100% / 70%)
 
 :root
   @include generate-colors(false)
+  --card-scale: 1.2
+  --icon-btn-size: 1.75rem
+  --icon-size: 1.5rem
 
 @mixin generate-bitgrid-colors($dark: false)
   --grid-primary: var(--brand)
@@ -328,8 +331,8 @@ body
   overflow: hidden
 
 @mixin card-action-btn
-  width: 2.5rem
-  height: 2.5rem
+  width: var(--icon-btn-size, 2.5rem)
+  height: var(--icon-btn-size, 2.5rem)
   border-radius: 50%
   background: var(--border-muted)
   cursor: pointer
@@ -340,19 +343,19 @@ body
 @mixin card-title($size: 1.85rem)
   margin: 0 0 0.6rem 0
   color: var(--primary)
-  font-size: $size
+  font-size: calc(#{$size} * var(--card-scale, 1))
   font-weight: 600
   line-height: 1.2
 
 @mixin card-text($size: 1.3rem)
   margin: 0.3rem 0
-  font-size: $size
+  font-size: calc(#{$size} * var(--card-scale, 1))
   color: var(--fg-muted)
   line-height: 1.4
 
 @mixin card-subtext($size: 1.15rem)
   margin: 0.2rem 0
-  font-size: $size
+  font-size: calc(#{$size} * var(--card-scale, 1))
   color: var(--fg-muted)
   line-height: 1.3
 

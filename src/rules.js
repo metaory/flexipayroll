@@ -21,7 +21,6 @@ export const RULE_CATEGORIES = {
 }
 
 export const CRITERIA_TYPES = {
-  ALL: 'all',
   MARRIED: 'married',
   SINGLE: 'single',
   MALE: 'male',
@@ -39,7 +38,7 @@ export const DEFAULT_RULES = [
     label: 'Bonus E',
     type: RULE_TYPES.DAYS_MULTIPLIER,
     value: 5,
-    criteria: { appliesTo: [CRITERIA_TYPES.ALL] },
+    criteria: { appliesTo: [] },
     category: RULE_CATEGORIES.BONUS,
     order: 1,
     enabled: true
@@ -49,7 +48,7 @@ export const DEFAULT_RULES = [
     label: 'Insurance Deduction',
     type: RULE_TYPES.PERCENTAGE_MONTHLY,
     value: 0.07,
-    criteria: { appliesTo: [CRITERIA_TYPES.ALL] },
+    criteria: { appliesTo: [] },
     category: RULE_CATEGORIES.DEDUCTION,
     order: 2,
     enabled: true
@@ -93,9 +92,7 @@ export const validateRule = (rule) => {
     errors.criteria = 'Criteria must specify appliesTo as an array'
   }
   
-  if (rule.criteria.appliesTo.length === 0) {
-    errors.criteria = 'At least one criteria must be selected'
-  }
+  // Empty criteria means apply to all employees
   
   if (!rule.criteria.appliesTo.every(criteria => Object.values(CRITERIA_TYPES).includes(criteria))) {
     errors.criteria = 'Invalid criteria type in array'
@@ -119,10 +116,8 @@ export const validateRule = (rule) => {
 export const appliesToEmployee = (rule, employee) => {
   const { appliesTo } = rule.criteria
   
-  // If 'all' is selected, always applies
-  if (appliesTo.includes(CRITERIA_TYPES.ALL)) {
-    return true
-  }
+  // If no criteria selected, applies to all
+  if (!appliesTo || appliesTo.length === 0) return true
   
   // Check if employee matches ANY of the selected criteria (OR logic)
   return appliesTo.some(criteria => {

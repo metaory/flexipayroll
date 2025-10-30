@@ -55,12 +55,10 @@
         
         <div class="summary">
           <div class="line">
-            <span>Hours Worked:</span>
             <span>{formatHours(result.totalHours)}</span>
           </div>
           
           <div class="line">
-            <span>Base Salary:</span>
             <span>{formatCurrency(result.baseSalary)}</span>
           </div>
           
@@ -91,18 +89,16 @@
           {/if}
           
           <div class="line">
-            <span>Gross Salary:</span>
             <span>{formatCurrency(result.grossSalary)}</span>
           </div>
           
           <div class="line final">
-            <span>Take-Home:</span>
             <span class="final-amount">{formatCurrency(result.finalSalary)}</span>
           </div>
         </div>
 
         <button class="view-details-btn" onclick={() => openCalculationDialog(result)}>
-          <Icon icon="solar:calculator-bold" width="1rem" height="1rem" />
+          <Icon icon="solar:calculator-bold" style="width: var(--icon-size); height: var(--icon-size)" />
           View Calculation Details
         </button>
       </div>
@@ -182,6 +178,7 @@
     
   .report-card
     @extend %card-base
+    --card-scale: 1.4
     
     header
       @extend %flex-between
@@ -204,9 +201,6 @@
     @include card-text(1.3rem)
     
     span:first-child
-      color: var(--fg-muted)
-      
-    span:last-child
       font-weight: 600
       color: var(--fg)
       
@@ -218,7 +212,7 @@
         
       &.final-amount
         color: var(--success)
-        font-size: 1.65rem
+        font-size: calc(2.2rem * var(--card-scale, 1))
         
     &.final
       margin-top: 0.5rem

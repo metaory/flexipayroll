@@ -106,19 +106,7 @@
       errors.value = true
     }
     
-    const hasGender = newRule.criteria.appliesTo.includes(CRITERIA_TYPES.MALE) || 
-                       newRule.criteria.appliesTo.includes(CRITERIA_TYPES.FEMALE)
-    if (!hasGender) {
-      errors.gender = true
-    }
-    
-    const hasMarital = newRule.criteria.appliesTo.includes(CRITERIA_TYPES.SINGLE) || 
-                        newRule.criteria.appliesTo.includes(CRITERIA_TYPES.MARRIED)
-    if (!hasMarital) {
-      errors.marital = true
-    }
-    
-    if (errors.label || errors.value || errors.gender || errors.marital) {
+    if (errors.label || errors.value) {
       toasts.error('Please fix the errors below')
       return
     }
@@ -264,7 +252,7 @@
     
     <div class="config-actions">
       <button class="danger" onclick={resetAllStorage}>
-        <Icon icon="solar:danger-triangle-bold" width="1rem" height="1rem" />
+        <Icon icon="solar:danger-triangle-bold" style="width: var(--icon-size); height: var(--icon-size)" />
         Reset Storage (DANGEROUS)
       </button>
     </div>
@@ -276,11 +264,11 @@
       <h3>Calculation Rules</h3>
       <div class="rules-actions">
         <button class="secondary" onclick={handleResetRules}>
-          <Icon icon="solar:refresh-bold" width="1rem" height="1rem" />
+          <Icon icon="solar:refresh-bold" style="width: var(--icon-size); height: var(--icon-size)" />
           Reset to Defaults
         </button>
         <button class="primary" onclick={startAddRule}>
-          <Icon icon="solar:add-circle-bold" width="1rem" height="1rem" />
+          <Icon icon="solar:add-circle-bold" style="width: var(--icon-size); height: var(--icon-size)" />
           Add Rule
         </button>
       </div>
@@ -295,6 +283,7 @@
           data-category={rule.category}
           draggable="true"
           role="listitem"
+          onclick={() => startEditRule(rule)}
           ondragstart={(e) => handleDragStart(e, rule)}
           ondragover={handleDragOver}
           ondrop={(e) => handleDrop(e, rule)}
@@ -308,15 +297,15 @@
               </div>
             </div>
             <div class="rule-details">
-              <p><strong>Value:</strong> {rule.value}</p>
-              <p><strong>Applies to:</strong>
+              <p class="rule-value">{rule.value}</p>
+              <p class="rule-applies">
                 {#each rule.criteria.appliesTo as criteria}
                   <span class="criteria-badge">
                     {[genderOptions, maritalStatusOptions].flat().find(opt => opt.value === criteria)?.label || criteria}
                   </span>
                 {/each}
               </p>
-              <p><strong>Order:</strong> {rule.order}</p>
+              <p class="rule-order">{rule.order}</p>
             </div>
           </div>
 
@@ -324,15 +313,15 @@
             <button
               class="toggle-btn"
               class:enabled={rule.enabled}
-              onclick={() => toggleRuleEnabled(rule.id)}
+              onclick={(e) => { e.stopPropagation(); toggleRuleEnabled(rule.id) }}
             >
-              <Icon icon={rule.enabled ? "solar:eye-bold" : "solar:eye-closed-bold"} width="1rem" height="1rem" />
+              <Icon icon={rule.enabled ? "solar:eye-bold" : "solar:eye-closed-bold"} style="width: var(--icon-size); height: var(--icon-size)" />
             </button>
-            <button class="edit-btn" onclick={() => startEditRule(rule)}>
-              <Icon icon="solar:pen-bold" width="1rem" height="1rem" />
+            <button class="edit-btn" onclick={(e) => { e.stopPropagation(); startEditRule(rule) }}>
+              <Icon icon="solar:pen-bold" style="width: var(--icon-size); height: var(--icon-size)" />
             </button>
-            <button class="delete-btn" onclick={() => deleteRule(rule.id)}>
-              <Icon icon="solar:trash-bin-trash-bold" width="1rem" height="1rem" />
+            <button class="delete-btn" onclick={(e) => { e.stopPropagation(); deleteRule(rule.id) }}>
+              <Icon icon="solar:trash-bin-trash-bold" style="width: var(--icon-size); height: var(--icon-size)" />
             </button>
           </div>
         </div>
@@ -404,7 +393,7 @@
             <span>Applies To</span>
             
             <div class="radio-groups-grid">
-              <div class="radio-group" class:error={errors.gender}>
+              <div class="radio-group">
                 <span class="group-label">Gender</span>
                 <div class="radio-options">
                   {#each genderOptions as option}
@@ -419,7 +408,7 @@
                             c !== CRITERIA_TYPES.MALE && c !== CRITERIA_TYPES.FEMALE
                           )
                           newRule.criteria.appliesTo = [...filtered, option.value]
-                          if (errors.gender) errors.gender = false
+                          // No validation required; empty selection means applies to all
                         }}
                       />
                       <span>{option.label}</span>
@@ -428,7 +417,7 @@
                 </div>
               </div>
 
-              <div class="radio-group" class:error={errors.marital}>
+              <div class="radio-group">
                 <span class="group-label">Marital Status</span>
                 <div class="radio-options">
                   {#each maritalStatusOptions as option}
@@ -443,7 +432,7 @@
                             c !== CRITERIA_TYPES.SINGLE && c !== CRITERIA_TYPES.MARRIED
                           )
                           newRule.criteria.appliesTo = [...filtered, option.value]
-                          if (errors.marital) errors.marital = false
+                          // No validation required; empty selection means applies to all
                         }}
                       />
                       <span>{option.label}</span>
@@ -457,11 +446,11 @@
 
         <div class="form-actions">
           <button class="secondary" onclick={cancelRuleForm}>
-            <Icon icon="solar:close-circle-bold" width="1rem" height="1rem" />
+            <Icon icon="solar:close-circle-bold" style="width: var(--icon-size); height: var(--icon-size)" />
             Cancel
           </button>
           <button class="primary" onclick={saveRule}>
-            <Icon icon="solar:check-circle-bold" width="1rem" height="1rem" />
+            <Icon icon="solar:check-circle-bold" style="width: var(--icon-size); height: var(--icon-size)" />
             Save
           </button>
         </div>
@@ -543,6 +532,10 @@
 
   .rule-card
     @include card-draggable(1rem)
+    cursor: pointer
+
+    &:hover
+      background: var(--surface-medium)
 
     &.disabled
       opacity: 0.6
@@ -586,17 +579,26 @@
 
 
     .rule-details
+      display: grid
+      grid-template-columns: auto 1fr auto
+      gap: 0.5rem 1rem
+      align-items: center
+
       p
-        @include card-text(1.3rem)
+        @include card-title(2.2rem)
+        color: var(--fg)
         display: flex
         flex-wrap: wrap
         align-items: center
         gap: 0.35rem
+        margin: 0
+        line-height: 1.1
 
   .rule-actions
     @extend %flex
     gap: 0.5rem
     flex-shrink: 0
+    --icon-btn-size: 1.75rem
 
   .toggle-btn, .edit-btn, .delete-btn
     @include card-action-btn
@@ -698,13 +700,13 @@
 
   .criteria-badge
     display: inline-block
-    padding: 0.25rem 0.5rem
+    padding: 0.35rem 0.75rem
     margin: 0.125rem
     background: var(--primary-bg)
     color: var(--primary)
     border-radius: var(--radius-sm)
-    font-size: 0.75rem
-    font-weight: 600
+    font-size: 1.2rem
+    font-weight: 700
     white-space: nowrap
     word-break: keep-all
     flex-shrink: 0

@@ -138,7 +138,7 @@
       <h3>Employees ({employees.length})</h3>
       <div class="employee-actions">
         <button class="primary" onclick={startAddEmployee}>
-          <Icon icon="solar:add-circle-bold" width="1rem" height="1rem" />
+          <Icon icon="solar:add-circle-bold" style="width: var(--icon-size); height: var(--icon-size)" />
           Add Employee
         </button>
       </div>
@@ -149,7 +149,7 @@
       {#if employees.length > 0}
         <div class="employee-cards">
           {#each employees as employee}
-            <div class="employee-card">
+            <div class="employee-card" onclick={() => startEditEmployee(employee)}>
               <div class="employee-info">
                 <h4>{employee.name}</h4>
                 <p>{employee.gender} • {employee.maritalStatus}</p>
@@ -163,11 +163,11 @@
               </div>
 
               <div class="employee-actions">
-                <button class="edit-btn" onclick={() => startEditEmployee(employee)}>
-                  <Icon icon="solar:pen-bold" width="1rem" height="1rem" />
+                <button class="edit-btn" onclick={(e) => { e.stopPropagation(); startEditEmployee(employee) }}>
+                  <Icon icon="solar:pen-bold" style="width: var(--icon-size); height: var(--icon-size)" />
                 </button>
-                <button class="delete-btn" onclick={() => deleteEmployee(employee.id)}>
-                  <Icon icon="solar:trash-bin-trash-bold" width="1rem" height="1rem" />
+                <button class="delete-btn" onclick={(e) => { e.stopPropagation(); deleteEmployee(employee.id) }}>
+                  <Icon icon="solar:trash-bin-trash-bold" style="width: var(--icon-size); height: var(--icon-size)" />
                 </button>
               </div>
             </div>
@@ -231,11 +231,11 @@
 
     <div class="form-actions">
       <button class="secondary" onclick={cancelEmployeeForm}>
-        <Icon icon="solar:close-circle-bold" width="1rem" height="1rem" />
+        <Icon icon="solar:close-circle-bold" style="width: var(--icon-size); height: var(--icon-size)" />
         Cancel
       </button>
       <button class="primary" onclick={saveEmployee}>
-        <Icon icon="solar:check-circle-bold" width="1rem" height="1rem" />
+        <Icon icon="solar:check-circle-bold" style="width: var(--icon-size); height: var(--icon-size)" />
         {editingEmployee ? 'Update' : 'Add'} Employee
       </button>
     </div>
@@ -280,6 +280,11 @@
 
   .employee-card
     @include card-interactive(1rem)
+    --card-scale: 1.2
+    cursor: pointer
+
+    &:hover
+      background: var(--surface-medium)
 
   .employee-info
     @include card-content
@@ -307,6 +312,7 @@
     @extend %flex
     gap: 0.5rem
     flex-shrink: 0
+    --icon-btn-size: 1.75rem
 
   .edit-btn, .delete-btn
     @include card-action-btn
