@@ -1,15 +1,13 @@
 <script>
   import Icon from '@iconify/svelte'
-  import { createEventDispatcher } from 'svelte'
   import { EMPLOYEE_FIELDS } from '../payroll.js'
   import { addEmployee, updateEmployee, removeEmployee, basicConfig } from '../stores.js'
-  import { generateEmployeeId } from '../core.js'
+  import { generateEmployeeId, formatCurrency } from '../core.js'
   import { toasts } from '../lib/toast.js'
   import { confirmDialog } from '../lib/dialog.js'
   import Dialog from './Dialog.svelte'
 
   let { employees = [] } = $props()
-  const dispatch = createEventDispatcher()
 
   // Form state
   let showEmployeeDialog = $state(false)
@@ -153,9 +151,9 @@
               <div class="employee-info">
                 <h4>{employee.name}</h4>
                 <p>{employee.gender} • {employee.maritalStatus}</p>
-                <p class="salary">$ {employee.monthlySalary?.toLocaleString()}</p>
+                <p class="salary">{formatCurrency(employee.monthlySalary || 0, 'id-ID', 'IDR', $basicConfig.currencySymbol)}</p>
                 {#if employee.hourlyRate}
-                  <p class="hourly-rate">$ {employee.hourlyRate.toLocaleString()}/hr</p>
+                  <p class="hourly-rate">{formatCurrency(employee.hourlyRate, 'id-ID', 'IDR', $basicConfig.currencySymbol)}/hr</p>
                 {/if}
                 {#if employee.yearsOfExperience}
                   <p class="experience">{employee.yearsOfExperience} years experience</p>

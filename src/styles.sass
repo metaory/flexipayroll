@@ -81,7 +81,7 @@ $light-bg: hsl(0deg 0% 100% / 70%)
 
 :root
   @include generate-colors(false)
-  --card-scale: 1.2
+  --card-scale: 1
   --icon-btn-size: 1.75rem
   --icon-size: 1.5rem
 
@@ -271,10 +271,22 @@ body
       background: var(--bg-muted)
 
 %button-primary
-  @include button-variant(primary)
+  @extend %button-base
+  background: black
+  color: white
+
+  &:hover:not(:disabled)
+    background: color-mix(in oklab, black 85%, white)
 
 %button-secondary
-  @include button-variant(secondary)
+  @extend %button-base
+  background: white
+  color: black
+  border: 2px solid black
+
+  &:hover:not(:disabled)
+    background: color-mix(in oklab, white 85%, black)
+    color: white
 
 %button-outline
   @extend %button-base
@@ -309,7 +321,7 @@ body
 
 %card-base
   background: var(--surface)
-  padding: 1.25rem
+  padding: 1rem
   border-radius: var(--radius)
   @extend %transition
 
@@ -340,8 +352,8 @@ body
   @extend %grid
   place-items: center
 
-@mixin card-title($size: 1.85rem)
-  margin: 0 0 0.6rem 0
+@mixin card-title($size: 1.5rem)
+  margin: 0 0 0.5rem 0
   color: var(--primary)
   font-size: calc(#{$size} * var(--card-scale, 1))
   font-weight: 600

@@ -3,6 +3,7 @@
   import Dialog from './Dialog.svelte'
   import { formatCurrency, formatHours } from '../core.js'
   import { buildCalculationSteps } from '../payroll.js'
+  import { basicConfig } from '../stores.js'
   
   let { results = [], period = '' } = $props()
   
@@ -59,14 +60,14 @@
           </div>
           
           <div class="line">
-            <span>{formatCurrency(result.baseSalary)}</span>
+            <span>{formatCurrency(result.baseSalary, 'id-ID', 'IDR', $basicConfig.currencySymbol)}</span>
           </div>
           
           <!-- Dynamic Bonuses -->
           {#each getAppliedRules(result).bonuses as bonus}
             <div class="line">
               <span>{bonus.label}:</span>
-              <span class="bonus">+{formatCurrency(bonus.value)}</span>
+              <span class="bonus">+{formatCurrency(bonus.value, 'id-ID', 'IDR', $basicConfig.currencySymbol)}</span>
             </div>
           {/each}
           
@@ -74,7 +75,7 @@
           {#each getAppliedRules(result).deductions as deduction}
             <div class="line">
               <span>{deduction.label}:</span>
-              <span class="deduction">-{formatCurrency(deduction.value)}</span>
+              <span class="deduction">-{formatCurrency(deduction.value, 'id-ID', 'IDR', $basicConfig.currencySymbol)}</span>
             </div>
           {/each}
           
@@ -83,17 +84,17 @@
             <div class="line">
               <span>Adjustments:</span>
               <span class={result.adjustmentTotal > 0 ? 'bonus' : 'deduction'}>
-                {result.adjustmentTotal > 0 ? '+' : ''}{formatCurrency(result.adjustmentTotal)}
+                {result.adjustmentTotal > 0 ? '+' : ''}{formatCurrency(result.adjustmentTotal, 'id-ID', 'IDR', $basicConfig.currencySymbol)}
               </span>
             </div>
           {/if}
           
           <div class="line">
-            <span>{formatCurrency(result.grossSalary)}</span>
+            <span>{formatCurrency(result.grossSalary, 'id-ID', 'IDR', $basicConfig.currencySymbol)}</span>
           </div>
           
           <div class="line final">
-            <span class="final-amount">{formatCurrency(result.finalSalary)}</span>
+            <span class="final-amount">{formatCurrency(result.finalSalary, 'id-ID', 'IDR', $basicConfig.currencySymbol)}</span>
           </div>
         </div>
 
@@ -116,20 +117,20 @@
       
       <div class="summary-line">
         <span>Base Salary:</span>
-        <span>{formatCurrency(selectedResult.baseSalary)}</span>
+        <span>{formatCurrency(selectedResult.baseSalary, 'id-ID', 'IDR', $basicConfig.currencySymbol)}</span>
       </div>
       
       {#each getAppliedRules(selectedResult).bonuses as bonus}
         <div class="summary-line">
           <span>{bonus.label}:</span>
-          <span class="bonus">+{formatCurrency(bonus.value)}</span>
+          <span class="bonus">+{formatCurrency(bonus.value, 'id-ID', 'IDR', $basicConfig.currencySymbol)}</span>
         </div>
       {/each}
       
       {#each getAppliedRules(selectedResult).deductions as deduction}
         <div class="summary-line">
           <span>{deduction.label}:</span>
-          <span class="deduction">-{formatCurrency(deduction.value)}</span>
+          <span class="deduction">-{formatCurrency(deduction.value, 'id-ID', 'IDR', $basicConfig.currencySymbol)}</span>
         </div>
       {/each}
       
@@ -137,19 +138,19 @@
         <div class="summary-line">
           <span>Adjustments:</span>
           <span class={selectedResult.adjustmentTotal > 0 ? 'bonus' : 'deduction'}>
-            {selectedResult.adjustmentTotal > 0 ? '+' : ''}{formatCurrency(selectedResult.adjustmentTotal)}
+            {selectedResult.adjustmentTotal > 0 ? '+' : ''}{formatCurrency(selectedResult.adjustmentTotal, 'id-ID', 'IDR', $basicConfig.currencySymbol)}
           </span>
         </div>
       {/if}
       
       <div class="summary-line">
         <span>Gross Salary:</span>
-        <span>{formatCurrency(selectedResult.grossSalary)}</span>
+        <span>{formatCurrency(selectedResult.grossSalary, 'id-ID', 'IDR', $basicConfig.currencySymbol)}</span>
       </div>
       
       <div class="summary-line final">
         <span>Take-Home:</span>
-        <span class="final-amount">{formatCurrency(selectedResult.finalSalary)}</span>
+        <span class="final-amount">{formatCurrency(selectedResult.finalSalary, 'id-ID', 'IDR', $basicConfig.currencySymbol)}</span>
       </div>
     </div>
     
@@ -159,7 +160,7 @@
           <span class="step-number">{index + 1}</span>
           <div class="step-header">
             <span class="step-label">{step.label}</span>
-            <span class="step-result">{formatCurrency(step.result)}</span>
+            <span class="step-result">{formatCurrency(step.result, 'id-ID', 'IDR', $basicConfig.currencySymbol)}</span>
           </div>
           <span class="formula-text">{step.formula}</span>
           <span class="calculation-text">{step.formulaWithValues}</span>
@@ -186,7 +187,7 @@
       padding-bottom: 1rem
       
       h3
-        @include card-title(2.2rem)
+        @include card-title(1.5rem)
         
       span
         @include card-text(1.3rem)

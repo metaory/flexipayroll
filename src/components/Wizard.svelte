@@ -8,8 +8,21 @@
 
   const currentStepData = $derived(STEPS[currentStep])
 
-  const nextStep = () => dispatch('next')
-  const prevStep = () => dispatch('prev')
+  const handleNext = (event) => {
+    if (event) {
+      event.preventDefault()
+      event.stopPropagation()
+    }
+    dispatch('next')
+  }
+  
+  const handlePrev = (event) => {
+    if (event) {
+      event.preventDefault()
+      event.stopPropagation()
+    }
+    dispatch('prev')
+  }
 </script>
 
 <header class="wizard-header">
@@ -34,17 +47,15 @@
 </section>
 
 <footer class="wizard-footer">
-  <button class="secondary" onclick={prevStep} disabled={currentStep === 0}>
+  <button type="button" class="secondary" onclick={handlePrev} disabled={currentStep === 0}>
     <Icon icon="solar:arrow-left-linear" width="1rem" height="1rem" />
     Previous
   </button>
 
-  {#if currentStep < STEPS.length - 1}
-    <button class="primary" onclick={nextStep}>
-      Next
-      <Icon icon="solar:arrow-right-linear" width="1rem" height="1rem" />
-    </button>
-  {/if}
+  <button type="button" class="primary" onclick={handleNext} disabled={currentStep >= STEPS.length - 1}>
+    Next
+    <Icon icon="solar:arrow-right-linear" width="1rem" height="1rem" />
+  </button>
 </footer>
 
 <style lang="sass">

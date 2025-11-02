@@ -1,13 +1,10 @@
 <script>
   import Icon from '@iconify/svelte'
-  import { createEventDispatcher } from 'svelte'
   import { rules, basicConfig, addRule, updateRule, removeRule, toggleRule, reorderRules, resetRules, updateBasicConfig } from '../stores.js'
   import { RULE_TYPES, RULE_CATEGORIES, CRITERIA_TYPES, createRule, validateRule } from '../rules.js'
   import { toasts } from '../lib/toast.js'
   import { confirmDialog } from '../lib/dialog.js'
   import Dialog from './Dialog.svelte'
-
-  const dispatch = createEventDispatcher()
 
   let { basicConfigData = $basicConfig } = $props()
 
@@ -187,6 +184,33 @@
 
     draggedRule = null
   }
+
+  const handleRuleCardClick = (e, rule) => {
+    if (!e || !e.target) return
+    const button = e.target.closest('button')
+    if (button) return
+    const footer = e.target.closest('.wizard-footer')
+    if (footer) return
+    startEditRule(rule)
+  }
+
+  const handleToggleClick = (e, id) => {
+    if (!e) return
+    e.stopPropagation()
+    toggleRuleEnabled(id)
+  }
+
+  const handleEditClick = (e, rule) => {
+    if (!e) return
+    e.stopPropagation()
+    startEditRule(rule)
+  }
+
+  const handleDeleteClick = (e, id) => {
+    if (!e) return
+    e.stopPropagation()
+    deleteRule(id)
+  }
 </script>
 
 <div class="rules-container">
@@ -283,9 +307,9 @@
           data-category={rule.category}
           draggable="true"
           role="listitem"
-          onclick={() => startEditRule(rule)}
+          onclick={(e) => handleRuleCardClick(e, rule)}
           ondragstart={(e) => handleDragStart(e, rule)}
-          ondragover={handleDragOver}
+          ondragover={(e) => handleDragOver(e)}
           ondrop={(e) => handleDrop(e, rule)}
         >
           <div class="rule-info">
@@ -298,13 +322,15 @@
             </div>
             <div class="rule-details">
               <p class="rule-value">{rule.value}</p>
-              <p class="rule-applies">
-                {#each rule.criteria.appliesTo as criteria}
-                  <span class="criteria-badge">
-                    {[genderOptions, maritalStatusOptions].flat().find(opt => opt.value === criteria)?.label || criteria}
-                  </span>
-                {/each}
-              </p>
+              {#if rule.criteria.appliesTo.length > 0}
+                <p class="rule-applies">
+                  {#each rule.criteria.appliesTo as criteria}
+                    <span class="criteria-badge">
+                      {[genderOptions, maritalStatusOptions].flat().find(opt => opt.value === criteria)?.label || criteria}
+                    </span>
+                  {/each}
+                </p>
+              {/if}
               <p class="rule-order">{rule.order}</p>
             </div>
           </div>
@@ -313,14 +339,14 @@
             <button
               class="toggle-btn"
               class:enabled={rule.enabled}
-              onclick={(e) => { e.stopPropagation(); toggleRuleEnabled(rule.id) }}
+              onclick={(e) => handleToggleClick(e, rule.id)}
             >
               <Icon icon={rule.enabled ? "solar:eye-bold" : "solar:eye-closed-bold"} style="width: var(--icon-size); height: var(--icon-size)" />
             </button>
-            <button class="edit-btn" onclick={(e) => { e.stopPropagation(); startEditRule(rule) }}>
+            <button class="edit-btn" onclick={(e) => handleEditClick(e, rule)}>
               <Icon icon="solar:pen-bold" style="width: var(--icon-size); height: var(--icon-size)" />
             </button>
-            <button class="delete-btn" onclick={(e) => { e.stopPropagation(); deleteRule(rule.id) }}>
+            <button class="delete-btn" onclick={(e) => handleDeleteClick(e, rule.id)}>
               <Icon icon="solar:trash-bin-trash-bold" style="width: var(--icon-size); height: var(--icon-size)" />
             </button>
           </div>
@@ -527,12 +553,14 @@
         @extend %button-secondary
 
   .rules-list
-    @include auto-grid(280px)
+    @include auto-grid(380px)
     gap: 1rem
 
   .rule-card
     @include card-draggable(1rem)
     cursor: pointer
+    flex-direction: column
+    padding: 1.25rem
 
     &:hover
       background: var(--surface-medium)
@@ -549,25 +577,27 @@
 
   .rule-info
     @include card-content
+    width: 100%
 
     .rule-header
-      @extend %flex-between
-      margin-bottom: 0.5rem
-      flex-wrap: wrap
-      gap: 0.5rem
+      margin-bottom: 0.75rem
 
       h4
-        @include card-title(1.85rem)
+        @include card-title(1.6rem)
+        margin-bottom: 0.5rem
+        line-height: 1.3
 
     .rule-badges
       @extend %flex
       gap: 0.5rem
+      margin-bottom: 0.75rem
+      flex-wrap: wrap
 
     .badge
-      padding: 0.35rem 0.65rem
-      border-radius: var(--radius-sm)
-      font-size: 1.15rem
-      font-weight: 600
+      padding: 0.5rem 0.75rem
+      border-radius: var(--radius)
+      font-size: 1.8rem
+      font-weight: 700
 
       &.category-bonus
         background: var(--success-bg)
@@ -577,28 +607,49 @@
         background: var(--error-bg)
         color: var(--error)
 
+      &.type-fixed, &.type-days_multiplier, &.type-percentage_monthly, &.type-percentage_base, &.type-hourly_multiplier
+        background: var(--primary-bg)
+        color: var(--primary)
 
     .rule-details
       display: grid
-      grid-template-columns: auto 1fr auto
-      gap: 0.5rem 1rem
-      align-items: center
+      gap: 0.75rem
 
-      p
-        @include card-title(2.2rem)
+      .rule-value
+        font-size: 4.5rem
         color: var(--fg)
+        margin: 0
+        line-height: 1.2
+        font-weight: 700
+
+      .rule-applies
         display: flex
         flex-wrap: wrap
+        gap: 0.5rem
         align-items: center
-        gap: 0.35rem
         margin: 0
-        line-height: 1.1
+
+      .rule-order
+        display: inline-flex
+        align-items: center
+        justify-content: center
+        width: 4.5rem
+        height: 4.5rem
+        border-radius: 50%
+        background: var(--primary-bg)
+        color: var(--primary)
+        font-size: 2.8rem
+        font-weight: 700
+        margin: 0
+        flex-shrink: 0
 
   .rule-actions
     @extend %flex
     gap: 0.5rem
     flex-shrink: 0
-    --icon-btn-size: 1.75rem
+    margin-top: auto
+    padding-top: 0.75rem
+    --icon-btn-size: 2.25rem
 
   .toggle-btn, .edit-btn, .delete-btn
     @include card-action-btn
@@ -700,12 +751,11 @@
 
   .criteria-badge
     display: inline-block
-    padding: 0.35rem 0.75rem
-    margin: 0.125rem
+    padding: 0.5rem 0.75rem
     background: var(--primary-bg)
     color: var(--primary)
-    border-radius: var(--radius-sm)
-    font-size: 1.2rem
+    border-radius: var(--radius)
+    font-size: 1.9rem
     font-weight: 700
     white-space: nowrap
     word-break: keep-all

@@ -1,7 +1,7 @@
 <script>
   import Icon from '@iconify/svelte'
   import { formatCurrency } from '../core.js'
-  import { addAdjustment, updateAdjustment, removeAdjustment, getAdjustments } from '../stores.js'
+  import { addAdjustment, updateAdjustment, removeAdjustment, getAdjustments, basicConfig } from '../stores.js'
   import { toasts } from '../lib/toast.js'
   import { confirmDialog } from '../lib/dialog.js'
 
@@ -122,7 +122,7 @@
             <div class="employee-meta">
               <span>{employee.gender} • {employee.maritalStatus}</span>
               <span class="total-adjustments">
-                Total: {formatCurrency(getTotalAdjustments(employee.id))}
+                Total: {formatCurrency(getTotalAdjustments(employee.id), 'id-ID', 'IDR', $basicConfig.currencySymbol)}
               </span>
             </div>
           </div>
@@ -140,7 +140,7 @@
                   <div class="adjustment-info">
                     <span class="adjustment-label">{adjustment.label}</span>
                     <span class="adjustment-amount" class:positive={adjustment.amount > 0} class:negative={adjustment.amount < 0}>
-                      {adjustment.amount > 0 ? '+' : ''}{formatCurrency(adjustment.amount)}
+                      {adjustment.amount > 0 ? '+' : ''}{formatCurrency(adjustment.amount, 'id-ID', 'IDR', $basicConfig.currencySymbol)}
                     </span>
                   </div>
                   <div class="adjustment-actions">

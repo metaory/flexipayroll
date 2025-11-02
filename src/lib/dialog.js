@@ -83,15 +83,15 @@ export async function confirmDialog(message, title = 'Confirm') {
 
     const cancelBtn = dialog.querySelector('[data-action="cancel"]');
     cancelBtn.style.cssText += `
-      background: var(--surface, #f8fafc);
-      border-color: var(--border-muted, #e2e8f0);
-      color: var(--fg-muted, #64748b);
+      background: white;
+      border-color: black;
+      color: black;
     `;
 
     const confirmBtn = dialog.querySelector('[data-action="confirm"]');
     confirmBtn.style.cssText += `
-      background: var(--primary, #3b82f6);
-      border-color: var(--primary, #3b82f6);
+      background: black;
+      border-color: black;
       color: white;
     `;
 

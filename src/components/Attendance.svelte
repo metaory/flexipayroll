@@ -1,12 +1,11 @@
 <script>
   import Icon from '@iconify/svelte'
-  import { createEventDispatcher, tick } from 'svelte'
+  import { tick } from 'svelte'
   import { DAY_TYPES, calculateWorkingHours, getDaysInMonth, getWeekdays, getWeekdayName } from '../core.js'
   import { setAttendance, removeAttendance, getAttendance } from '../stores.js'
   import BitGrid from 'bit-grid-component'
 
   let { employees = [], period = '', basicConfig = {} } = $props()
-  const dispatch = createEventDispatcher()
 
   // Reactive computation of calendar days
   const calendarDays = $derived.by(() => {
