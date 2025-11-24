@@ -101,7 +101,7 @@
 <div class="adjustments-container">
   {#if employees.length === 0}
     <div class="empty">
-      <Icon icon="solar:settings-bold-duotone" width="3rem" height="3rem" />
+      <Icon icon="tabler:settings" width="4rem" height="4rem" style="width: 4rem; height: 4rem" />
       <p>No employees to add adjustments for</p>
       <p class="text-muted">Add employees first to manage adjustments</p>
     </div>
@@ -131,7 +131,7 @@
           <div class="current-adjustments">
             {#if (adjustmentsData[employee.id] || []).length === 0}
               <div class="no-adjustments">
-                <Icon icon="solar:minus-circle-bold" width="1.5rem" height="1.5rem" />
+                <Icon icon="tabler:circle-minus" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
                 <span>No adjustments</span>
               </div>
             {:else}
@@ -145,10 +145,10 @@
                   </div>
                   <div class="adjustment-actions">
                     <button class="edit-btn" onclick={() => handleEditAdjustment(employee.id, adjustment)}>
-                      <Icon icon="solar:pen-bold" width="1rem" height="1rem" />
-                    </button>
-                    <button class="delete-btn" onclick={() => handleDeleteAdjustment(employee.id, adjustment.id)}>
-                      <Icon icon="solar:trash-bin-trash-bold" width="1rem" height="1rem" />
+                      <Icon icon="tabler:edit" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
+                      </button>
+                      <button class="delete-btn" onclick={() => handleDeleteAdjustment(employee.id, adjustment.id)}>
+                        <Icon icon="tabler:trash" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
                     </button>
                   </div>
                 </div>
@@ -176,16 +176,16 @@
             <div class="form-actions">
               {#if editingAdjustment && editingEmployeeId === employee.id}
                 <button class="secondary" onclick={resetForm}>
-                  <Icon icon="solar:close-circle-bold" width="1rem" height="1rem" />
+                  <Icon icon="tabler:x" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
                   Cancel
                 </button>
                 <button class="primary" onclick={handleUpdateAdjustment}>
-                  <Icon icon="solar:check-circle-bold" width="1rem" height="1rem" />
+                  <Icon icon="tabler:check" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
                   Update
                 </button>
               {:else}
                 <button class="primary" onclick={() => handleAddAdjustment(employee.id)}>
-                  <Icon icon="solar:add-circle-bold" width="1rem" height="1rem" />
+                  <Icon icon="tabler:plus" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
                   Add Adjustment
                 </button>
               {/if}
@@ -233,8 +233,9 @@
         color: var(--info)
 
   .adjustments-grid
-    @include auto-grid(280px)
+    @include auto-grid(380px)
     gap: 1.5rem
+    align-items: start
 
   .employee-adjustments
     @extend %card-base
@@ -337,6 +338,9 @@
     @extend %grid
     grid-template-columns: 2fr 1fr
     gap: 1rem
+
+    @media (max-width: 600px)
+      grid-template-columns: 1fr
 
     input
       @extend %input-base

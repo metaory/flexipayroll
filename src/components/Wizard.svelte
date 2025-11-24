@@ -27,7 +27,7 @@
 
 <header class="wizard-header">
   <div class="step-info">
-    <Icon icon={currentStepData.icon} width="2.5rem" height="2.5rem" />
+    <Icon icon={currentStepData.icon} width="3rem" height="3rem" style="width: 3rem; height: 3rem" />
     <div>
       <h1>{currentStepData.title}</h1>
       <p>{currentStepData.formula || `Step ${currentStep + 1} of ${STEPS.length}`}</p>
@@ -48,13 +48,13 @@
 
 <footer class="wizard-footer">
   <button type="button" class="secondary" onclick={handlePrev} disabled={currentStep === 0}>
-    <Icon icon="solar:arrow-left-linear" width="1rem" height="1rem" />
+    <Icon icon="tabler:arrow-left" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
     Previous
   </button>
 
   <button type="button" class="primary" onclick={handleNext} disabled={currentStep >= STEPS.length - 1}>
     Next
-    <Icon icon="solar:arrow-right-linear" width="1rem" height="1rem" />
+    <Icon icon="tabler:arrow-right" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
   </button>
 </footer>
 

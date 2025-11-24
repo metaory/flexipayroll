@@ -9,6 +9,7 @@
   
   let dialogOpen = $state(false)
   let selectedResult = $state(null)
+  let expandedCards = $state({})
   
   const openCalculationDialog = (result) => {
     selectedResult = result
@@ -20,16 +21,21 @@
     const applied = { bonuses: [], deductions: [], adjustments: [] }
     
     Object.entries(result.ruleResults).forEach(([category, rules]) => {
-      if (category === 'bonuses' || category === 'deductions' || category === 'adjustments') {
+      if (category === 'bonuses' || category === 'deductions') {
         Object.entries(rules).forEach(([ruleId, ruleData]) => {
           // Handle percentage rules that store finalValue separately
           const value = ruleData.finalValue !== undefined ? ruleData.finalValue : ruleData.value
           if (value > 0) {
+            const rule = ruleData.rule
+            const percentage = rule.type === 'percentage_monthly' || rule.type === 'percentage_base' 
+              ? ` (${(rule.value * 100).toFixed(1)}%)` 
+              : ''
+            
             applied[category].push({
               id: ruleId,
-              label: ruleData.rule.label,
+              label: rule.label + percentage,
               value: value,
-              type: ruleData.rule.type
+              type: rule.type
             })
           }
         })
@@ -38,70 +44,135 @@
     
     return applied
   }
+  
+  // Helper to format calculation breakdown
+  const getCalculationBreakdown = (result) => {
+    const breakdown = []
+    const applied = getAppliedRules(result)
+    
+    // Base Salary
+    breakdown.push({
+      label: 'Base Salary',
+      value: result.baseSalary,
+      type: 'base',
+      sign: '+'
+    })
+    
+    // Bonuses
+    applied.bonuses.forEach(bonus => {
+      breakdown.push({
+        label: bonus.label,
+        value: bonus.value,
+        type: 'bonus',
+        sign: '+'
+      })
+    })
+    
+    // Adjustments
+    if (result.adjustmentTotal !== 0) {
+      breakdown.push({
+        label: 'Adjustments',
+        value: result.adjustmentTotal,
+        type: 'adjustment',
+        sign: result.adjustmentTotal > 0 ? '+' : ''
+      })
+    }
+    
+    // Gross Salary subtotal
+    breakdown.push({
+      label: 'Gross Salary',
+      value: result.grossSalary,
+      type: 'subtotal',
+      sign: '='
+    })
+    
+    // Deductions
+    applied.deductions.forEach(deduction => {
+      breakdown.push({
+        label: deduction.label,
+        value: deduction.value,
+        type: 'deduction',
+        sign: '-'
+      })
+    })
+    
+    // Final Salary
+    const finalValue = result.finalSalary || 0
+    console.log('Report - Final Salary value:', finalValue, 'Type:', typeof finalValue, 'IsNaN:', isNaN(finalValue))
+    breakdown.push({
+      label: 'Take-Home Salary',
+      value: finalValue,
+      type: 'final',
+      sign: '='
+    })
+    
+    return breakdown
+  }
 </script>
 
 {#if results.length === 0}
   <div class="empty">
-    <Icon icon="solar:document-text-bold-duotone" width="3rem" height="3rem" />
+    <Icon icon="tabler:file-text" width="4rem" height="4rem" style="width: 4rem; height: 4rem" />
     <p>No employees to report</p>
   </div>
 {:else}
   <div class="report-grid">
     {#each results as result}
-      <div class="report-card">
-        <header>
-          <h3>{result.employee.name}</h3>
-          <span>Payslip - {period}</span>
-        </header>
-        
-        <div class="summary">
-          <div class="line">
-            <span>{formatHours(result.totalHours)}</span>
-          </div>
-          
-          <div class="line">
-            <span>{formatCurrency(result.baseSalary, 'id-ID', 'IDR', $basicConfig.currencySymbol)}</span>
-          </div>
-          
-          <!-- Dynamic Bonuses -->
-          {#each getAppliedRules(result).bonuses as bonus}
-            <div class="line">
-              <span>{bonus.label}:</span>
-              <span class="bonus">+{formatCurrency(bonus.value, 'id-ID', 'IDR', $basicConfig.currencySymbol)}</span>
+      {@const employeeId = result.employee.id}
+      {@const isExpanded = expandedCards[employeeId]}
+      <div class="report-card" class:collapsed={!isExpanded}>
+        <button 
+          class="card-header-btn"
+          onclick={() => {
+            expandedCards = { ...expandedCards, [employeeId]: !isExpanded }
+          }}
+        >
+          <header>
+            <div class="header-content">
+              <Icon 
+                icon={isExpanded ? "tabler:chevron-down" : "tabler:chevron-right"} 
+                width="2.5rem" 
+                height="2.5rem" 
+                style="width: var(--icon-size); height: var(--icon-size)" 
+              />
+              <div class="header-text">
+                <h3>{result.employee.name}</h3>
+                <span>Payslip - {period}</span>
+              </div>
             </div>
-          {/each}
-          
-          <!-- Dynamic Deductions -->
-          {#each getAppliedRules(result).deductions as deduction}
-            <div class="line">
-              <span>{deduction.label}:</span>
-              <span class="deduction">-{formatCurrency(deduction.value, 'id-ID', 'IDR', $basicConfig.currencySymbol)}</span>
-            </div>
-          {/each}
-          
-          <!-- Manual Adjustments -->
-          {#if result.adjustmentTotal !== 0}
-            <div class="line">
-              <span>Adjustments:</span>
-              <span class={result.adjustmentTotal > 0 ? 'bonus' : 'deduction'}>
-                {result.adjustmentTotal > 0 ? '+' : ''}{formatCurrency(result.adjustmentTotal, 'id-ID', 'IDR', $basicConfig.currencySymbol)}
-              </span>
-            </div>
-          {/if}
-          
-          <div class="line">
-            <span>{formatCurrency(result.grossSalary, 'id-ID', 'IDR', $basicConfig.currencySymbol)}</span>
-          </div>
-          
-          <div class="line final">
-            <span class="final-amount">{formatCurrency(result.finalSalary, 'id-ID', 'IDR', $basicConfig.currencySymbol)}</span>
-          </div>
-        </div>
-
-        <button class="view-details-btn" onclick={() => openCalculationDialog(result)}>
-          <Icon icon="solar:calculator-bold" style="width: var(--icon-size); height: var(--icon-size)" />
-          View Calculation Details
+            {#if !isExpanded}
+              <div class="collapsed-salary">
+                <span class="collapsed-label">Take-Home:</span>
+                <span class="collapsed-amount">
+                  {formatCurrency(result.finalSalary || 0, 'id-ID', 'IDR', $basicConfig.currencySymbol)}
+                </span>
+              </div>
+            {/if}
+          </header>
         </button>
+        
+        {#if isExpanded}
+          <div class="summary">
+            <div class="line hours">
+              <span>Hours Worked:</span>
+              <span>{formatHours(result.totalHours)}</span>
+            </div>
+            
+            {#each getCalculationBreakdown(result) as item}
+              <div class="line" class:subtotal={item.type === 'subtotal'} class:final={item.type === 'final'}>
+                <span>{item.label}:</span>
+                <span class={item.type === 'bonus' ? 'bonus' : item.type === 'deduction' ? 'deduction' : item.type === 'final' ? 'final-amount' : ''}>
+                  {item.sign}{formatCurrency(item.value, 'id-ID', 'IDR', $basicConfig.currencySymbol)}
+                </span>
+              </div>
+            {/each}
+          </div>
+
+          <button class="view-details-btn" onclick={() => openCalculationDialog(result)}>
+            <Icon icon="tabler:calculator" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
+            View Calculation Details
+          </button>
+        {/if}
       </div>
     {/each}
   </div>
@@ -174,36 +245,98 @@
   @use "../styles.sass" as *
   
   .report-grid
-    @include auto-grid(280px)
-    gap: 2rem
+    @include auto-grid(300px)
+    gap: 0.75rem
     
   .report-card
     @extend %card-base
-    --card-scale: 1.4
+    --card-scale: 1.2
+    padding: 0.875rem
     
-    header
-      @extend %flex-between
-      margin-bottom: 1.25rem
-      padding-bottom: 1rem
-      
-      h3
-        @include card-title(1.5rem)
+    &.collapsed
+      .card-header-btn
+        margin-bottom: 0
         
-      span
-        @include card-text(1.3rem)
+    .card-header-btn
+      width: 100%
+      background: none
+      border: none
+      padding: 0
+      margin: 0
+      cursor: pointer
+      text-align: left
+      @extend %transition
+      
+      &:hover
+        opacity: 0.85
+        
+      header
+        @extend %flex-between
+        align-items: flex-start
+        margin-bottom: 0
+        padding-bottom: 0.75rem
+        border-bottom: 2px solid var(--border-muted)
+        
+        .header-content
+          @extend %flex
+          align-items: center
+          gap: 0.5rem
+          flex: 1
+          
+          .header-text
+            @extend %grid
+            gap: 0.25rem
+            
+            h3
+              @include card-title(1.35rem)
+              margin: 0
+              
+            span
+              @include card-text(1.1rem)
+              
+        .collapsed-salary
+          @extend %grid
+          gap: 0.25rem
+          text-align: right
+          margin-left: 1rem
+          
+          .collapsed-label
+            @include card-text(0.95rem)
+            color: var(--fg-muted)
+            font-weight: 600
+            
+          .collapsed-amount
+            @include card-title(1.5rem)
+            color: var(--success)
+            font-weight: 700
         
   .summary
     @extend %grid
-    gap: 0.65rem
+    gap: 0.35rem
+    margin-top: 0.75rem
     
   .line
     @extend %flex-between
-    padding: 0.5rem 0
-    @include card-text(1.3rem)
+    padding: 0.35rem 0
+    @include card-text(1.15rem)
+    
+    &.hours
+      border-bottom: 1px solid var(--border-muted)
+      margin-bottom: 0.25rem
+      padding-bottom: 0.5rem
+      
+      span:last-child
+        font-weight: 600
+        color: var(--info)
     
     span:first-child
       font-weight: 600
       color: var(--fg)
+      font-size: calc(1.05rem * var(--card-scale, 1))
+      
+    span:last-child
+      font-weight: 600
+      font-size: calc(1.15rem * var(--card-scale, 1))
       
       &.bonus
         color: var(--success)
@@ -213,11 +346,32 @@
         
       &.final-amount
         color: var(--success)
-        font-size: calc(2.2rem * var(--card-scale, 1))
+        font-size: calc(1.75rem * var(--card-scale, 1))
+    
+    &.subtotal
+      border-top: 1px solid var(--border-muted)
+      margin-top: 0.35rem
+      padding-top: 0.5rem
+      padding-bottom: 0.35rem
+      background: var(--surface-muted)
+      margin-left: -0.5rem
+      margin-right: -0.5rem
+      padding-left: 0.5rem
+      padding-right: 0.5rem
+      border-radius: 0.25rem
+      
+      span:last-child
+        font-weight: 700
+        color: var(--primary)
         
     &.final
       margin-top: 0.5rem
-      padding-top: 1rem
+      padding-top: 0.75rem
+      border-top: 2px solid var(--success)
+      
+      span:first-child
+        font-weight: 700
+        font-size: calc(1.15rem * var(--card-scale, 1))
       
   .empty
     @extend %grid
@@ -236,35 +390,39 @@
     justify-content: center
     gap: 0.5rem
     width: 100%
-    margin-top: 0.75rem
-    padding: 0.6rem
+    margin-top: 0.5rem
+    padding: 0.5rem
     background: var(--primary)
     color: white
     border: none
-    border-radius: var(--radius)
+    border-radius: 0.5rem
     font-weight: 600
     cursor: pointer
-    font-size: 1.1rem
+    font-size: 1rem
     @extend %transition
 
     &:hover
-      background: color-mix(in oklab, var(--primary) 90%, black)
+      background: var(--secondary)
+      transform: translateY(-1px)
+      box-shadow: 0 4px 12px color-mix(in oklab, var(--primary) 30%, transparent)
 
   .dialog-summary
     @extend %grid
-    gap: 0.5rem
-    margin-bottom: 2rem
-    padding: 1rem
+    gap: 0.35rem
+    margin-bottom: 1.5rem
+    padding: 0.875rem
     background: var(--surface-secondary)
     border-radius: var(--radius)
+    border: 2px solid var(--border-muted)
 
   .summary-line
     @extend %flex-between
-    padding: 0.35rem 0
-    font-size: 1.1rem
+    padding: 0.25rem 0
+    font-size: 1rem
     
     span:first-child
       color: var(--fg-muted)
+      font-size: 0.95rem
       
     span:last-child
       font-weight: 600
@@ -278,24 +436,25 @@
         
       &.final-amount
         color: var(--success)
-        font-size: 1.65rem
+        font-size: 1.45rem
         
     &.final
-      margin-top: 0.5rem
-      padding-top: 1rem
+      margin-top: 0.35rem
+      padding-top: 0.75rem
+      border-top: 2px solid var(--success)
 
   .calculation-steps
     @extend %grid
-    gap: 0.4rem
+    gap: 0.3rem
 
   .calculation-step
     display: grid
-    grid-template-columns: 1.25rem 1fr max-content max-content
-    align-items: center
-    gap: 0.5rem 1rem
-    padding: 0.5rem 0.75rem
+    grid-template-columns: 1.15rem 1fr
+    align-items: start
+    gap: 0.35rem 0.75rem
+    padding: 0.4rem 0.65rem
     background: var(--surface-secondary)
-    border-radius: 0 var(--radius) var(--radius) 0
+    border-radius: 0.35rem
     border-left: 3px solid var(--border-muted)
     @extend %transition
 
@@ -313,6 +472,7 @@
 
     &.summary
       border-left-color: var(--primary)
+      background: var(--surface-muted)
 
     &.final
       border-left-color: var(--success)
@@ -321,13 +481,13 @@
   .step-number
     @extend %grid
     place-items: center
-    width: 1.25rem
-    height: 1.25rem
-    background: var(--primary-bg)
-    color: var(--primary)
+    width: 1.15rem
+    height: 1.15rem
+    background: var(--border-muted)
+    color: var(--fg)
     border-radius: 50%
     font-weight: 700
-    font-size: 0.65rem
+    font-size: 0.6rem
     flex-shrink: 0
 
   .step-header
@@ -338,33 +498,33 @@
     .step-label
       font-weight: 600
       color: var(--fg)
-      font-size: 0.9rem
+      font-size: 0.85rem
 
     .step-result
       font-weight: 700
       color: var(--primary)
-      font-size: 0.9rem
+      font-size: 0.85rem
 
   .formula-text
-    grid-column: 3
-    font-family: var(--font-mono)
+    grid-column: 2
+    font-family: 'JetBrains Mono', monospace
     color: var(--fg-muted)
     font-size: 0.7rem
     background: var(--bg-muted)
-    padding: 0.15rem 0.5rem
-    border-radius: 4px
-    border: 1px solid var(--border-muted)
-    white-space: nowrap
+    padding: 0.2rem 0.4rem
+    border-radius: 0.25rem
+    line-height: 1.4
+    margin-top: 0.15rem
 
   .calculation-text
-    grid-column: 4
-    font-family: var(--font-mono)
+    grid-column: 2
+    font-family: 'JetBrains Mono', monospace
     color: var(--primary)
     font-size: 0.7rem
     background: var(--primary-bg)
-    padding: 0.15rem 0.5rem
-    border-radius: 4px
-    border: 1px solid var(--primary)
-    white-space: nowrap
+    padding: 0.2rem 0.4rem
+    border-radius: 0.25rem
+    line-height: 1.4
+    margin-top: 0.15rem
 
 </style>

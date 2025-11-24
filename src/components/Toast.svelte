@@ -35,10 +35,10 @@
 
 {#if show}
   <div class="toast {type}" class:show>
-    <Icon icon={getIcon()} width="1.2em" height="1.2em" />
+    <Icon icon={getIcon()} width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
     <span>{message}</span>
     <button class="close-btn" onclick={close}>
-      <Icon icon={ICONS.close} width="1em" height="1em" />
+      <Icon icon={ICONS.close} width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
     </button>
   </div>
 {/if}

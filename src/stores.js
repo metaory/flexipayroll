@@ -31,7 +31,9 @@ const DEFAULT_BASIC_CONFIG = {
   workingDaysPerMonth: 22,
   currencySymbol: '$',
   monthDays: 30,
-  firstDayWeekday: 'Saturday'
+  firstDayWeekday: 'Saturday',
+  overtimeRate: 1.5,
+  undertimeRate: 0.5
 }
 
 const DEFAULT_THEME = {
@@ -62,11 +64,52 @@ export const rules = writable(storage.get(KEYS.RULES, DEFAULT_RULES))
 rules.subscribe(value => storage.set(KEYS.RULES, value))
 
 // Basic config store (workdayHours, workingDaysPerMonth)
-export const basicConfig = writable(storage.get(KEYS.BASIC_CONFIG, DEFAULT_BASIC_CONFIG))
+const loadBasicConfig = () => {
+  const loaded = storage.get(KEYS.BASIC_CONFIG, DEFAULT_BASIC_CONFIG)
+  // Migrate old workdayHours from 6.5 to 8 if needed
+  if (loaded.workdayHours === 6.5) {
+    return { ...DEFAULT_BASIC_CONFIG, ...loaded, workdayHours: 8 }
+  }
+  // Ensure workdayHours exists, default to 8
+  if (!loaded.workdayHours) {
+    return { ...DEFAULT_BASIC_CONFIG, ...loaded, workdayHours: 8 }
+  }
+  // Ensure overtimeRate and undertimeRate exist with defaults
+  return {
+    ...DEFAULT_BASIC_CONFIG,
+    ...loaded,
+    overtimeRate: loaded.overtimeRate ?? DEFAULT_BASIC_CONFIG.overtimeRate,
+    undertimeRate: loaded.undertimeRate ?? DEFAULT_BASIC_CONFIG.undertimeRate
+  }
+}
+export const basicConfig = writable(loadBasicConfig())
 basicConfig.subscribe(value => storage.set(KEYS.BASIC_CONFIG, value))
 
-// Employees store
-export const employees = writable(storage.get(KEYS.EMPLOYEES, []))
+// Employees store with migration
+const loadEmployees = () => {
+  const loaded = storage.get(KEYS.EMPLOYEES, [])
+  // Migrate monthlySalary to dailySalary (divide by 30)
+  // Ensure jadid field exists with default false
+  return loaded.map(emp => {
+    const migrated = { ...emp }
+    
+    if (emp.monthlySalary && !emp.dailySalary) {
+      const { monthlySalary, ...rest } = emp
+      migrated.dailySalary = monthlySalary / 30
+      delete migrated.monthlySalary
+      Object.assign(migrated, rest)
+    }
+    
+    // Ensure jadid field exists (default to false if not present)
+    if (migrated.jadid === undefined) {
+      migrated.jadid = false
+    }
+    
+    return migrated
+  })
+}
+
+export const employees = writable(loadEmployees())
 employees.subscribe(value => storage.set(KEYS.EMPLOYEES, value))
 
 // Attendance store
@@ -97,7 +140,7 @@ salaryRecords.subscribe(value => storage.set('xpayroll_salary_records', value))
 export const employeeStats = derived(employees, ($employees) => {
   const total = $employees.length
   const married = $employees.filter(emp => emp.maritalStatus === 'married').length
-  const totalPayroll = $employees.reduce((sum, emp) => sum + emp.monthlySalary, 0)
+  const totalPayroll = $employees.reduce((sum, emp) => sum + ((emp.dailySalary || 0) * 30), 0)
   const averageSalary = total > 0 ? totalPayroll / total : 0
   
   return { total, married, totalPayroll, averageSalary }

@@ -21,7 +21,7 @@ export const DAY_TYPES = {
 }
 
 export const DEFAULT_CONFIG = {
-  workdayHours: 8,
+  workdayHours: 6.5,
   workingDaysPerMonth: 22,
   bonusE: 5,
   bonusS: 2.5,
@@ -42,8 +42,8 @@ export const validateEmployee = (data) => {
     errors.name = 'Name must be at least 2 characters'
   }
   
-  if (!data.monthlySalary || data.monthlySalary <= 0) {
-    errors.monthlySalary = 'Monthly salary must be greater than 0'
+  if (!data.dailySalary || data.dailySalary <= 0) {
+    errors.dailySalary = 'Daily salary must be greater than 0'
   }
   
   if (!['male', 'female'].includes(data.gender)) {
@@ -75,11 +75,11 @@ export const validateAttendance = (data) => {
 // CALCULATION UTILITIES
 // ============================================================================
 
-export const calculateDailyRate = (monthlySalary, workingDaysPerMonth = 22) => 
-  monthlySalary / workingDaysPerMonth
+export const calculateDailyRate = (dailySalary) => 
+  dailySalary
 
-export const calculateHourlyRate = (dailyRate, workdayHours = 8) => 
-  dailyRate / workdayHours
+export const calculateHourlyRate = (dailySalary, workdayHours = 8) => 
+  dailySalary / workdayHours
 
 export const calculateBaseSalary = (hoursWorked, hourlyRate) => 
   hoursWorked * hourlyRate
@@ -122,8 +122,17 @@ export const getDefaultHours = (dayType, workdayHours = 8) => {
 // ============================================================================
 
 export const formatCurrency = (amount, locale = 'id-ID', currency = 'IDR', currencySymbol = null) => {
+  // Handle undefined, null, or NaN values
+  if (amount === undefined || amount === null || isNaN(amount)) {
+    console.warn('formatCurrency received invalid amount:', amount)
+    return currencySymbol ? `${currencySymbol} 0` : '0'
+  }
+  
+  // Ensure amount is a number
+  const numAmount = typeof amount === 'number' ? amount : parseFloat(amount) || 0
+  
   if (currencySymbol) {
-    return `${currencySymbol} ${amount.toLocaleString(locale, {
+    return `${currencySymbol} ${numAmount.toLocaleString(locale, {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     })}`
@@ -133,7 +142,7 @@ export const formatCurrency = (amount, locale = 'id-ID', currency = 'IDR', curre
     currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
-  }).format(amount)
+  }).format(numAmount)
 }
 
 export const formatHours = (hours) => {
@@ -295,12 +304,20 @@ export const storage = {
 export const calculateWorkingHours = (entryTime, exitTime) => {
   if (!entryTime || !exitTime) return 0
   
-  const entry = new Date(`1970-01-01T${entryTime}:00`)
-  const exit = new Date(`1970-01-01T${exitTime}:00`)
+  // Handle both "HH:MM" and "HH:MM:SS" formats
+  const entryStr = entryTime.includes(':') ? entryTime : `${entryTime}:00`
+  const exitStr = exitTime.includes(':') ? exitTime : `${exitTime}:00`
   
-  if (exit <= entry) return 0
+  // Ensure we have seconds
+  const entryFormatted = entryStr.split(':').length === 2 ? `${entryStr}:00` : entryStr
+  const exitFormatted = exitStr.split(':').length === 2 ? `${exitStr}:00` : exitStr
   
-  const diffMs = exit - entry
+  const entry = new Date(`1970-01-01T${entryFormatted}`)
+  const exit = new Date(`1970-01-01T${exitFormatted}`)
+  
+  if (exit <= entry || isNaN(entry.getTime()) || isNaN(exit.getTime())) return 0
+  
+  const diffMs = exit.getTime() - entry.getTime()
   return diffMs / (1000 * 60 * 60) // Convert to hours
 }
 

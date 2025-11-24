@@ -82,8 +82,8 @@ $light-bg: hsl(0deg 0% 100% / 70%)
 :root
   @include generate-colors(false)
   --card-scale: 1
-  --icon-btn-size: 1.75rem
-  --icon-size: 1.5rem
+  --icon-btn-size: 3rem
+  --icon-size: 2.5rem
 
 @mixin generate-bitgrid-colors($dark: false)
   --grid-primary: var(--brand)
@@ -192,12 +192,6 @@ body
   margin: 0 auto
   padding: 0
   overflow: hidden
-  display: grid
-  grid-template-rows: 5rem calc(100vh - 9rem) 4rem
-  grid-template-areas: "header" "content" "footer"
-
-  @media (max-width: $mobile)
-    grid-template-rows: 4rem calc(100vh - 7rem) 3rem
 
 %flex-base
   display: flex

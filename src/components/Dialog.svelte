@@ -69,7 +69,7 @@
         <h3>{title}</h3>
         {#if closable}
           <button class="close-btn" onclick={handleClose}>
-            <Icon icon="solar:close-circle-bold" width="1.5rem" height="1.5rem" />
+            <Icon icon="tabler:x" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
           </button>
         {/if}
       </div>

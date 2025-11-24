@@ -2,7 +2,7 @@
   import Icon from '@iconify/svelte'
   import { EMPLOYEE_FIELDS } from '../payroll.js'
   import { addEmployee, updateEmployee, removeEmployee, basicConfig } from '../stores.js'
-  import { generateEmployeeId, formatCurrency } from '../core.js'
+  import { generateEmployeeId, formatCurrency, calculateHourlyRate } from '../core.js'
   import { toasts } from '../lib/toast.js'
   import { confirmDialog } from '../lib/dialog.js'
   import Dialog from './Dialog.svelte'
@@ -12,26 +12,28 @@
   // Form state
   let showEmployeeDialog = $state(false)
   let editingEmployee = $state(null)
-  let errors = $state({ name: false, gender: false, maritalStatus: false, monthlySalary: false, yearsOfExperience: false })
+  let errors = $state({ name: false, gender: false, maritalStatus: false, dailySalary: false, yearsOfExperience: false })
   let newEmployee = $state({
     name: '',
     gender: 'male',
     maritalStatus: 'single',
-    monthlySalary: '',
-    yearsOfExperience: ''
+    dailySalary: '',
+    yearsOfExperience: '',
+    jadid: false
   })
 
   // Handle dialog close
   const handleDialogClose = () => {
     showEmployeeDialog = false
     editingEmployee = null
-    errors = { name: false, gender: false, maritalStatus: false, monthlySalary: false, yearsOfExperience: false }
+    errors = { name: false, gender: false, maritalStatus: false, dailySalary: false, yearsOfExperience: false }
     newEmployee = {
       name: '',
       gender: 'male',
       maritalStatus: 'single',
-      monthlySalary: '',
-      yearsOfExperience: ''
+      dailySalary: '',
+      yearsOfExperience: '',
+      jadid: false
     }
   }
 
@@ -41,20 +43,21 @@
       name: '',
       gender: 'male',
       maritalStatus: 'single',
-      monthlySalary: '',
-      yearsOfExperience: ''
+      dailySalary: '',
+      yearsOfExperience: '',
+      jadid: false
     }
     showEmployeeDialog = true
   }
 
   const startEditEmployee = (employee) => {
     editingEmployee = employee
-    newEmployee = { ...employee }
+    newEmployee = { ...employee, jadid: Boolean(employee.jadid) }
     showEmployeeDialog = true
   }
 
   const saveEmployee = () => {
-    errors = { name: false, gender: false, maritalStatus: false, monthlySalary: false, yearsOfExperience: false }
+    errors = { name: false, gender: false, maritalStatus: false, dailySalary: false, yearsOfExperience: false }
     
     if (!newEmployee.name || newEmployee.name.trim() === '') {
       errors.name = true
@@ -68,30 +71,25 @@
       errors.maritalStatus = true
     }
     
-    if (!newEmployee.monthlySalary || newEmployee.monthlySalary === '' || Number(newEmployee.monthlySalary) <= 0) {
-      errors.monthlySalary = true
+    if (!newEmployee.dailySalary || newEmployee.dailySalary === '' || Number(newEmployee.dailySalary) <= 0) {
+      errors.dailySalary = true
     }
     
     if (!newEmployee.yearsOfExperience || newEmployee.yearsOfExperience === '' || Number(newEmployee.yearsOfExperience) < 0) {
       errors.yearsOfExperience = true
     }
     
-    if (errors.name || errors.gender || errors.maritalStatus || errors.monthlySalary || errors.yearsOfExperience) {
+    if (errors.name || errors.gender || errors.maritalStatus || errors.dailySalary || errors.yearsOfExperience) {
       toasts.error('Please fix the errors below')
       return
     }
     
     try {
-      // Calculate hourly rate using current basicConfig
-      const monthlySalaryNum = Number(newEmployee.monthlySalary)
-      const dailyRate = monthlySalaryNum / ($basicConfig.workingDaysPerMonth || 22)
-      const hourlyRate = dailyRate / ($basicConfig.workdayHours || 8)
-      
       const data = { 
         ...newEmployee, 
-        monthlySalary: parseInt(newEmployee.monthlySalary),
-        hourlyRate: hourlyRate,
-        yearsOfExperience: parseFloat(newEmployee.yearsOfExperience)
+        dailySalary: parseInt(newEmployee.dailySalary),
+        yearsOfExperience: parseFloat(newEmployee.yearsOfExperience),
+        jadid: Boolean(newEmployee.jadid)
       }
       
       if (editingEmployee) {
@@ -102,7 +100,7 @@
         toasts.success('Employee added')
       }
       cancelEmployeeForm()
-      errors = { name: false, gender: false, maritalStatus: false, monthlySalary: false, yearsOfExperience: false }
+      errors = { name: false, gender: false, maritalStatus: false, dailySalary: false, yearsOfExperience: false }
     } catch (error) {
       toasts.error(error.message)
     }
@@ -111,13 +109,14 @@
   const cancelEmployeeForm = () => {
     showEmployeeDialog = false
     editingEmployee = null
-    errors = { name: false, gender: false, maritalStatus: false, monthlySalary: false, yearsOfExperience: false }
+    errors = { name: false, gender: false, maritalStatus: false, dailySalary: false, yearsOfExperience: false }
     newEmployee = {
       name: '',
       gender: 'male',
       maritalStatus: 'single',
-      monthlySalary: '',
-      yearsOfExperience: ''
+      dailySalary: '',
+      yearsOfExperience: '',
+      jadid: false
     }
   }
 
@@ -136,7 +135,7 @@
       <h3>Employees ({employees.length})</h3>
       <div class="employee-actions">
         <button class="primary" onclick={startAddEmployee}>
-          <Icon icon="solar:add-circle-bold" style="width: var(--icon-size); height: var(--icon-size)" />
+          <Icon icon="tabler:plus" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
           Add Employee
         </button>
       </div>
@@ -150,10 +149,14 @@
             <div class="employee-card" onclick={() => startEditEmployee(employee)}>
               <div class="employee-info">
                 <h4>{employee.name}</h4>
-                <p>{employee.gender} • {employee.maritalStatus}</p>
-                <p class="salary">{formatCurrency(employee.monthlySalary || 0, 'id-ID', 'IDR', $basicConfig.currencySymbol)}</p>
-                {#if employee.hourlyRate}
-                  <p class="hourly-rate">{formatCurrency(employee.hourlyRate, 'id-ID', 'IDR', $basicConfig.currencySymbol)}/hr</p>
+                <p>{employee.gender} • {employee.maritalStatus}{#if employee.jadid} • <span class="jadid-badge">Jadid (New)</span>{/if}</p>
+                <p class="salary">{formatCurrency(employee.dailySalary || 0, 'id-ID', 'IDR', $basicConfig.currencySymbol)}/day</p>
+                {#if employee.dailySalary}
+                  <p class="monthly-ref">({formatCurrency((employee.dailySalary || 0) * 30, 'id-ID', 'IDR', $basicConfig.currencySymbol)}/month)</p>
+                {/if}
+                {#if employee.dailySalary}
+                  {@const hourlyRate = calculateHourlyRate(employee.dailySalary, $basicConfig.workdayHours || 8)}
+                  <p class="hourly-rate">{formatCurrency(hourlyRate, 'id-ID', 'IDR', $basicConfig.currencySymbol)}/hr</p>
                 {/if}
                 {#if employee.yearsOfExperience}
                   <p class="experience">{employee.yearsOfExperience} years experience</p>
@@ -161,11 +164,11 @@
               </div>
 
               <div class="employee-actions">
-                <button class="edit-btn" onclick={(e) => { e.stopPropagation(); startEditEmployee(employee) }}>
-                  <Icon icon="solar:pen-bold" style="width: var(--icon-size); height: var(--icon-size)" />
+                <button class="edit-btn" onclick={(e) => { e.stopPropagation(); startEditEmployee(employee) }} title="Edit" aria-label="Edit employee">
+                  <Icon icon="tabler:edit" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
                 </button>
-                <button class="delete-btn" onclick={(e) => { e.stopPropagation(); deleteEmployee(employee.id) }}>
-                  <Icon icon="solar:trash-bin-trash-bold" style="width: var(--icon-size); height: var(--icon-size)" />
+                <button class="delete-btn" onclick={(e) => { e.stopPropagation(); deleteEmployee(employee.id) }} title="Delete" aria-label="Delete employee">
+                  <Icon icon="tabler:trash" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
                 </button>
               </div>
             </div>
@@ -173,7 +176,7 @@
         </div>
       {:else}
         <div class="empty">
-          <Icon icon="solar:users-group-two-rounded-bold-duotone" width="3rem" height="3rem" />
+          <Icon icon="tabler:users" width="4rem" height="4rem" style="width: 4rem; height: 4rem" />
           <p>No employees added yet</p>
         </div>
       {/if}
@@ -188,52 +191,66 @@
   >
     <div class="form-grid">
       {#each EMPLOYEE_FIELDS as field}
-        <label class="field" class:error={errors[field.key]}>
-          <span>{field.label}</span>
-          {#if field.type === 'select'}
-            <select
-              value={newEmployee[field.key] || ''}
+        {#if field.type === 'checkbox'}
+          <label class="field checkbox-field" class:error={errors[field.key]}>
+            <input
+              type="checkbox"
+              checked={Boolean(newEmployee[field.key])}
               onchange={(e) => {
-                newEmployee[field.key] = e.currentTarget.value
-                if (errors[field.key]) errors[field.key] = false
-              }}
-            >
-              {#each field.options as option}
-                <option value={option.value}>{option.label}</option>
-              {/each}
-            </select>
-          {:else if field.type === 'number' && field.step === 0.1}
-            <input
-              {...field}
-              value={newEmployee[field.key] || ''}
-              oninput={(e) => {
-                const value = parseFloat(e.currentTarget.value) || 0
-                newEmployee[field.key] = Math.max(0, value)
+                newEmployee = { ...newEmployee, [field.key]: e.currentTarget.checked }
                 if (errors[field.key]) errors[field.key] = false
               }}
             />
-          {:else}
-            <input
-              {...field}
-              value={newEmployee[field.key] || ''}
-              oninput={(e) => {
-                const target = e.currentTarget
-                newEmployee[field.key] = field.type === 'number' ? +target.value : target.value
-                if (errors[field.key]) errors[field.key] = false
-              }}
-            />
-          {/if}
-        </label>
+            <span>{field.label}</span>
+          </label>
+        {:else}
+          <label class="field" class:error={errors[field.key]}>
+            <span>{field.label}</span>
+            {#if field.type === 'select'}
+              <select
+                value={newEmployee[field.key] || ''}
+                onchange={(e) => {
+                  newEmployee[field.key] = e.currentTarget.value
+                  if (errors[field.key]) errors[field.key] = false
+                }}
+              >
+                {#each field.options as option}
+                  <option value={option.value}>{option.label}</option>
+                {/each}
+              </select>
+            {:else if field.type === 'number' && field.step === 0.1}
+              <input
+                {...field}
+                value={newEmployee[field.key] || ''}
+                oninput={(e) => {
+                  const value = parseFloat(e.currentTarget.value) || 0
+                  newEmployee[field.key] = Math.max(0, value)
+                  if (errors[field.key]) errors[field.key] = false
+                }}
+              />
+            {:else}
+              <input
+                {...field}
+                value={newEmployee[field.key] || ''}
+                oninput={(e) => {
+                  const target = e.currentTarget
+                  newEmployee[field.key] = field.type === 'number' ? +target.value : target.value
+                  if (errors[field.key]) errors[field.key] = false
+                }}
+              />
+            {/if}
+          </label>
+        {/if}
       {/each}
     </div>
 
     <div class="form-actions">
       <button class="secondary" onclick={cancelEmployeeForm}>
-        <Icon icon="solar:close-circle-bold" style="width: var(--icon-size); height: var(--icon-size)" />
+        <Icon icon="tabler:x" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
         Cancel
       </button>
       <button class="primary" onclick={saveEmployee}>
-        <Icon icon="solar:check-circle-bold" style="width: var(--icon-size); height: var(--icon-size)" />
+        <Icon icon="tabler:check" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
         {editingEmployee ? 'Update' : 'Add'} Employee
       </button>
     </div>
@@ -302,9 +319,22 @@
         font-weight: 600
         color: var(--fg-muted)
         @include card-subtext(1.15rem)
+        
+      &.monthly-ref
+        @include card-subtext(1rem)
 
-      &.experience
-        @include card-subtext(1.15rem)
+    .jadid-badge
+      display: inline-block
+      padding: 0.2rem 0.6rem
+      background: var(--accent)
+      color: var(--bg)
+      border-radius: 0.4rem
+      font-size: 1rem
+      font-weight: 600
+      margin-left: 0.5rem
+
+    .experience
+      @include card-subtext(1.15rem)
 
   .employee-actions
     @extend %flex
@@ -313,7 +343,26 @@
     --icon-btn-size: 1.75rem
 
   .edit-btn, .delete-btn
-    @include card-action-btn
+    width: 3.5rem
+    height: 3.5rem
+    border-radius: 50%
+    background: var(--border-muted)
+    border: none
+    padding: 0
+    display: flex
+    align-items: center
+    justify-content: center
+    color: var(--fg-muted)
+    cursor: pointer
+    transition: all 0.2s ease
+    flex-shrink: 0
+
+    :global(svg)
+      display: block
+      width: 2.5rem
+      height: 2.5rem
+      color: inherit
+      fill: currentColor
 
     &:hover
       background: var(--surface-medium)
@@ -364,6 +413,64 @@
       &:focus
         border-color: var(--error)
         box-shadow: 0 0 0 2px var(--error-bg)
+
+  .checkbox-field
+    display: flex
+    flex-direction: row
+    align-items: center
+    gap: 0.75rem
+    cursor: pointer
+    padding: 0.75rem
+    border-radius: var(--radius)
+    background: var(--surface-muted)
+    transition: all 0.2s ease
+
+    &:hover
+      background: var(--surface-medium)
+
+    input[type="checkbox"]
+      width: 2rem
+      height: 2rem
+      cursor: pointer
+      margin: 0
+      flex-shrink: 0
+      appearance: none
+      border: 3px solid var(--border)
+      border-radius: 0.5rem
+      background: var(--surface)
+      transition: all 0.2s ease
+      position: relative
+
+      &:checked
+        background: var(--primary)
+        border-color: var(--primary)
+
+        &::after
+          content: '✓'
+          position: absolute
+          top: 50%
+          left: 50%
+          transform: translate(-50%, -50%)
+          color: white
+          font-size: 1.4rem
+          font-weight: bold
+          line-height: 1
+
+      &:hover
+        border-color: var(--primary)
+
+    span
+      font-weight: 600
+      color: var(--fg)
+      user-select: none
+      margin: 0
+
+    &.error
+      background: var(--error-bg)
+      border: 1px solid var(--error)
+
+      span
+        color: var(--error)
 
   .empty
     @extend %grid

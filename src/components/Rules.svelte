@@ -225,9 +225,33 @@
               min="1"
               max="24"
               step="0.5"
-              value={basicConfigData.workdayHours}
+              value={basicConfigData.workdayHours || 8}
               oninput={(e) => updateBasicConfigField('workdayHours', +e.target.value || 8)}
             />
+      </label>
+      <label class="field">
+        <span>Overtime Rate (multiplier)</span>
+        <input
+          type="number"
+          min="0"
+          max="10"
+          step="0.1"
+          value={basicConfigData.overtimeRate ?? 1.5}
+          oninput={(e) => updateBasicConfigField('overtimeRate', +e.currentTarget.value || 1.5)}
+        />
+        <small>Rate multiplier for hours worked over standard (e.g., 1.5 = 1.5x hourly rate)</small>
+      </label>
+      <label class="field">
+        <span>Undertime Rate (multiplier)</span>
+        <input
+          type="number"
+          min="0"
+          max="1"
+          step="0.1"
+          value={basicConfigData.undertimeRate ?? 0.5}
+          oninput={(e) => updateBasicConfigField('undertimeRate', +e.currentTarget.value || 0.5)}
+        />
+        <small>Rate multiplier for hours worked under standard (e.g., 0.5 = 0.5x hourly rate)</small>
       </label>
       <label class="field">
         <span>Working Days/Month</span>
@@ -276,7 +300,7 @@
     
     <div class="config-actions">
       <button class="danger" onclick={resetAllStorage}>
-        <Icon icon="solar:danger-triangle-bold" style="width: var(--icon-size); height: var(--icon-size)" />
+        <Icon icon="tabler:alert-triangle" width="3rem" height="3rem" style="width: 3rem; height: 3rem" />
         Reset Storage (DANGEROUS)
       </button>
     </div>
@@ -288,11 +312,11 @@
       <h3>Calculation Rules</h3>
       <div class="rules-actions">
         <button class="secondary" onclick={handleResetRules}>
-          <Icon icon="solar:refresh-bold" style="width: var(--icon-size); height: var(--icon-size)" />
+          <Icon icon="tabler:refresh" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
           Reset to Defaults
         </button>
         <button class="primary" onclick={startAddRule}>
-          <Icon icon="solar:add-circle-bold" style="width: var(--icon-size); height: var(--icon-size)" />
+          <Icon icon="tabler:plus" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
           Add Rule
         </button>
       </div>
@@ -341,13 +365,13 @@
               class:enabled={rule.enabled}
               onclick={(e) => handleToggleClick(e, rule.id)}
             >
-              <Icon icon={rule.enabled ? "solar:eye-bold" : "solar:eye-closed-bold"} style="width: var(--icon-size); height: var(--icon-size)" />
-            </button>
-            <button class="edit-btn" onclick={(e) => handleEditClick(e, rule)}>
-              <Icon icon="solar:pen-bold" style="width: var(--icon-size); height: var(--icon-size)" />
-            </button>
-            <button class="delete-btn" onclick={(e) => handleDeleteClick(e, rule.id)}>
-              <Icon icon="solar:trash-bin-trash-bold" style="width: var(--icon-size); height: var(--icon-size)" />
+              <Icon icon={rule.enabled ? "tabler:eye" : "tabler:eye-closed"} width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
+              </button>
+              <button class="edit-btn" onclick={(e) => handleEditClick(e, rule)}>
+                <Icon icon="tabler:edit" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
+              </button>
+              <button class="delete-btn" onclick={(e) => handleDeleteClick(e, rule.id)}>
+                <Icon icon="tabler:trash" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
             </button>
           </div>
         </div>
@@ -472,11 +496,11 @@
 
         <div class="form-actions">
           <button class="secondary" onclick={cancelRuleForm}>
-            <Icon icon="solar:close-circle-bold" style="width: var(--icon-size); height: var(--icon-size)" />
+            <Icon icon="tabler:x" style="width: var(--icon-size); height: var(--icon-size)" />
             Cancel
           </button>
           <button class="primary" onclick={saveRule}>
-            <Icon icon="solar:check-circle-bold" style="width: var(--icon-size); height: var(--icon-size)" />
+            <Icon icon="tabler:check" style="width: var(--icon-size); height: var(--icon-size)" />
             Save
           </button>
         </div>
@@ -498,12 +522,14 @@
       color: var(--primary)
 
   .config-grid
-    @include auto-grid(200px)
+    @include auto-grid(250px)
     gap: 1.5rem
+    align-items: start
 
   .field
     @extend %grid
     gap: 0.5rem
+    min-height: fit-content
 
     span
       font-weight: 600
@@ -511,6 +537,13 @@
 
     input, select
       @extend %input-base
+
+    small
+      font-size: 1rem
+      color: var(--fg-muted)
+      opacity: 0.7
+      margin-top: -0.25rem
+      line-height: 1.4
 
     &.error input
       background: var(--error-bg)

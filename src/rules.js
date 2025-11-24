@@ -144,35 +144,60 @@ export const calculateRuleValue = (rule, employee, attendance, config) => {
     return 0
   }
   
-  const dailyRate = employee.monthlySalary / config.workingDaysPerMonth
-  const hourlyRate = dailyRate / config.workdayHours
+  const dailyRate = employee.dailySalary
+  const hourlyRate = employee.dailySalary / config.workdayHours
+  
+  // Calculate actual days worked (used by both FIXED and DAYS_MULTIPLIER)
+  const actualDaysWorked = Object.values(attendance || {}).filter(dayData => 
+    dayData && (
+      (dayData.type === 'regular' && dayData.entryTime && dayData.exitTime) ||
+      dayData.type === 'holiday'
+    )
+  ).length
+  
+  // Calculate expected days (full month)
+  const expectedMonthDays = config.monthDays || 30
+  
+  // Calculate proportion (actual days / expected days), but don't let it exceed 1.0
+  const daysWorkedProportion = expectedMonthDays > 0 ? Math.min(actualDaysWorked / expectedMonthDays, 1.0) : 0
   
   switch (rule.type) {
     case RULE_TYPES.FIXED:
-      return rule.value
+      // Calculate proportional to actual days worked
+      // Apply proportion to fixed value
+      return rule.value * daysWorkedProportion
       
     case RULE_TYPES.DAYS_MULTIPLIER:
-      return dailyRate * rule.value
+      // Calculate based on actual days worked from attendance grid, proportional to days worked
+      // multiplier represents number of days, each day = 8 hours (standard day)
+      // Formula: (multiplier × 8 hours × days_proportion) × hourlyRate
+      const standardDayHours = 8
+      
+      // Apply proportion to multiplier days
+      const bonusHours = rule.value * standardDayHours * daysWorkedProportion
+      return bonusHours * hourlyRate
       
     case RULE_TYPES.PERCENTAGE_MONTHLY:
-      // Percentage of monthly salary (fixed amount)
-      return employee.monthlySalary * rule.value
+      // Return the percentage value itself (will be applied to gross salary in payroll.js)
+      // Don't calculate here since gross salary isn't available yet
+      return rule.value
       
     case RULE_TYPES.PERCENTAGE_BASE:
       // This will be applied to base salary later
       return rule.value
       
     case RULE_TYPES.HOURLY_MULTIPLIER:
-      const totalHours = Object.values(attendance || {}).reduce((sum, dayData) => {
-        if (dayData.type === 'regular' && dayData.entryTime && dayData.exitTime) {
-          return sum + calculateWorkingHours(dayData.entryTime, dayData.exitTime)
-        }
-        if (dayData.type === 'holiday') {
-          return sum + config.workdayHours
-        }
-        return sum
-      }, 0)
-      return hourlyRate * rule.value * totalHours
+      // Formula: hourlyRate × multiplier
+      // The multiplier value represents the NUMBER OF HOURS to apply this rule to
+      // Example: If hourly rate is 390,000 and multiplier is 2 (meaning 2 hours)
+      // Result: 390,000 × 2 = 780,000
+      // This is used for deductions/bonuses based on specific hours (e.g., "2 hours not worked")
+      // NOT multiplied by totalHours - the multiplier value itself represents the hours
+      
+      const result = hourlyRate * rule.value
+      console.log(`HOURLY_MULTIPLIER calculation: hourlyRate=${hourlyRate.toFixed(2)}, multiplier (hours)=${rule.value}, result=${result.toFixed(2)}`)
+      console.log(`   Note: Multiplier value represents the number of hours, not a multiplier of all hours worked.`)
+      return result
       
     default:
       return 0
@@ -189,27 +214,42 @@ export const applyRules = (employee, attendance, rules, config) => {
     deductions: {}
   }
   
-  // Sort rules by order
-  const sortedRules = [...rules].sort((a, b) => a.order - b.order)
-  
   // Calculate base salary first
-  const dailyRate = employee.monthlySalary / config.workingDaysPerMonth
-  const hourlyRate = dailyRate / config.workdayHours
+  const dailyRate = employee.dailySalary
+  const hourlyRate = employee.dailySalary / config.workdayHours
   
-  const totalHours = Object.values(attendance || {}).reduce((sum, dayData) => {
-    if (dayData.type === 'regular' && dayData.entryTime && dayData.exitTime) {
-      return sum + calculateWorkingHours(dayData.entryTime, dayData.exitTime)
-    }
-    if (dayData.type === 'holiday') {
-      return sum + config.workdayHours
-    }
-    return sum
-  }, 0)
+  // Count actual days with attendance data
+  const actualDays = Object.values(attendance || {}).filter(dayData => 
+    dayData && (
+      (dayData.type === 'regular' && dayData.entryTime && dayData.exitTime) ||
+      dayData.type === 'holiday'
+    )
+  ).length
+  
+  // Calculate total hours: actual days × 8 hours (standard day)
+  // Each day counts as exactly 8 hours, regardless of actual entry/exit times
+  const standardDayHours = 8
+  const totalHours = actualDays * standardDayHours
   
   const baseSalary = totalHours * hourlyRate
   let grossSalary = baseSalary
   
-  // First pass: calculate bonuses and deductions
+  // If employee is jadid (new), skip all rules - only base salary applies
+  if (employee.jadid) {
+    return {
+      baseSalary,
+      bonuses: {},
+      deductions: {},
+      grossSalary,
+      totalHours,
+      actualDays
+    }
+  }
+  
+  // Sort rules by order
+  const sortedRules = [...rules].sort((a, b) => a.order - b.order)
+  
+  // First pass: calculate bonuses and deductions (store deductions, don't subtract yet)
   sortedRules.forEach(rule => {
     if (!rule.enabled) return
     
@@ -229,8 +269,8 @@ export const applyRules = (employee, attendance, rules, config) => {
           // Store percentage for later application to base salary
           results.deductions[rule.id] = { rule, value, percentage: true, percentageType: 'base' }
         } else {
+          // Store deduction but don't subtract from grossSalary yet
           results.deductions[rule.id] = { rule, value, percentage: false }
-          grossSalary -= value
         }
       }
     }
@@ -245,27 +285,24 @@ export const applyRules = (employee, attendance, rules, config) => {
     }
   })
   
-  // Third pass: apply percentage-based deductions to base salary
+  // Third pass: calculate percentage-based deductions (store but don't subtract)
   Object.values(results.deductions).forEach(item => {
     if (item.percentage && item.percentageType === 'base') {
       const deduction = baseSalary * item.value
       item.finalValue = deduction
-      grossSalary -= deduction
     }
+    // For PERCENTAGE_MONTHLY, the value is already calculated in calculateRuleValue
+    // No need to recalculate, just ensure it's stored correctly
   })
   
-  // Calculate gross salary (before deductions)
-  const grossSalaryBeforeDeductions = baseSalary + Object.values(results.bonuses)
-    .filter(item => !item.percentage)
-    .reduce((sum, item) => sum + item.value, 0) + Object.values(results.bonuses)
-    .filter(item => item.percentage && item.percentageType === 'base')
-    .reduce((sum, item) => sum + item.finalValue, 0)
-  
+  // Use the calculated grossSalary directly (it already includes base + all bonuses)
+  // This ensures consistency with what we calculated above
   return {
     ...results,
     baseSalary,
-    grossSalary: grossSalaryBeforeDeductions,
-    finalSalary: grossSalary
+    grossSalary: grossSalary,
+    totalHours,
+    actualDays
   }
 }
 
@@ -308,14 +345,4 @@ export const getNextOrder = (rules) => {
 // MISSING FUNCTION (from core.js)
 // ============================================================================
 
-const calculateWorkingHours = (entryTime, exitTime) => {
-  if (!entryTime || !exitTime) return 0
-  
-  const entry = new Date(`1970-01-01T${entryTime}:00`)
-  const exit = new Date(`1970-01-01T${exitTime}:00`)
-  
-  if (exit <= entry) return 0
-  
-  const diffMs = exit.getTime() - entry.getTime()
-  return diffMs / (1000 * 60 * 60) // Convert to hours
-}
+import { calculateWorkingHours } from './core.js'
