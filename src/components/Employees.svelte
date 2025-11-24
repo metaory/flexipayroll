@@ -9,44 +9,41 @@
 
   let { employees = [] } = $props()
 
-  // Form state
-  let showEmployeeDialog = $state(false)
-  let editingEmployee = $state(null)
-  let errors = $state({ name: false, gender: false, maritalStatus: false, dailySalary: false, yearsOfExperience: false })
-  let newEmployee = $state({
+  // Constants
+  const EMPTY_EMPLOYEE = {
     name: '',
     gender: 'male',
     maritalStatus: 'single',
     dailySalary: '',
     yearsOfExperience: '',
     jadid: false
-  })
+  }
+
+  const EMPTY_ERRORS = {
+    name: false,
+    gender: false,
+    maritalStatus: false,
+    dailySalary: false,
+    yearsOfExperience: false
+  }
+
+  // Form state
+  let showEmployeeDialog = $state(false)
+  let editingEmployee = $state(null)
+  let errors = $state({ ...EMPTY_ERRORS })
+  let newEmployee = $state({ ...EMPTY_EMPLOYEE })
 
   // Handle dialog close
   const handleDialogClose = () => {
     showEmployeeDialog = false
     editingEmployee = null
-    errors = { name: false, gender: false, maritalStatus: false, dailySalary: false, yearsOfExperience: false }
-    newEmployee = {
-      name: '',
-      gender: 'male',
-      maritalStatus: 'single',
-      dailySalary: '',
-      yearsOfExperience: '',
-      jadid: false
-    }
+    errors = { ...EMPTY_ERRORS }
+    newEmployee = { ...EMPTY_EMPLOYEE }
   }
 
   // Employee form handlers
   const startAddEmployee = () => {
-    newEmployee = {
-      name: '',
-      gender: 'male',
-      maritalStatus: 'single',
-      dailySalary: '',
-      yearsOfExperience: '',
-      jadid: false
-    }
+    newEmployee = { ...EMPTY_EMPLOYEE }
     showEmployeeDialog = true
   }
 
@@ -57,29 +54,19 @@
   }
 
   const saveEmployee = () => {
-    errors = { name: false, gender: false, maritalStatus: false, dailySalary: false, yearsOfExperience: false }
+    const validations = [
+      [!newEmployee.name || newEmployee.name.trim() === '', 'name'],
+      [!newEmployee.gender, 'gender'],
+      [!newEmployee.maritalStatus, 'maritalStatus'],
+      [!newEmployee.dailySalary || newEmployee.dailySalary === '' || Number(newEmployee.dailySalary) <= 0, 'dailySalary'],
+      [!newEmployee.yearsOfExperience || newEmployee.yearsOfExperience === '' || Number(newEmployee.yearsOfExperience) < 0, 'yearsOfExperience']
+    ]
     
-    if (!newEmployee.name || newEmployee.name.trim() === '') {
-      errors.name = true
-    }
+    errors = validations
+      .filter(([condition]) => condition)
+      .reduce((acc, [, field]) => ({ ...acc, [field]: true }), { ...EMPTY_ERRORS })
     
-    if (!newEmployee.gender) {
-      errors.gender = true
-    }
-    
-    if (!newEmployee.maritalStatus) {
-      errors.maritalStatus = true
-    }
-    
-    if (!newEmployee.dailySalary || newEmployee.dailySalary === '' || Number(newEmployee.dailySalary) <= 0) {
-      errors.dailySalary = true
-    }
-    
-    if (!newEmployee.yearsOfExperience || newEmployee.yearsOfExperience === '' || Number(newEmployee.yearsOfExperience) < 0) {
-      errors.yearsOfExperience = true
-    }
-    
-    if (errors.name || errors.gender || errors.maritalStatus || errors.dailySalary || errors.yearsOfExperience) {
+    if (Object.values(errors).some(Boolean)) {
       toasts.error('Please fix the errors below')
       return
     }
@@ -100,7 +87,7 @@
         toasts.success('Employee added')
       }
       cancelEmployeeForm()
-      errors = { name: false, gender: false, maritalStatus: false, dailySalary: false, yearsOfExperience: false }
+      errors = { ...EMPTY_ERRORS }
     } catch (error) {
       toasts.error(error.message)
     }
@@ -109,15 +96,8 @@
   const cancelEmployeeForm = () => {
     showEmployeeDialog = false
     editingEmployee = null
-    errors = { name: false, gender: false, maritalStatus: false, dailySalary: false, yearsOfExperience: false }
-    newEmployee = {
-      name: '',
-      gender: 'male',
-      maritalStatus: 'single',
-      dailySalary: '',
-      yearsOfExperience: '',
-      jadid: false
-    }
+    errors = { ...EMPTY_ERRORS }
+    newEmployee = { ...EMPTY_EMPLOYEE }
   }
 
   const deleteEmployee = async (id) => {

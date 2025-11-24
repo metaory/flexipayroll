@@ -70,41 +70,20 @@ export const DEFAULT_RULES = [
 // ============================================================================
 
 export const validateRule = (rule) => {
-  const errors = {}
+  const validations = [
+    [!rule.id || rule.id.length < 2, 'id', 'Rule ID must be at least 2 characters'],
+    [!rule.label || rule.label.length < 2, 'label', 'Rule label must be at least 2 characters'],
+    [!Object.values(RULE_TYPES).includes(rule.type), 'type', 'Invalid rule type'],
+    [typeof rule.value !== 'number' || rule.value < 0, 'value', 'Value must be a positive number'],
+    [!rule.criteria || !rule.criteria.appliesTo || !Array.isArray(rule.criteria.appliesTo), 'criteria', 'Criteria must specify appliesTo as an array'],
+    [rule.criteria?.appliesTo && !rule.criteria.appliesTo.every(criteria => Object.values(CRITERIA_TYPES).includes(criteria)), 'criteria', 'Invalid criteria type in array'],
+    [!Object.values(RULE_CATEGORIES).includes(rule.category), 'category', 'Invalid category'],
+    [typeof rule.order !== 'number' || rule.order < 0, 'order', 'Order must be a positive number']
+  ]
   
-  if (!rule.id || rule.id.length < 2) {
-    errors.id = 'Rule ID must be at least 2 characters'
-  }
-  
-  if (!rule.label || rule.label.length < 2) {
-    errors.label = 'Rule label must be at least 2 characters'
-  }
-  
-  if (!Object.values(RULE_TYPES).includes(rule.type)) {
-    errors.type = 'Invalid rule type'
-  }
-  
-  if (typeof rule.value !== 'number' || rule.value < 0) {
-    errors.value = 'Value must be a positive number'
-  }
-  
-  if (!rule.criteria || !rule.criteria.appliesTo || !Array.isArray(rule.criteria.appliesTo)) {
-    errors.criteria = 'Criteria must specify appliesTo as an array'
-  }
-  
-  // Empty criteria means apply to all employees
-  
-  if (!rule.criteria.appliesTo.every(criteria => Object.values(CRITERIA_TYPES).includes(criteria))) {
-    errors.criteria = 'Invalid criteria type in array'
-  }
-  
-  if (!Object.values(RULE_CATEGORIES).includes(rule.category)) {
-    errors.category = 'Invalid category'
-  }
-  
-  if (typeof rule.order !== 'number' || rule.order < 0) {
-    errors.order = 'Order must be a positive number'
-  }
+  const errors = validations
+    .filter(([condition]) => condition)
+    .reduce((acc, [, field, message]) => ({ ...acc, [field]: message }), {})
   
   return Object.keys(errors).length === 0 ? null : errors
 }
@@ -113,6 +92,14 @@ export const validateRule = (rule) => {
 // RULE APPLICATION
 // ============================================================================
 
+const CRITERIA_CHECKERS = {
+  [CRITERIA_TYPES.MARRIED]: (emp) => emp.maritalStatus === 'married',
+  [CRITERIA_TYPES.SINGLE]: (emp) => emp.maritalStatus === 'single',
+  [CRITERIA_TYPES.MALE]: (emp) => emp.gender === 'male',
+  [CRITERIA_TYPES.FEMALE]: (emp) => emp.gender === 'female',
+  [CRITERIA_TYPES.CUSTOM]: () => false // Custom conditions not implemented yet
+}
+
 export const appliesToEmployee = (rule, employee) => {
   const { appliesTo } = rule.criteria
   
@@ -120,34 +107,31 @@ export const appliesToEmployee = (rule, employee) => {
   if (!appliesTo || appliesTo.length === 0) return true
   
   // Check if employee matches ANY of the selected criteria (OR logic)
-  return appliesTo.some(criteria => {
-    switch (criteria) {
-      case CRITERIA_TYPES.MARRIED:
-        return employee.maritalStatus === 'married'
-      case CRITERIA_TYPES.SINGLE:
-        return employee.maritalStatus === 'single'
-      case CRITERIA_TYPES.MALE:
-        return employee.gender === 'male'
-      case CRITERIA_TYPES.FEMALE:
-        return employee.gender === 'female'
-      case CRITERIA_TYPES.CUSTOM:
-        // For now, custom conditions not implemented
-        return false
-      default:
-        return false
-    }
-  })
+  return appliesTo.some(criteria => CRITERIA_CHECKERS[criteria]?.(employee) ?? false)
+}
+
+const RULE_CALCULATORS = {
+  [RULE_TYPES.FIXED]: (rule, _, __, ___, daysWorkedProportion) => 
+    rule.value * daysWorkedProportion,
+  
+  [RULE_TYPES.DAYS_MULTIPLIER]: (rule, _, __, hourlyRate, daysWorkedProportion) => {
+    const standardDayHours = 8
+    const bonusHours = rule.value * standardDayHours * daysWorkedProportion
+    return bonusHours * hourlyRate
+  },
+  
+  [RULE_TYPES.PERCENTAGE_MONTHLY]: (rule) => rule.value,
+  
+  [RULE_TYPES.PERCENTAGE_BASE]: (rule) => rule.value,
+  
+  [RULE_TYPES.HOURLY_MULTIPLIER]: (rule, _, __, hourlyRate) => hourlyRate * rule.value
 }
 
 export const calculateRuleValue = (rule, employee, attendance, config) => {
-  if (!appliesToEmployee(rule, employee)) {
-    return 0
-  }
+  if (!appliesToEmployee(rule, employee)) return 0
   
-  const dailyRate = employee.dailySalary
   const hourlyRate = employee.dailySalary / config.workdayHours
   
-  // Calculate actual days worked (used by both FIXED and DAYS_MULTIPLIER)
   const actualDaysWorked = Object.values(attendance || {}).filter(dayData => 
     dayData && (
       (dayData.type === 'regular' && dayData.entryTime && dayData.exitTime) ||
@@ -155,53 +139,11 @@ export const calculateRuleValue = (rule, employee, attendance, config) => {
     )
   ).length
   
-  // Calculate expected days (full month)
   const expectedMonthDays = config.monthDays || 30
-  
-  // Calculate proportion (actual days / expected days), but don't let it exceed 1.0
   const daysWorkedProportion = expectedMonthDays > 0 ? Math.min(actualDaysWorked / expectedMonthDays, 1.0) : 0
   
-  switch (rule.type) {
-    case RULE_TYPES.FIXED:
-      // Calculate proportional to actual days worked
-      // Apply proportion to fixed value
-      return rule.value * daysWorkedProportion
-      
-    case RULE_TYPES.DAYS_MULTIPLIER:
-      // Calculate based on actual days worked from attendance grid, proportional to days worked
-      // multiplier represents number of days, each day = 8 hours (standard day)
-      // Formula: (multiplier × 8 hours × days_proportion) × hourlyRate
-      const standardDayHours = 8
-      
-      // Apply proportion to multiplier days
-      const bonusHours = rule.value * standardDayHours * daysWorkedProportion
-      return bonusHours * hourlyRate
-      
-    case RULE_TYPES.PERCENTAGE_MONTHLY:
-      // Return the percentage value itself (will be applied to gross salary in payroll.js)
-      // Don't calculate here since gross salary isn't available yet
-      return rule.value
-      
-    case RULE_TYPES.PERCENTAGE_BASE:
-      // This will be applied to base salary later
-      return rule.value
-      
-    case RULE_TYPES.HOURLY_MULTIPLIER:
-      // Formula: hourlyRate × multiplier
-      // The multiplier value represents the NUMBER OF HOURS to apply this rule to
-      // Example: If hourly rate is 390,000 and multiplier is 2 (meaning 2 hours)
-      // Result: 390,000 × 2 = 780,000
-      // This is used for deductions/bonuses based on specific hours (e.g., "2 hours not worked")
-      // NOT multiplied by totalHours - the multiplier value itself represents the hours
-      
-      const result = hourlyRate * rule.value
-      console.log(`HOURLY_MULTIPLIER calculation: hourlyRate=${hourlyRate.toFixed(2)}, multiplier (hours)=${rule.value}, result=${result.toFixed(2)}`)
-      console.log(`   Note: Multiplier value represents the number of hours, not a multiplier of all hours worked.`)
-      return result
-      
-    default:
-      return 0
-  }
+  const calculator = RULE_CALCULATORS[rule.type]
+  return calculator ? calculator(rule, employee, attendance, hourlyRate, daysWorkedProportion) : 0
 }
 
 // ============================================================================

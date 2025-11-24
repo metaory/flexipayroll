@@ -1,6 +1,6 @@
 <script>
   import Icon from '@iconify/svelte'
-  import { tick } from 'svelte'
+  import { tick, untrack } from 'svelte'
   import { DAY_TYPES, calculateWorkingHours, getDaysInMonth, getWeekdays, getWeekdayName } from '../core.js'
   import { setAttendance, removeAttendance, getAttendance } from '../stores.js'
   import BitGrid from 'bit-grid-component'
@@ -11,7 +11,7 @@
   const calendarDays = $derived.by(() => {
     const daysInMonth = basicConfig.monthDays || getDaysInMonth(period)
     const weekdays = getWeekdays(period)
-    const firstDayWeekday = (basicConfig && basicConfig.firstDayWeekday) ? basicConfig.firstDayWeekday : 'Saturday'
+    const firstDayWeekday = basicConfig?.firstDayWeekday || 'Saturday'
 
     return Array.from({ length: daysInMonth }, (_, i) => {
       const day = i + 1
@@ -85,90 +85,100 @@
   // All employees collapsed by default (empty object means all are false/collapsed)
   let expandedEmployees = $state({})
 
+  // Clean up grids only when period changes (not when collapsing)
+  const cleanupGrids = () => {
+    untrack(() => {
+      Object.keys(attendanceGrids).map(employeeId => {
+        const container = document.getElementById(`attendance-grid-${employeeId}`)
+        if (container) {
+          const grid = attendanceGrids[employeeId]
+          if (grid && grid.parentNode) {
+            grid.parentNode.removeChild(grid)
+          }
+        }
+      })
+      attendanceGrids = {}
+      isLoadingData = {}
+    })
+  }
+
   // Load attendance data for current period
   $effect(() => {
-    if (period && employees.length > 0) {
-      // Load fresh data from storage every time to ensure we have latest state
-      const loadedData = {}
-      employees.forEach(emp => {
-        loadedData[emp.id] = getAttendance(period, emp.id)
-      })
-      attendanceData = loadedData
+    if (!period || employees.length === 0) return
 
-      // Only initialize if period changed or grids don't exist
-      if (period !== initializedPeriod || Object.keys(attendanceGrids).length === 0) {
-        // Wait for DOM to be ready and data to be set
-        tick().then(() => {
-          tick().then(() => {
-            employees.forEach(emp => {
-              initializeAttendanceGrid(emp.id)
-            })
-            initializedPeriod = period
-          })
-        })
-      } else if (period === initializedPeriod) {
-        // Period hasn't changed, but ensure grids reflect current attendanceData
-        tick().then(() => {
-          tick().then(() => {
-            employees.forEach(emp => {
-              const grid = attendanceGrids[emp.id]
-              if (grid) {
-                loadExistingAttendanceData(emp.id, grid)
-              }
-            })
-          })
-        })
-      }
+    const periodChanged = period !== initializedPeriod
+
+    // Clean up old grids when period changes
+    if (periodChanged) {
+      cleanupGrids()
+      initializedPeriod = period
     }
+    
+    // Load fresh data from storage (untrack to prevent reactive loop)
+    untrack(() => {
+      attendanceData = employees.reduce((acc, emp) => {
+        acc[emp.id] = getAttendance(period, emp.id)
+        return acc
+      }, {})
+    })
   })
 
   // Re-initialize grids when calendarDays changes (e.g., config update) but only if period matches
   $effect(() => {
-    if (calendarDays.length > 0 && employees.length > 0 && period === initializedPeriod) {
-      tick().then(() => {
-        employees.forEach(emp => {
-          initializeAttendanceGrid(emp.id)
-        })
-      })
-    }
-  })
-
-  // Initialize grid when employee section is expanded
-  $effect(() => {
-    if (period && employees.length > 0 && calendarDays.length > 0) {
-      employees.forEach(emp => {
-        if (expandedEmployees[emp.id] && !attendanceGrids[emp.id]) {
-          // Employee expanded but grid not yet initialized
-          // Wait for DOM to render the container
-          tick().then(() => {
-            tick().then(() => {
-              tick().then(() => {
-                const container = document.getElementById(`attendance-grid-${emp.id}`)
-                if (container) {
-                  initializeAttendanceGrid(emp.id)
-                } else {
-                  // Container not ready, try one more time
-                  setTimeout(() => {
-                    initializeAttendanceGrid(emp.id)
-                  }, 100)
-                }
-              })
-            })
-          })
+    if (calendarDays.length === 0 || employees.length === 0 || period !== initializedPeriod) return
+    untrack(() => {
+      // Re-initialize only existing grids
+      Object.keys(attendanceGrids).map(employeeId => {
+        const container = document.getElementById(`attendance-grid-${employeeId}`)
+        const grid = attendanceGrids[employeeId]
+        if (container && grid) {
+          // Remove old grid
+          if (grid.parentNode) {
+            grid.parentNode.removeChild(grid)
+          }
+          delete attendanceGrids[employeeId]
+          // Re-initialize
+          waitTicks(1).then(() => initializeAttendanceGrid(employeeId))
         }
       })
+    })
+  })
+
+  // Wait for DOM element to be ready
+  const waitForElement = (id, maxAttempts = 10) => {
+    const attempt = (count) => {
+      const element = document.getElementById(id)
+      if (element) return Promise.resolve(element)
+      if (count >= maxAttempts) return Promise.resolve(null)
+      return new Promise(resolve => setTimeout(() => attempt(count + 1).then(resolve), 50))
     }
+    return attempt(0)
+  }
+
+  // Wait for DOM rendering (using setTimeout to avoid triggering effects)
+  const waitTicks = (count = 3) => {
+    const delay = 16 * count // ~16ms per frame, multiply by count
+    return new Promise(resolve => setTimeout(resolve, delay))
+  }
+
+  // Initialize grid when employee section is expanded (simple approach - wait for each)
+  $effect(() => {
+    if (!period || employees.length === 0 || calendarDays.length === 0) return
+
+    employees
+      .filter(emp => expandedEmployees[emp.id] && !untrack(() => attendanceGrids[emp.id]))
+      .map(emp => {
+        waitForElement(`attendance-grid-${emp.id}`)
+          .then(() => initializeAttendanceGrid(emp.id))
+      })
   })
 
 
   // Initialize BitGrid for attendance tracking
   const initializeAttendanceGrid = (employeeId) => {
-    // Only initialize if employee section is expanded
-    if (!expandedEmployees[employeeId]) return
-    
     const container = document.getElementById(`attendance-grid-${employeeId}`)
     if (!container) return
-    
+
     // Prevent double initialization
     if (attendanceGrids[employeeId]) return
 
@@ -182,22 +192,13 @@
     // Only load saved data - don't pre-fill empty days
     const data = calendarDays.map(day => {
       const dayData = employeeData[day.date]
-      
-      // If we have saved data, initialize grid with that data
-      if (dayData && dayData.type === DAY_TYPES.REGULAR && dayData.entryTime && dayData.exitTime) {
+
+      if (dayData?.type === DAY_TYPES.REGULAR && dayData.entryTime && dayData.exitTime) {
         const entryTime = parseTime(dayData.entryTime)
         const exitTime = parseTime(dayData.exitTime)
-        
-        return timeSlots.map(slot => {
-          const slotStart = typeof slot.hour === 'number' ? slot.hour : 0
-          const slotEnd = slotStart + (slot.duration || 1)
-          // Select slot if it overlaps with work period
-          // Slot is selected if: slot starts before exit AND slot ends after entry
-          return slotStart < exitTime && slotEnd > entryTime
-        })
+        return timeSlots.map(slot => slotOverlaps(slot, entryTime, exitTime))
       }
-      
-      // If no saved data, leave day empty - user must explicitly mark attendance
+
       return timeSlots.map(() => false)
     })
 
@@ -210,138 +211,106 @@
     })
 
     // Set loading flag BEFORE appending to prevent onChange from firing
-    isLoadingData = { ...isLoadingData, [employeeId]: true }
-    
+    untrack(() => {
+      isLoadingData = { ...isLoadingData, [employeeId]: true }
+      attendanceGrids[employeeId] = grid
+    })
+
     container.appendChild(grid)
-    attendanceGrids[employeeId] = grid
-    
-    // Update local state to match loaded data
-    attendanceData = {
-      ...attendanceData,
-      [employeeId]: employeeData
-    }
-    
+
     // After grid is created, ensure all cells match saved data exactly
-    // Use multiple ticks to ensure grid is fully rendered
-    tick().then(() => {
-      tick().then(() => {
-        tick().then(() => {
-          loadExistingAttendanceData(employeeId, grid)
-          // Clear loading flag after data is loaded
-          tick().then(() => {
-            isLoadingData = { ...isLoadingData, [employeeId]: false }
-          })
+    waitTicks(3).then(() => {
+      loadExistingAttendanceData(employeeId, grid)
+      waitTicks(1).then(() => {
+        untrack(() => {
+          isLoadingData = { ...isLoadingData, [employeeId]: false }
         })
       })
     })
-    
+
     return grid
+  }
+
+  // Check if slot overlaps with work period
+  const slotOverlaps = (slot, entryTime, exitTime) => {
+    const slotStart = typeof slot.hour === 'number' ? slot.hour : 0
+    const slotEnd = slotStart + (slot.duration || 1)
+    return slotStart < exitTime && slotEnd > entryTime
+  }
+
+  // Clear all slots for a day
+  const clearDaySlots = (grid, dayIndex) => {
+    timeSlots.map((_, slotIndex) => grid.setCell(dayIndex, slotIndex, false))
   }
 
   // Ensure grid cells match saved attendance data exactly
   const loadExistingAttendanceData = (employeeId, grid) => {
     // Re-fetch latest data to ensure we have the most current state
-    const latestData = getAttendance(period, employeeId)
-    const employeeData = latestData || {}
-    
-    // Update local state to match latest data
-    attendanceData = {
-      ...attendanceData,
-      [employeeId]: employeeData
-    }
-    
-    calendarDays.forEach((day, dayIndex) => {
+    const employeeData = getAttendance(period, employeeId) || {}
+
+    calendarDays.map((day, dayIndex) => {
       const dayData = employeeData[day.date]
-      
-      if (dayData && dayData.type === DAY_TYPES.REGULAR && dayData.entryTime && dayData.exitTime) {
-        // Ensure grid matches saved data exactly
+
+      // Regular day with entry/exit times
+      if (dayData?.type === DAY_TYPES.REGULAR && dayData.entryTime && dayData.exitTime) {
         const entryTime = parseTime(dayData.entryTime)
         const exitTime = parseTime(dayData.exitTime)
-        
-        // Set each cell based on saved entry/exit times
-        // Account for variable slot durations (15-min vs 1-hour slots)
-        timeSlots.forEach((slot, slotIndex) => {
-          const slotStart = typeof slot.hour === 'number' ? slot.hour : 0
-          const slotEnd = slotStart + (slot.duration || 1)
-          // Select slot if it overlaps with work period
-          // Slot is selected if: slot starts before exit AND slot ends after entry
-          const shouldBeSelected = slotStart < exitTime && slotEnd > entryTime
-          grid.setCell(dayIndex, slotIndex, shouldBeSelected)
+        timeSlots.map((slot, slotIndex) => {
+          grid.setCell(dayIndex, slotIndex, slotOverlaps(slot, entryTime, exitTime))
         })
-      } else if (dayData && dayData.type !== DAY_TYPES.REGULAR) {
-        // Clear all cells for non-regular days (holiday, sick, leave, absent)
-        timeSlots.forEach((_, slotIndex) => {
-          grid.setCell(dayIndex, slotIndex, false)
-        })
-      } else if (!dayData) {
-        // If no saved data, leave grid empty - don't pre-fill
-        // User must explicitly mark days as worked
-        timeSlots.forEach((_, slotIndex) => {
-          grid.setCell(dayIndex, slotIndex, false)
-        })
+        return
       }
+
+      // Non-regular day or no data - clear all slots
+      clearDaySlots(grid, dayIndex)
     })
   }
 
   // Handle grid changes for specific employee
   const handleGridChange = (employeeId, gridData) => {
-    // Skip onChange events during initial data loading
     if (isLoadingData[employeeId]) return
-    
-    calendarDays.forEach((day, dayIndex) => {
+
+    calendarDays.map((day, dayIndex) => {
       const dayRow = gridData[dayIndex]
-      
-      // Find all selected slot indices
-      const selectedIndices = dayRow.map((selected, i) => selected ? i : -1).filter(i => i >= 0)
-      
+      const selectedIndices = dayRow
+        .map((selected, i) => selected ? i : -1)
+        .filter(i => i >= 0)
+
       if (selectedIndices.length === 0) {
-        // Clear attendance for this day
         removeAttendance(period, employeeId, day.date)
-        // Update local state immediately
-        attendanceData = {
-          ...attendanceData,
-          [employeeId]: {
-            ...attendanceData[employeeId],
-            [day.date]: undefined
+        untrack(() => {
+          attendanceData = {
+            ...attendanceData,
+            [employeeId]: { ...attendanceData[employeeId], [day.date]: undefined }
           }
-        }
+        })
         return
       }
-      
-      // Find earliest and latest selected slots (accounting for gaps)
-      const firstIndex = selectedIndices[0]
-      const lastIndex = selectedIndices[selectedIndices.length - 1]
-      
-      const firstSlot = timeSlots[firstIndex]
-      const lastSlot = timeSlots[lastIndex]
-      
-      // Entry time is the start of the first selected slot
-      const entryTime = formatTimeFromHour(firstSlot.hour)
-      
-      // Exit time is the end of the last selected slot (hour + duration)
-      const exitTime = formatTimeFromHour(lastSlot.hour + lastSlot.duration)
-      
-      const attendanceEntry = {
+
+      const firstSlot = timeSlots[selectedIndices[0]]
+      const lastSlot = timeSlots[selectedIndices[selectedIndices.length - 1]]
+
+      updateAttendance(employeeId, day.date, {
         type: DAY_TYPES.REGULAR,
-        entryTime,
-        exitTime
-      }
-      
-      // Update immediately to ensure state is synced
-      updateAttendance(employeeId, day.date, attendanceEntry)
+        entryTime: formatTimeFromHour(firstSlot.hour),
+        exitTime: formatTimeFromHour(lastSlot.hour + lastSlot.duration)
+      })
     })
   }
 
 
   // Update attendance data and persist
   const updateAttendance = (employeeId, date, data) => {
-    attendanceData = {
-      ...attendanceData,
-      [employeeId]: {
-        ...attendanceData[employeeId],
-        [date]: data
+    // Update local state (untrack to prevent reactive loop)
+    untrack(() => {
+      attendanceData = {
+        ...attendanceData,
+        [employeeId]: {
+          ...attendanceData[employeeId],
+          [date]: data
+        }
       }
-    }
+    })
 
     // Persist to store
     if (Object.keys(data).length > 0) {
@@ -374,15 +343,14 @@
               <span>{employees.length} employees</span>
               <span>{calendarDays.length} days</span>
             </div>
-            <button 
+            <button
               class="toggle-all-btn"
               onclick={() => {
                 const allExpanded = employees.every(emp => expandedEmployees[emp.id])
-                const newState = {}
-                employees.forEach(emp => {
-                  newState[emp.id] = !allExpanded
-                })
-                expandedEmployees = newState
+                expandedEmployees = employees.reduce((acc, emp) => {
+                  acc[emp.id] = !allExpanded
+                  return acc
+                }, {})
               }}
             >
               <Icon icon="tabler:list" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
@@ -391,10 +359,10 @@
           </div>
         </div>
       </div>
-      
+
       {#each employees as employee}
         <div class="employee-attendance-section" class:collapsed={!expandedEmployees[employee.id]}>
-          <button 
+          <button
             class="employee-header"
             onclick={() => {
               expandedEmployees = { ...expandedEmployees, [employee.id]: !expandedEmployees[employee.id] }
@@ -406,16 +374,18 @@
             </div>
             <span class="employee-meta">{employee.gender} • {employee.maritalStatus}</span>
           </button>
-          {#if expandedEmployees[employee.id]}
-            <div id="attendance-grid-{employee.id}" class="attendance-grid-container">
-              {#if !attendanceGrids[employee.id]}
-                <div class="grid-loading">
-                  <Icon icon="line-md:loading-loop" width="3rem" height="3rem" style="width: 3rem; height: 3rem" />
-                  <span>Loading attendance grid...</span>
-                </div>
-              {/if}
-            </div>
-          {/if}
+          <div 
+            id="attendance-grid-{employee.id}" 
+            class="attendance-grid-container"
+            style:display={expandedEmployees[employee.id] ? 'grid' : 'none'}
+          >
+            {#if !attendanceGrids[employee.id]}
+              <div class="grid-loading">
+                <Icon icon="line-md:loading-loop" width="3rem" height="3rem" style="width: 3rem; height: 3rem" />
+                <span>Loading attendance grid...</span>
+              </div>
+            {/if}
+          </div>
         </div>
       {/each}
     </div>
@@ -469,7 +439,7 @@
           transform: scale(1.05)
           box-shadow: 0 4px 12px color-mix(in oklab, var(--primary) 25%, transparent)
 
-      // Second span (days count)  
+      // Second span (days count)
       &:nth-child(2)
         background: linear-gradient(135deg, var(--info-bg) 0%, color-mix(in oklab, var(--info) 30%, transparent) 100%)
         color: var(--info)
@@ -486,7 +456,7 @@
     font-size: 1.15rem
     position: relative
     overflow: hidden
-    
+
     &::before
       content: ''
       position: absolute
@@ -498,14 +468,14 @@
       background: var(--primary-bg)
       transform: translate(-50%, -50%)
       transition: width 0.4s ease, height 0.4s ease
-    
+
     &:hover
       background: var(--primary-bg)
       color: var(--primary)
       border-color: var(--primary)
       transform: translateY(-2px)
       box-shadow: 0 4px 12px color-mix(in oklab, var(--primary) 25%, transparent)
-      
+
       &::before
         width: 300px
         height: 300px
@@ -655,7 +625,7 @@
     background: var(--bg)
     animation: slideDown 0.3s ease-out
     position: relative
-    
+
     @keyframes slideDown
       from
         opacity: 0
@@ -667,24 +637,24 @@
         max-height: 70vh
         padding-top: 1.5rem
         padding-bottom: 1.5rem
-    
+
     // Hide scrollbar when not needed
     &::-webkit-scrollbar
       width: 10px
       height: 10px
-    
+
     &::-webkit-scrollbar-track
       background: var(--surface-muted)
       border-radius: 5px
-    
+
     &::-webkit-scrollbar-thumb
       background: var(--border)
       border-radius: 5px
       transition: background 0.2s ease
-      
+
       &:hover
         background: var(--primary)
-    
+
     // Firefox scrollbar
     scrollbar-width: thin
     scrollbar-color: var(--border) var(--surface-muted)

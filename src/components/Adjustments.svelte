@@ -7,10 +7,18 @@
 
   let { employees = [], period = '' } = $props()
 
-  // Form state
-  let adjustmentForm = $state({ label: '', amount: '' })
-  let editingAdjustment = $state(null)
-  let editingEmployeeId = $state(null)
+  // Form state - separate state per employee
+  let adjustmentForms = $state({})
+  let editingAdjustments = $state({})
+
+  // Initialize form state for each employee
+  const initializeForms = () => {
+    const forms = {}
+    employees.forEach(emp => {
+      forms[emp.id] = { label: '', amount: '' }
+    })
+    return forms
+  }
 
   // Load adjustments for all employees
   const loadAdjustments = () => {
@@ -22,6 +30,11 @@
   }
 
   let adjustmentsData = $state(loadAdjustments())
+  
+  // Initialize forms when employees change
+  $effect(() => {
+    adjustmentForms = initializeForms()
+  })
 
   // Reactive updates when employees or period change
   $effect(() => {
@@ -30,52 +43,55 @@
 
   // Form handlers
   const handleAddAdjustment = (employeeId) => {
-    if (!adjustmentForm.label || !adjustmentForm.amount) {
+    const form = adjustmentForms[employeeId]
+    if (!form.label || !form.amount) {
       toasts.error('Label and amount required')
       return
     }
 
-    const amount = parseFloat(adjustmentForm.amount)
+    const amount = parseFloat(form.amount)
     if (isNaN(amount)) {
       toasts.error('Invalid amount')
       return
     }
 
     addAdjustment(period, employeeId, {
-      label: adjustmentForm.label,
+      label: form.label,
       amount: amount
     })
 
     toasts.success('Adjustment added')
-    resetForm()
+    resetForm(employeeId)
     adjustmentsData = loadAdjustments()
   }
 
   const handleEditAdjustment = (employeeId, adjustment) => {
-    editingAdjustment = adjustment
-    editingEmployeeId = employeeId
-    adjustmentForm = { label: adjustment.label, amount: adjustment.amount.toString() }
+    editingAdjustments[employeeId] = adjustment
+    adjustmentForms[employeeId] = { label: adjustment.label, amount: adjustment.amount.toString() }
   }
 
-  const handleUpdateAdjustment = () => {
-    if (!adjustmentForm.label || !adjustmentForm.amount) {
+  const handleUpdateAdjustment = (employeeId) => {
+    const form = adjustmentForms[employeeId]
+    const editing = editingAdjustments[employeeId]
+    
+    if (!form.label || !form.amount) {
       toasts.error('Label and amount required')
       return
     }
 
-    const amount = parseFloat(adjustmentForm.amount)
+    const amount = parseFloat(form.amount)
     if (isNaN(amount)) {
       toasts.error('Invalid amount')
       return
     }
 
-    updateAdjustment(period, editingEmployeeId, editingAdjustment.id, {
-      label: adjustmentForm.label,
+    updateAdjustment(period, employeeId, editing.id, {
+      label: form.label,
       amount: amount
     })
 
     toasts.success('Adjustment updated')
-    resetForm()
+    resetForm(employeeId)
     adjustmentsData = loadAdjustments()
   }
 
@@ -87,10 +103,9 @@
     }
   }
 
-  const resetForm = () => {
-    adjustmentForm = { label: '', amount: '' }
-    editingAdjustment = null
-    editingEmployeeId = null
+  const resetForm = (employeeId) => {
+    adjustmentForms[employeeId] = { label: '', amount: '' }
+    delete editingAdjustments[employeeId]
   }
 
   const getTotalAdjustments = (employeeId) => {
@@ -162,24 +177,24 @@
               <input
                 type="text"
                 placeholder="Adjustment label (e.g., Gift, Loan)"
-                value={adjustmentForm.label}
-                oninput={(e) => adjustmentForm.label = e.target.value}
+                value={adjustmentForms[employee.id]?.label || ''}
+                oninput={(e) => adjustmentForms[employee.id] = { ...adjustmentForms[employee.id], label: e.currentTarget.value }}
               />
               <input
                 type="number"
                 placeholder="Amount (positive/negative)"
                 step="0.01"
-                value={adjustmentForm.amount}
-                oninput={(e) => adjustmentForm.amount = e.target.value}
+                value={adjustmentForms[employee.id]?.amount || ''}
+                oninput={(e) => adjustmentForms[employee.id] = { ...adjustmentForms[employee.id], amount: e.currentTarget.value }}
               />
             </div>
             <div class="form-actions">
-              {#if editingAdjustment && editingEmployeeId === employee.id}
-                <button class="secondary" onclick={resetForm}>
+              {#if editingAdjustments[employee.id]}
+                <button class="secondary" onclick={() => resetForm(employee.id)}>
                   <Icon icon="tabler:x" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
                   Cancel
                 </button>
-                <button class="primary" onclick={handleUpdateAdjustment}>
+                <button class="primary" onclick={() => handleUpdateAdjustment(employee.id)}>
                   <Icon icon="tabler:check" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
                   Update
                 </button>
@@ -336,11 +351,8 @@
 
   .form-fields
     @extend %grid
-    grid-template-columns: 2fr 1fr
+    grid-template-columns: 1fr
     gap: 1rem
-
-    @media (max-width: 600px)
-      grid-template-columns: 1fr
 
     input
       @extend %input-base

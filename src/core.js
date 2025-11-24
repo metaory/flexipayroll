@@ -36,37 +36,29 @@ export const DEFAULT_CONFIG = {
 // ============================================================================
 
 export const validateEmployee = (data) => {
-  const errors = {}
+  const validations = [
+    [!data.name || data.name.length < 2, 'name', 'Name must be at least 2 characters'],
+    [!data.dailySalary || data.dailySalary <= 0, 'dailySalary', 'Daily salary must be greater than 0'],
+    [!['male', 'female'].includes(data.gender), 'gender', 'Invalid gender'],
+    [!['single', 'married'].includes(data.maritalStatus), 'maritalStatus', 'Invalid marital status']
+  ]
   
-  if (!data.name || data.name.length < 2) {
-    errors.name = 'Name must be at least 2 characters'
-  }
-  
-  if (!data.dailySalary || data.dailySalary <= 0) {
-    errors.dailySalary = 'Daily salary must be greater than 0'
-  }
-  
-  if (!['male', 'female'].includes(data.gender)) {
-    errors.gender = 'Invalid gender'
-  }
-  
-  if (!['single', 'married'].includes(data.maritalStatus)) {
-    errors.maritalStatus = 'Invalid marital status'
-  }
+  const errors = validations
+    .filter(([condition]) => condition)
+    .reduce((acc, [, field, message]) => ({ ...acc, [field]: message }), {})
   
   return Object.keys(errors).length === 0 ? null : errors
 }
 
 export const validateAttendance = (data) => {
-  const errors = {}
+  const validations = [
+    [data.type === 'regular' && (!data.entryTime || !data.exitTime), 'entryExitTimes', 'Entry and exit times required for regular days'],
+    [data.entryTime && data.exitTime && data.exitTime <= data.entryTime, 'timeOrder', 'Exit time must be after entry time']
+  ]
   
-  if (data.type === 'regular' && (!data.entryTime || !data.exitTime)) {
-    errors.entryExitTimes = 'Entry and exit times required for regular days'
-  }
-  
-  if (data.entryTime && data.exitTime && data.exitTime <= data.entryTime) {
-    errors.timeOrder = 'Exit time must be after entry time'
-  }
+  const errors = validations
+    .filter(([condition]) => condition)
+    .reduce((acc, [, field, message]) => ({ ...acc, [field]: message }), {})
   
   return Object.keys(errors).length === 0 ? null : errors
 }
@@ -105,16 +97,17 @@ export const calculateHours = (entryTime, exitTime) => {
   return (exit - entry) / (1000 * 60 * 60) // Convert ms to hours
 }
 
+const DEFAULT_HOURS_MAP = {
+  regular: 0, // Calculated from entry/exit
+  paidLeave: (hours) => hours,
+  unpaidLeave: 0,
+  overtime: 0
+}
+
 export const getDefaultHours = (dayType, workdayHours = 8) => {
-  const hourMap = {
-    regular: 0, // Calculated from entry/exit
-    holiday: workdayHours,
-    paidLeave: workdayHours,
-    unpaidLeave: 0,
-    overtime: 0
-  }
-  
-  return hourMap[dayType] || 0
+  const hourValue = DEFAULT_HOURS_MAP[dayType]
+  if (dayType === 'holiday' || dayType === 'paidLeave') return workdayHours
+  return typeof hourValue === 'function' ? hourValue(workdayHours) : (hourValue ?? 0)
 }
 
 // ============================================================================
@@ -124,7 +117,6 @@ export const getDefaultHours = (dayType, workdayHours = 8) => {
 export const formatCurrency = (amount, locale = 'id-ID', currency = 'IDR', currencySymbol = null) => {
   // Handle undefined, null, or NaN values
   if (amount === undefined || amount === null || isNaN(amount)) {
-    console.warn('formatCurrency received invalid amount:', amount)
     return currencySymbol ? `${currencySymbol} 0` : '0'
   }
   
@@ -323,44 +315,42 @@ export const calculateWorkingHours = (entryTime, exitTime) => {
 
 // calculateSalaryRecord removed - now handled by rules engine in payroll.js
 
+const ATTENDANCE_HANDLERS = {
+  regular: (dayData, config) => ({
+    present: dayData.entryTime && dayData.exitTime ? 1 : 0,
+    hours: dayData.entryTime && dayData.exitTime ? calculateWorkingHours(dayData.entryTime, dayData.exitTime) : 0
+  }),
+  holiday: (_, config) => ({ holiday: 1, hours: config.workdayHours }),
+  sick: () => ({ sick: 1 }),
+  leave: () => ({ leave: 1 })
+}
+
 export const calculateAttendanceSummary = (attendance, config = DEFAULT_CONFIG) => {
-  let totalDays = 0
-  let presentDays = 0
-  let totalHours = 0
-  let holidayDays = 0
-  let sickDays = 0
-  let leaveDays = 0
+  const initial = {
+    totalDays: 0,
+    presentDays: 0,
+    totalHours: 0,
+    holidayDays: 0,
+    sickDays: 0,
+    leaveDays: 0
+  }
   
-  Object.values(attendance || {}).forEach(dayData => {
-    totalDays++
+  const summary = Object.values(attendance || {}).reduce((acc, dayData) => {
+    const handler = ATTENDANCE_HANDLERS[dayData.type]
+    const result = handler ? handler(dayData, config) : {}
     
-    switch (dayData.type) {
-      case 'regular':
-        if (dayData.entryTime && dayData.exitTime) {
-          presentDays++
-          totalHours += calculateWorkingHours(dayData.entryTime, dayData.exitTime)
-        }
-        break
-      case 'holiday':
-        holidayDays++
-        totalHours += config.workdayHours
-        break
-      case 'sick':
-        sickDays++
-        break
-      case 'leave':
-        leaveDays++
-        break
+    return {
+      totalDays: acc.totalDays + 1,
+      presentDays: acc.presentDays + (result.present ?? 0),
+      totalHours: acc.totalHours + (result.hours ?? 0),
+      holidayDays: acc.holidayDays + (result.holiday ?? 0),
+      sickDays: acc.sickDays + (result.sick ?? 0),
+      leaveDays: acc.leaveDays + (result.leave ?? 0)
     }
-  })
+  }, initial)
   
   return {
-    totalDays,
-    presentDays,
-    totalHours,
-    holidayDays,
-    sickDays,
-    leaveDays,
-    absentDays: totalDays - presentDays - holidayDays - sickDays - leaveDays
+    ...summary,
+    absentDays: summary.totalDays - summary.presentDays - summary.holidayDays - summary.sickDays - summary.leaveDays
   }
 }

@@ -3,7 +3,7 @@
  * Clean, functional stores with minimal complexity
  */
 
-import { writable, derived } from 'svelte/store'
+import { writable, derived, get } from 'svelte/store'
 import { storage } from './core.js'
 import { DEFAULT_RULES, createRule, validateRule, getNextOrder } from './rules.js'
 
@@ -180,22 +180,17 @@ export const updateEmployee = (id, updates) => {
 export const removeEmployee = (id) => {
   employees.update(current => current.filter(emp => emp.id !== id))
   
-  // Clean up related data
-  attendance.update(current => {
-    const updated = { ...current }
-    Object.keys(updated).forEach(period => {
-      delete updated[period]?.[id]
-    })
-    return updated
-  })
+  // Clean up related data - remove employee from all periods
+  const cleanupPeriods = (data) => 
+    Object.fromEntries(
+      Object.entries(data).map(([period, periodData]) => [
+        period,
+        Object.fromEntries(Object.entries(periodData).filter(([empId]) => empId !== id))
+      ])
+    )
   
-  payroll.update(current => {
-    const updated = { ...current }
-    Object.keys(updated).forEach(period => {
-      delete updated[period]?.[id]
-    })
-    return updated
-  })
+  attendance.update(cleanupPeriods)
+  payroll.update(cleanupPeriods)
 }
 
 // Attendance actions
@@ -258,13 +253,8 @@ export const removeAdjustment = (period, employeeId, adjustmentId) => {
   }))
 }
 
-export const getAdjustments = (period, employeeId) => {
-  let result = []
-  adjustments.subscribe(current => {
-    result = current[period]?.[employeeId] || []
-  })()
-  return result
-}
+export const getAdjustments = (period, employeeId) => 
+  get(adjustments)[period]?.[employeeId] || []
 
 // Payroll actions
 export const setPayroll = (period, employeeId, data) => {
@@ -375,21 +365,11 @@ export const storeSalaryRecord = (period, employeeId, record) => {
   }))
 }
 
-export const getSalaryRecord = (period, employeeId) => {
-  let result = null
-  salaryRecords.subscribe(current => {
-    result = current[period]?.[employeeId] || null
-  })()
-  return result
-}
+export const getSalaryRecord = (period, employeeId) => 
+  get(salaryRecords)[period]?.[employeeId] || null
 
-export const getPeriodSalaryRecords = (period) => {
-  let result = {}
-  salaryRecords.subscribe(current => {
-    result = current[period] || {}
-  })()
-  return result
-}
+export const getPeriodSalaryRecords = (period) => 
+  get(salaryRecords)[period] || {}
 
 export const clearPeriodSalaryRecords = (period) => {
   salaryRecords.update(current => {
@@ -403,26 +383,11 @@ export const clearPeriodSalaryRecords = (period) => {
 // GETTERS
 // ============================================================================
 
-export const getEmployee = (id) => {
-  let result = null
-  employees.subscribe(current => {
-    result = current.find(emp => emp.id === id)
-  })()
-  return result
-}
+export const getEmployee = (id) => 
+  get(employees).find(emp => emp.id === id) || null
 
-export const getAttendance = (period, employeeId) => {
-  let result = {}
-  attendance.subscribe(current => {
-    result = current[period]?.[employeeId] || {}
-  })()
-  return result
-}
+export const getAttendance = (period, employeeId) => 
+  get(attendance)[period]?.[employeeId] || {}
 
-export const getPayroll = (period, employeeId) => {
-  let result = null
-  payroll.subscribe(current => {
-    result = current[period]?.[employeeId] || null
-  })()
-  return result
-}
+export const getPayroll = (period, employeeId) => 
+  get(payroll)[period]?.[employeeId] || null
