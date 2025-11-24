@@ -135,7 +135,7 @@
       <h3>Employees ({employees.length})</h3>
       <div class="employee-actions">
         <button class="primary" onclick={startAddEmployee}>
-          <Icon icon="tabler:plus" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
+          <Icon icon="tabler:plus" width="3rem" height="3rem" style="width: 3rem; height: 3rem" />
           Add Employee
         </button>
       </div>
@@ -165,10 +165,10 @@
 
               <div class="employee-actions">
                 <button class="edit-btn" onclick={(e) => { e.stopPropagation(); startEditEmployee(employee) }} title="Edit" aria-label="Edit employee">
-                  <Icon icon="tabler:edit" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
+                  <Icon icon="tabler:edit" width="3rem" height="3rem" style="width: 3rem; height: 3rem" />
                 </button>
                 <button class="delete-btn" onclick={(e) => { e.stopPropagation(); deleteEmployee(employee.id) }} title="Delete" aria-label="Delete employee">
-                  <Icon icon="tabler:trash" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
+                  <Icon icon="tabler:trash" width="3rem" height="3rem" style="width: 3rem; height: 3rem" />
                 </button>
               </div>
             </div>
@@ -246,11 +246,11 @@
 
     <div class="form-actions">
       <button class="secondary" onclick={cancelEmployeeForm}>
-        <Icon icon="tabler:x" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
+        <Icon icon="tabler:x" width="3rem" height="3rem" style="width: 3rem; height: 3rem" />
         Cancel
       </button>
       <button class="primary" onclick={saveEmployee}>
-        <Icon icon="tabler:check" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
+        <Icon icon="tabler:check" width="3rem" height="3rem" style="width: 3rem; height: 3rem" />
         {editingEmployee ? 'Update' : 'Add'} Employee
       </button>
     </div>
@@ -340,11 +340,10 @@
     @extend %flex
     gap: 0.5rem
     flex-shrink: 0
-    --icon-btn-size: 1.75rem
 
   .edit-btn, .delete-btn
-    width: 3.5rem
-    height: 3.5rem
+    width: 4rem
+    height: 4rem
     border-radius: 50%
     background: var(--border-muted)
     border: none
@@ -359,8 +358,8 @@
 
     :global(svg)
       display: block
-      width: 2.5rem
-      height: 2.5rem
+      width: 3rem !important
+      height: 3rem !important
       color: inherit
       fill: currentColor
 
