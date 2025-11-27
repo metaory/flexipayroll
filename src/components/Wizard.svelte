@@ -1,28 +1,10 @@
 <script>
   import Icon from '@iconify/svelte'
-  import { createEventDispatcher } from 'svelte'
   import { STEPS } from '../payroll.js'
 
-  let { currentStep = 0 } = $props()
-  const dispatch = createEventDispatcher()
+  let { currentStep = 0, onNext, onPrev } = $props()
 
   const currentStepData = $derived(STEPS[currentStep])
-
-  const handleNext = (event) => {
-    if (event) {
-      event.preventDefault()
-      event.stopPropagation()
-    }
-    dispatch('next')
-  }
-  
-  const handlePrev = (event) => {
-    if (event) {
-      event.preventDefault()
-      event.stopPropagation()
-    }
-    dispatch('prev')
-  }
 </script>
 
 <header class="wizard-header">
@@ -47,14 +29,13 @@
 </section>
 
 <footer class="wizard-footer">
-  <button type="button" class="secondary" onclick={handlePrev} disabled={currentStep === 0}>
-    <Icon icon="tabler:arrow-left" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
+  <button type="button" class="secondary" onclick={onPrev} disabled={currentStep === 0}>
+    <Icon icon="tabler:arrow-left" width="1.25rem" height="1.25rem" />
     Previous
   </button>
-
-  <button type="button" class="primary" onclick={handleNext} disabled={currentStep >= STEPS.length - 1}>
+  <button type="button" class="primary" onclick={onNext} disabled={currentStep >= STEPS.length - 1}>
     Next
-    <Icon icon="tabler:arrow-right" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
+    <Icon icon="tabler:arrow-right" width="1.25rem" height="1.25rem" />
   </button>
 </footer>
 

@@ -151,98 +151,56 @@ export const calculateRuleValue = (rule, employee, attendance, config) => {
 // ============================================================================
 
 export const applyRules = (employee, attendance, rules, config) => {
-  const results = {
-    bonuses: {},
-    deductions: {}
-  }
-  
-  // Calculate base salary first
-  const dailyRate = employee.dailySalary
   const hourlyRate = employee.dailySalary / config.workdayHours
-  
-  // Count actual days with attendance data
-  const actualDays = Object.values(attendance || {}).filter(dayData => 
-    dayData && (
-      (dayData.type === 'regular' && dayData.entryTime && dayData.exitTime) ||
-      dayData.type === 'holiday'
-    )
+  const actualDays = Object.values(attendance || {}).filter(d => 
+    d && ((d.type === 'regular' && d.entryTime && d.exitTime) || d.type === 'holiday')
   ).length
-  
-  // Calculate total hours: actual days × 8 hours (standard day)
-  // Each day counts as exactly 8 hours, regardless of actual entry/exit times
-  const standardDayHours = 8
-  const totalHours = actualDays * standardDayHours
-  
+  const totalHours = actualDays * 8
   const baseSalary = totalHours * hourlyRate
-  let grossSalary = baseSalary
-  
-  // If employee is jadid (new), skip all rules - only base salary applies
+
+  // Jadid employees get base salary only
   if (employee.jadid) {
-    return {
-      baseSalary,
-      bonuses: {},
-      deductions: {},
-      grossSalary,
-      totalHours,
-      actualDays
-    }
+    return { baseSalary, bonuses: {}, deductions: {}, grossSalary: baseSalary, totalHours, actualDays }
   }
   
-  // Sort rules by order
-  const sortedRules = [...rules].sort((a, b) => a.order - b.order)
-  
-  // First pass: calculate bonuses and deductions (store deductions, don't subtract yet)
-  sortedRules.forEach(rule => {
-    if (!rule.enabled) return
-    
-    const value = calculateRuleValue(rule, employee, attendance, config)
-    
-    if (value > 0) {
-      if (rule.category === RULE_CATEGORIES.BONUS) {
-        if (rule.type === RULE_TYPES.PERCENTAGE_BASE) {
-          // Store percentage for later application to base salary
-          results.bonuses[rule.id] = { rule, value, percentage: true, percentageType: 'base' }
-        } else {
-          results.bonuses[rule.id] = { rule, value, percentage: false }
-          grossSalary += value
-        }
-      } else if (rule.category === RULE_CATEGORIES.DEDUCTION) {
-        if (rule.type === RULE_TYPES.PERCENTAGE_BASE) {
-          // Store percentage for later application to base salary
-          results.deductions[rule.id] = { rule, value, percentage: true, percentageType: 'base' }
-        } else {
-          // Store deduction but don't subtract from grossSalary yet
-          results.deductions[rule.id] = { rule, value, percentage: false }
-        }
-      }
-    }
-  })
-  
-  // Second pass: apply percentage-based bonuses to base salary
-  Object.values(results.bonuses).forEach(item => {
-    if (item.percentage && item.percentageType === 'base') {
-      const bonus = baseSalary * item.value
-      item.finalValue = bonus
-      grossSalary += bonus
-    }
-  })
-  
-  // Third pass: calculate percentage-based deductions (store but don't subtract)
-  Object.values(results.deductions).forEach(item => {
-    if (item.percentage && item.percentageType === 'base') {
-      const deduction = baseSalary * item.value
-      item.finalValue = deduction
-    }
-    // For PERCENTAGE_MONTHLY, the value is already calculated in calculateRuleValue
-    // No need to recalculate, just ensure it's stored correctly
-  })
-  
-  // Use the calculated grossSalary directly (it already includes base + all bonuses)
-  // This ensures consistency with what we calculated above
+  // Process enabled rules
+  const processedRules = [...rules]
+    .sort((a, b) => a.order - b.order)
+    .filter(r => r.enabled)
+    .map(rule => ({ rule, value: calculateRuleValue(rule, employee, attendance, config) }))
+    .filter(({ value }) => value > 0)
+
+  // Categorize rules
+  const categorized = processedRules.reduce((acc, { rule, value }) => {
+    const isPercentBase = rule.type === RULE_TYPES.PERCENTAGE_BASE
+    const entry = { rule, value, percentage: isPercentBase, percentageType: isPercentBase ? 'base' : null }
+    acc[rule.category === RULE_CATEGORIES.BONUS ? 'bonuses' : 'deductions'][rule.id] = entry
+    return acc
+  }, { bonuses: {}, deductions: {} })
+
+  // Calculate gross with fixed bonuses
+  const fixedBonusTotal = Object.values(categorized.bonuses)
+    .filter(i => !i.percentage)
+    .reduce((sum, i) => sum + i.value, 0)
+
+  // Apply percentage-based bonuses
+  Object.values(categorized.bonuses)
+    .filter(i => i.percentage && i.percentageType === 'base')
+    .map(i => { i.finalValue = baseSalary * i.value; return i })
+
+  // Apply percentage-based deductions
+  Object.values(categorized.deductions)
+    .filter(i => i.percentage && i.percentageType === 'base')
+    .map(i => { i.finalValue = baseSalary * i.value; return i })
+
+  const percentBonusTotal = Object.values(categorized.bonuses)
+    .filter(i => i.percentage)
+    .reduce((sum, i) => sum + (i.finalValue || 0), 0)
+
   return {
-    ...results,
+    ...categorized,
     baseSalary,
-    grossSalary: grossSalary,
+    grossSalary: baseSalary + fixedBonusTotal + percentBonusTotal,
     totalHours,
     actualDays
   }
@@ -278,13 +236,5 @@ export const sortRulesByOrder = (rules) => {
   return [...rules].sort((a, b) => a.order - b.order)
 }
 
-export const getNextOrder = (rules) => {
-  if (rules.length === 0) return 1
-  return Math.max(...rules.map(r => r.order)) + 1
-}
-
-// ============================================================================
-// MISSING FUNCTION (from core.js)
-// ============================================================================
-
-import { calculateWorkingHours } from './core.js'
+export const getNextOrder = (rules) => 
+  rules.length === 0 ? 1 : Math.max(...rules.map(r => r.order)) + 1

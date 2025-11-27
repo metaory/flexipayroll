@@ -21,6 +21,7 @@
     "@fontsource/bungee": "^5.2.6",
     "@fontsource/jetbrains-mono": "^5.2.8",
     "@iconify/svelte": "^5.0.0",
-    "bit-grid-component": "^0.3.0"
+    "bit-grid-component": "^0.3.0",
+    "platform-compat-screen": "^0.0.1"
   }
 }

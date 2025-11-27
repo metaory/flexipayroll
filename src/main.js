@@ -8,4 +8,11 @@ import '@styles'
 import { mount } from 'svelte'
 import App from './App.svelte'
 
+import platformCompatScreen from "platform-compat-screen";
+
+platformCompatScreen({
+  target: "mobile",
+  message: "This application requires a desktop device.",
+});
+
 mount(App, { target: document.getElementById('app') }) 

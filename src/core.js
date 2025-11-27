@@ -76,12 +76,6 @@ export const calculateHourlyRate = (dailySalary, workdayHours = 8) =>
 export const calculateBaseSalary = (hoursWorked, hourlyRate) => 
   hoursWorked * hourlyRate
 
-// calculateBonuses removed - now handled by rules engine
-
-// calculateDeductions removed - now handled by rules engine
-
-// calculateFinalSalary removed - now handled by rules engine
-
 // ============================================================================
 // ATTENDANCE UTILITIES
 // ============================================================================
@@ -207,19 +201,12 @@ export const getDaysInMonth = (period) => {
 
 export const getWeekdays = (period) => {
   const [year, month] = period.split('-')
-  const daysInMonth = getDaysInMonth(period)
-  const weekdays = []
-  
-  for (let day = 1; day <= daysInMonth; day++) {
-    const date = new Date(parseInt(year), parseInt(month) - 1, day)
-    const dayOfWeek = date.getDay()
-    
-    if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Not Sunday (0) or Saturday (6)
-      weekdays.push(`${period}-${String(day).padStart(2, '0')}`)
-    }
-  }
-  
-  return weekdays
+  return Array.from({ length: getDaysInMonth(period) }, (_, i) => i + 1)
+    .filter(day => {
+      const dayOfWeek = new Date(parseInt(year), parseInt(month) - 1, day).getDay()
+      return dayOfWeek !== 0 && dayOfWeek !== 6
+    })
+    .map(day => `${period}-${String(day).padStart(2, '0')}`)
 }
 
 // ============================================================================
@@ -312,8 +299,6 @@ export const calculateWorkingHours = (entryTime, exitTime) => {
   const diffMs = exit.getTime() - entry.getTime()
   return diffMs / (1000 * 60 * 60) // Convert to hours
 }
-
-// calculateSalaryRecord removed - now handled by rules engine in payroll.js
 
 const ATTENDANCE_HANDLERS = {
   regular: (dayData, config) => ({

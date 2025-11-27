@@ -3,7 +3,7 @@
  * Declarative step definitions with minimal complexity
  */
 
-import { calculateDailyRate, calculateHourlyRate, calculateWorkingHours, formatCurrency, formatHours } from './core.js'
+import { calculateDailyRate, calculateHourlyRate } from './core.js'
 import { applyRules, RULE_TYPES } from './rules.js'
 
 // Step definitions - simplified for rules-based system
@@ -313,15 +313,11 @@ export const buildCalculationSteps = (result) => {
     type: 'base'
   })
   
-  // Step 4-8: All Bonuses
-  Object.values(result.ruleResults.bonuses || {})
-    .map(ruleData => createRuleStep(ruleData, result, 'bonus'))
-    .forEach(step => steps.push(step))
-  
-  // Step 9-11: All Deductions
-  Object.values(result.ruleResults.deductions || {})
-    .map(ruleData => createRuleStep(ruleData, result, 'deduction'))
-    .forEach(step => steps.push(step))
+  // All Bonuses and Deductions
+  steps.push(
+    ...Object.values(result.ruleResults.bonuses || {}).map(d => createRuleStep(d, result, 'bonus')),
+    ...Object.values(result.ruleResults.deductions || {}).map(d => createRuleStep(d, result, 'deduction'))
+  )
   
   // Step 12: Manual Adjustments
   if (result.adjustmentTotal !== 0) {

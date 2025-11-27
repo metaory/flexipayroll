@@ -115,8 +115,8 @@
       <h3>Employees ({employees.length})</h3>
       <div class="employee-actions">
         <button class="primary" onclick={startAddEmployee}>
-          <Icon icon="tabler:plus" width="3rem" height="3rem" style="width: 3rem; height: 3rem" />
-          Add Employee
+          <Icon icon="tabler:plus" width="1rem" height="1rem" />
+          Add
         </button>
       </div>
     </div>
@@ -126,7 +126,7 @@
       {#if employees.length > 0}
         <div class="employee-cards">
           {#each employees as employee}
-            <div class="employee-card" onclick={() => startEditEmployee(employee)}>
+            <div class="employee-card" role="button" tabindex="0" onclick={() => startEditEmployee(employee)} onkeydown={(e) => e.key === 'Enter' && startEditEmployee(employee)}>
               <div class="employee-info">
                 <h4>{employee.name}</h4>
                 <p>{employee.gender} • {employee.maritalStatus}{#if employee.jadid} • <span class="jadid-badge">Jadid (New)</span>{/if}</p>
@@ -144,11 +144,11 @@
               </div>
 
               <div class="employee-actions">
-                <button class="edit-btn" onclick={(e) => { e.stopPropagation(); startEditEmployee(employee) }} title="Edit" aria-label="Edit employee">
-                  <Icon icon="tabler:edit" width="3rem" height="3rem" style="width: 3rem; height: 3rem" />
+                <button class="edit-btn" onclick={(e) => { e.stopPropagation(); startEditEmployee(employee) }} aria-label="Edit">
+                  <Icon icon="tabler:edit" width="1rem" height="1rem" />
                 </button>
-                <button class="delete-btn" onclick={(e) => { e.stopPropagation(); deleteEmployee(employee.id) }} title="Delete" aria-label="Delete employee">
-                  <Icon icon="tabler:trash" width="3rem" height="3rem" style="width: 3rem; height: 3rem" />
+                <button class="delete-btn" onclick={(e) => { e.stopPropagation(); deleteEmployee(employee.id) }} aria-label="Delete">
+                  <Icon icon="tabler:trash" width="1rem" height="1rem" />
                 </button>
               </div>
             </div>
@@ -156,8 +156,8 @@
         </div>
       {:else}
         <div class="empty">
-          <Icon icon="tabler:users" width="4rem" height="4rem" style="width: 4rem; height: 4rem" />
-          <p>No employees added yet</p>
+          <Icon icon="tabler:users" width="2.5rem" height="2.5rem" />
+          <p>No employees yet</p>
         </div>
       {/if}
     </div>
@@ -226,12 +226,12 @@
 
     <div class="form-actions">
       <button class="secondary" onclick={cancelEmployeeForm}>
-        <Icon icon="tabler:x" width="3rem" height="3rem" style="width: 3rem; height: 3rem" />
+        <Icon icon="tabler:x" width="1rem" height="1rem" />
         Cancel
       </button>
       <button class="primary" onclick={saveEmployee}>
-        <Icon icon="tabler:check" width="3rem" height="3rem" style="width: 3rem; height: 3rem" />
-        {editingEmployee ? 'Update' : 'Add'} Employee
+        <Icon icon="tabler:check" width="1rem" height="1rem" />
+        {editingEmployee ? 'Update' : 'Add'}
       </button>
     </div>
   </Dialog>
@@ -242,88 +242,102 @@
 
   .employee-section
     @extend %grid
-    gap: 3rem
+    gap: 1.5rem
 
   .employee-management
     @extend %card-base
+    padding: 0.875rem
 
     h3
-      margin-bottom: 1.5rem
+      margin-bottom: 1rem
+      font-size: 1.5rem
       color: var(--primary)
 
   .employee-header
     @extend %flex-between
-    margin-bottom: 2rem
+    margin-bottom: 1rem
 
   .employee-actions
     @extend %flex
-    gap: 1rem
+    gap: 0.5rem
 
     button
       @extend %button-base
+      padding: 0.5rem 0.75rem
+      font-size: 0.9rem
 
       &.primary
         @extend %button-primary
 
   .employee-list
     @extend %grid
-    gap: 1rem
+    gap: 0.5rem
 
   .employee-cards
-    @include auto-grid(280px)
-    gap: 1rem
+    @include auto-grid(240px)
+    gap: 0.5rem
 
   .employee-card
-    @include card-interactive(1rem)
-    --card-scale: 1.2
+    @include card-interactive(0.5rem)
+    --card-scale: 1
     cursor: pointer
+    padding: 0.65rem
+    border: 2px solid transparent
 
     &:hover
       background: var(--surface-medium)
+      border-color: var(--primary)
+      box-shadow: 0 4px 16px color-mix(in oklab, var(--primary) 20%, transparent)
+      transform: translateY(-2px)
+
+      h4
+        color: var(--secondary)
 
   .employee-info
     @include card-content
 
     h4
-      @include card-title(1.85rem)
+      @include card-title(1.2rem)
+      margin-bottom: 0.25rem
 
     p
-      @include card-text(1.3rem)
+      @include card-text(0.95rem)
+      margin: 0.15rem 0
 
       &.salary
         font-weight: 600
         color: var(--fg)
-        font-size: 1.4rem
+        font-size: 1.1rem
         
       &.hourly-rate
         font-weight: 600
         color: var(--fg-muted)
-        @include card-subtext(1.15rem)
+        font-size: 0.85rem
         
       &.monthly-ref
-        @include card-subtext(1rem)
+        font-size: 0.8rem
 
     .jadid-badge
       display: inline-block
-      padding: 0.2rem 0.6rem
+      padding: 0.15rem 0.4rem
       background: var(--accent)
       color: var(--bg)
-      border-radius: 0.4rem
-      font-size: 1rem
+      border-radius: 0.3rem
+      font-size: 0.75rem
       font-weight: 600
-      margin-left: 0.5rem
+      margin-left: 0.35rem
 
     .experience
-      @include card-subtext(1.15rem)
+      font-size: 0.85rem
 
   .employee-actions
     @extend %flex
-    gap: 0.5rem
+    gap: 0.35rem
     flex-shrink: 0
 
   .edit-btn, .delete-btn
-    width: 4rem
-    height: 4rem
+    width: 2rem
+    height: 2rem
     border-radius: 50%
     background: var(--border-muted)
     border: none
@@ -338,10 +352,9 @@
 
     :global(svg)
       display: block
-      width: 3rem !important
-      height: 3rem !important
+      width: 1.25rem !important
+      height: 1.25rem !important
       color: inherit
-      fill: currentColor
 
     &:hover
       background: var(--surface-medium)
@@ -355,17 +368,19 @@
     color: var(--error)
 
   .form-grid
-    @include auto-grid(200px)
-    gap: 1.5rem
-    margin-bottom: 2rem
+    @include auto-grid(180px)
+    gap: 1rem
+    margin-bottom: 1.25rem
 
   .form-actions
     @extend %flex
-    gap: 1rem
+    gap: 0.75rem
     justify-content: flex-end
 
     button
       @extend %button-base
+      padding: 0.5rem 0.75rem
+      font-size: 0.9rem
 
       &.primary
         @extend %button-primary
@@ -375,14 +390,17 @@
 
   .field
     @extend %grid
-    gap: 0.5rem
+    gap: 0.35rem
 
     span
       font-weight: 600
+      font-size: 0.9rem
       color: var(--fg)
 
     input, select
       @extend %input-base
+      padding: 0.5rem 0.75rem
+      font-size: 1rem
 
     &.error input, &.error select
       background: var(--error-bg)

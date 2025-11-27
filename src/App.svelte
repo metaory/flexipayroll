@@ -40,15 +40,15 @@
   :global(html.dark body::before)
     filter: $bg-filter-dark
 
-  main 
+  main
     background: var(--bg)
 
   .app-content
     overflow: hidden
     padding: 0
-    margin: auto 2em
+    margin: 0.6em 2em
     background: var(--bg)
-    height: 100vh
+    height: 98vh
     box-sizing: border-box
     border-radius: 1.6em
     position: relative

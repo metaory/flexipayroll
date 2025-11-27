@@ -116,9 +116,9 @@
 <div class="adjustments-container">
   {#if employees.length === 0}
     <div class="empty">
-      <Icon icon="tabler:settings" width="4rem" height="4rem" style="width: 4rem; height: 4rem" />
-      <p>No employees to add adjustments for</p>
-      <p class="text-muted">Add employees first to manage adjustments</p>
+      <Icon icon="tabler:settings" width="2.5rem" height="2.5rem" />
+      <p>No employees</p>
+      <p class="text-muted">Add employees first</p>
     </div>
   {:else}
     <div class="adjustments-header">
@@ -146,7 +146,7 @@
           <div class="current-adjustments">
             {#if (adjustmentsData[employee.id] || []).length === 0}
               <div class="no-adjustments">
-                <Icon icon="tabler:circle-minus" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
+                <Icon icon="tabler:circle-minus" width="1rem" height="1rem" />
                 <span>No adjustments</span>
               </div>
             {:else}
@@ -160,11 +160,9 @@
                   </div>
                   <div class="adjustment-actions">
                     <button class="edit-btn" onclick={() => handleEditAdjustment(employee.id, adjustment)}>
-                      <Icon icon="tabler:edit" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
-                      </button>
-                      <button class="delete-btn" onclick={() => handleDeleteAdjustment(employee.id, adjustment.id)}>
-                        <Icon icon="tabler:trash" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
-                    </button>
+                      <Icon icon="tabler:edit" width="1rem" height="1rem" /></button>
+                    <button class="delete-btn" onclick={() => handleDeleteAdjustment(employee.id, adjustment.id)}>
+                      <Icon icon="tabler:trash" width="1rem" height="1rem" /></button>
                   </div>
                 </div>
               {/each}
@@ -191,18 +189,12 @@
             <div class="form-actions">
               {#if editingAdjustments[employee.id]}
                 <button class="secondary" onclick={() => resetForm(employee.id)}>
-                  <Icon icon="tabler:x" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
-                  Cancel
-                </button>
+                  <Icon icon="tabler:x" width="1rem" height="1rem" />Cancel</button>
                 <button class="primary" onclick={() => handleUpdateAdjustment(employee.id)}>
-                  <Icon icon="tabler:check" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
-                  Update
-                </button>
+                  <Icon icon="tabler:check" width="1rem" height="1rem" />Update</button>
               {:else}
                 <button class="primary" onclick={() => handleAddAdjustment(employee.id)}>
-                  <Icon icon="tabler:plus" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
-                  Add Adjustment
-                </button>
+                  <Icon icon="tabler:plus" width="1rem" height="1rem" />Add</button>
               {/if}
             </div>
           </div>
@@ -217,107 +209,126 @@
 
   .adjustments-container
     @extend %grid
-    gap: 2rem
-    padding-top: 2rem
+    gap: 1rem
+    padding-top: 0.75rem
 
   .adjustments-header
     @extend %flex-between
-    padding-top: 0.2rem
 
     h3
       margin: 0
+      font-size: 1.5rem
       @extend %gradient-text
 
   .adjustments-summary
     @extend %flex
-    gap: 1rem
+    gap: 0.75rem
     color: var(--fg-muted)
-    font-size: 0.875rem
+    font-size: 0.8rem
 
     span
-      padding: 0.75rem 1.5rem
-      font-weight: 700
-      font-size: 0.875rem
+      padding: 0.5rem 1rem
+      font-weight: 600
+      font-size: 0.8rem
       cursor: default
 
       &:nth-child(1)
         color: var(--primary)
 
       &:nth-child(2)
-        background: linear-gradient(135deg, var(--info-bg) 0%, var(--info) 20%)
+        background: var(--info-bg)
         color: var(--info)
 
   .adjustments-grid
-    @include auto-grid(380px)
-    gap: 1.5rem
+    @include auto-grid(280px)
+    gap: 0.75rem
     align-items: start
 
   .employee-adjustments
     @extend %card-base
+    padding: 0.75rem
+    border: 2px solid transparent
+    @extend %transition
+
+    &:hover
+      border-color: var(--border)
+      box-shadow: 0 4px 12px color-mix(in oklab, var(--primary) 15%, transparent)
 
   .employee-header
     @extend %flex-between
-    margin-bottom: 1.5rem
-    padding-bottom: 1rem
+    margin-bottom: 0.75rem
+    padding-bottom: 0.5rem
 
     h4
-      @include card-title(1.85rem)
+      @include card-title(1.15rem)
 
   .employee-meta
     @extend %flex
     flex-direction: column
     align-items: flex-end
-    gap: 0.5rem
+    gap: 0.25rem
 
     span:first-child
-      @include card-text(1.3rem)
+      @include card-text(0.9rem)
 
     .total-adjustments
       font-weight: 600
       color: var(--fg)
-      font-size: 1.35rem
+      font-size: 1rem
 
   .current-adjustments
     @extend %grid
-    gap: 0.75rem
-    margin-bottom: 1.5rem
+    gap: 0.35rem
+    margin-bottom: 0.75rem
 
   .no-adjustments
     @extend %flex
     align-items: center
-    gap: 0.5rem
-    padding: 1rem
+    gap: 0.35rem
+    padding: 0.5rem
     color: var(--fg-muted)
     font-style: italic
-    text-align: center
+    font-size: 0.85rem
     background: var(--surface-muted)
     border-radius: var(--radius)
 
   .adjustment-item
     @extend %flex-between
-    padding: 0.75rem
+    padding: 0.5rem
     background: var(--surface-secondary)
-    border-radius: var(--radius)
+    border-radius: 0.5rem
+    border: 2px solid transparent
+    @extend %transition
+
+    &:hover
+      border-color: var(--border)
+      transform: translateX(4px)
 
     &[data-positive="true"]
       background: var(--surface-success)
 
+      &:hover
+        border-color: var(--success)
+
     &[data-positive="false"]
       background: color-mix(in oklab, var(--error) 12%, transparent)
+
+      &:hover
+        border-color: var(--error)
 
   .adjustment-info
     @extend %flex
     flex-direction: column
-    gap: 0.25rem
+    gap: 0.15rem
 
     .adjustment-label
       font-weight: 600
       color: var(--fg)
-      @include card-text(1.3rem)
+      font-size: 0.9rem
 
     .adjustment-amount
       font-weight: 600
-      font-size: 1.35rem
+      font-size: 1rem
 
       &.positive
         color: var(--success)
@@ -327,10 +338,11 @@
 
   .adjustment-actions
     @extend %flex
-    gap: 0.5rem
+    gap: 0.35rem
 
   .edit-btn, .delete-btn
     @include card-action-btn
+    --icon-btn-size: 1.75rem
 
     &:hover
       background: var(--surface-medium)
@@ -338,32 +350,34 @@
   .edit-btn:hover
     background: var(--primary-bg)
     color: var(--primary)
-    border-color: var(--primary)
 
   .delete-btn:hover
     background: var(--error-bg)
     color: var(--error)
-    border-color: var(--error)
 
   .adjustment-form
     @extend %grid
-    gap: 1rem
+    gap: 0.5rem
 
   .form-fields
     @extend %grid
     grid-template-columns: 1fr
-    gap: 1rem
+    gap: 0.5rem
 
     input
       @extend %input-base
+      padding: 0.5rem 0.75rem
+      font-size: 0.9rem
 
   .form-actions
     @extend %flex
-    gap: 1rem
+    gap: 0.5rem
     justify-content: flex-end
 
     button
       @extend %button-base
+      padding: 0.5rem 0.75rem
+      font-size: 0.85rem
 
       &.primary
         @extend %button-primary

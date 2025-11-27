@@ -97,11 +97,9 @@
     })
     
     // Final Salary
-    const finalValue = result.finalSalary || 0
-    console.log('Report - Final Salary value:', finalValue, 'Type:', typeof finalValue, 'IsNaN:', isNaN(finalValue))
     breakdown.push({
       label: 'Take-Home Salary',
-      value: finalValue,
+      value: result.finalSalary || 0,
       type: 'final',
       sign: '='
     })
@@ -112,7 +110,7 @@
 
 {#if results.length === 0}
   <div class="empty">
-    <Icon icon="tabler:file-text" width="4rem" height="4rem" style="width: 4rem; height: 4rem" />
+    <Icon icon="tabler:file-text" width="2.5rem" height="2.5rem" />
     <p>No employees to report</p>
   </div>
 {:else}
@@ -169,7 +167,7 @@
           </div>
 
           <button class="view-details-btn" onclick={() => openCalculationDialog(result)}>
-            <Icon icon="tabler:calculator" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
+            <Icon icon="tabler:calculator" width="1rem" height="1rem" />
             View Calculation Details
           </button>
         {/if}
@@ -245,17 +243,23 @@
   @use "../styles.sass" as *
   
   .report-grid
-    @include auto-grid(300px)
-    gap: 0.75rem
+    @include auto-grid(260px)
+    gap: 0.5rem
     
   .report-card
     @extend %card-base
-    --card-scale: 1.2
-    padding: 0.875rem
+    --card-scale: 1
+    padding: 0.65rem
+    border: 2px solid transparent
+    @extend %transition
     
-    &.collapsed
-      .card-header-btn
-        margin-bottom: 0
+    &:hover
+      border-color: var(--primary)
+      box-shadow: 0 4px 16px color-mix(in oklab, var(--primary) 20%, transparent)
+      transform: translateY(-2px)
+    
+    &.collapsed .card-header-btn
+      margin-bottom: 0
         
     .card-header-btn
       width: 100%
@@ -267,63 +271,63 @@
       text-align: left
       @extend %transition
       
-      &:hover
-        opacity: 0.85
+      &:hover .header-text h3
+        color: var(--secondary)
         
       header
         @extend %flex-between
         align-items: flex-start
         margin-bottom: 0
-        padding-bottom: 0.75rem
+        padding-bottom: 0.5rem
         border-bottom: 2px solid var(--border-muted)
         
         .header-content
           @extend %flex
           align-items: center
-          gap: 0.5rem
+          gap: 0.35rem
           flex: 1
           
           .header-text
             @extend %grid
-            gap: 0.25rem
+            gap: 0.15rem
             
             h3
-              @include card-title(1.35rem)
+              @include card-title(1.1rem)
               margin: 0
               
             span
-              @include card-text(1.1rem)
+              @include card-text(0.85rem)
               
         .collapsed-salary
           @extend %grid
-          gap: 0.25rem
+          gap: 0.15rem
           text-align: right
-          margin-left: 1rem
+          margin-left: 0.75rem
           
           .collapsed-label
-            @include card-text(0.95rem)
+            @include card-text(0.75rem)
             color: var(--fg-muted)
             font-weight: 600
             
           .collapsed-amount
-            @include card-title(1.5rem)
+            @include card-title(1.15rem)
             color: var(--success)
             font-weight: 700
         
   .summary
     @extend %grid
-    gap: 0.35rem
-    margin-top: 0.75rem
+    gap: 0.25rem
+    margin-top: 0.5rem
     
   .line
     @extend %flex-between
-    padding: 0.35rem 0
-    @include card-text(1.15rem)
+    padding: 0.2rem 0
+    @include card-text(0.9rem)
     
     &.hours
       border-bottom: 1px solid var(--border-muted)
-      margin-bottom: 0.25rem
-      padding-bottom: 0.5rem
+      margin-bottom: 0.15rem
+      padding-bottom: 0.35rem
       
       span:last-child
         font-weight: 600
@@ -332,11 +336,11 @@
     span:first-child
       font-weight: 600
       color: var(--fg)
-      font-size: calc(1.05rem * var(--card-scale, 1))
+      font-size: 0.85rem
       
     span:last-child
       font-weight: 600
-      font-size: calc(1.15rem * var(--card-scale, 1))
+      font-size: 0.9rem
       
       &.bonus
         color: var(--success)
@@ -346,18 +350,15 @@
         
       &.final-amount
         color: var(--success)
-        font-size: calc(1.75rem * var(--card-scale, 1))
+        font-size: 1.25rem
     
     &.subtotal
       border-top: 1px solid var(--border-muted)
-      margin-top: 0.35rem
-      padding-top: 0.5rem
-      padding-bottom: 0.35rem
+      margin-top: 0.25rem
+      padding: 0.35rem 0.4rem
       background: var(--surface-muted)
-      margin-left: -0.5rem
-      margin-right: -0.5rem
-      padding-left: 0.5rem
-      padding-right: 0.5rem
+      margin-left: -0.4rem
+      margin-right: -0.4rem
       border-radius: 0.25rem
       
       span:last-child
@@ -365,13 +366,13 @@
         color: var(--primary)
         
     &.final
-      margin-top: 0.5rem
-      padding-top: 0.75rem
+      margin-top: 0.35rem
+      padding-top: 0.5rem
       border-top: 2px solid var(--success)
       
       span:first-child
         font-weight: 700
-        font-size: calc(1.15rem * var(--card-scale, 1))
+        font-size: 0.9rem
       
   .empty
     @extend %grid
@@ -388,41 +389,40 @@
     @extend %flex
     align-items: center
     justify-content: center
-    gap: 0.5rem
+    gap: 0.35rem
     width: 100%
-    margin-top: 0.5rem
-    padding: 0.5rem
+    margin-top: 0.35rem
+    padding: 0.35rem
     background: var(--primary)
     color: white
     border: none
-    border-radius: 0.5rem
+    border-radius: 0.4rem
     font-weight: 600
     cursor: pointer
-    font-size: 1rem
+    font-size: 0.8rem
     @extend %transition
 
     &:hover
       background: var(--secondary)
       transform: translateY(-1px)
-      box-shadow: 0 4px 12px color-mix(in oklab, var(--primary) 30%, transparent)
 
   .dialog-summary
     @extend %grid
-    gap: 0.35rem
-    margin-bottom: 1.5rem
-    padding: 0.875rem
+    gap: 0.25rem
+    margin-bottom: 1rem
+    padding: 0.65rem
     background: var(--surface-secondary)
     border-radius: var(--radius)
     border: 2px solid var(--border-muted)
 
   .summary-line
     @extend %flex-between
-    padding: 0.25rem 0
-    font-size: 1rem
+    padding: 0.15rem 0
+    font-size: 0.85rem
     
     span:first-child
       color: var(--fg-muted)
-      font-size: 0.95rem
+      font-size: 0.8rem
       
     span:last-child
       font-weight: 600
@@ -436,11 +436,11 @@
         
       &.final-amount
         color: var(--success)
-        font-size: 1.45rem
+        font-size: 1.1rem
         
     &.final
-      margin-top: 0.35rem
-      padding-top: 0.75rem
+      margin-top: 0.25rem
+      padding-top: 0.5rem
       border-top: 2px solid var(--success)
 
   .calculation-steps

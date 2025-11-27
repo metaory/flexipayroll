@@ -33,7 +33,7 @@
   }
 </script>
 
-<Wizard {currentStep} on:next={handleNext} on:prev={handlePrev}>
+<Wizard {currentStep} onNext={handleNext} onPrev={handlePrev}>
   
   {#if currentStepData.id === 'config'}
     <Rules basicConfigData={$basicConfig} />

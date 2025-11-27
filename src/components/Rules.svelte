@@ -1,307 +1,149 @@
 <script>
   import Icon from '@iconify/svelte'
   import { rules, basicConfig, addRule, updateRule, removeRule, toggleRule, reorderRules, resetRules, updateBasicConfig } from '../stores.js'
-  import { RULE_TYPES, RULE_CATEGORIES, CRITERIA_TYPES, createRule, validateRule } from '../rules.js'
+  import { RULE_TYPES, RULE_CATEGORIES, CRITERIA_TYPES } from '../rules.js'
   import { toasts } from '../lib/toast.js'
   import { confirmDialog } from '../lib/dialog.js'
   import Dialog from './Dialog.svelte'
 
   let { basicConfigData = $basicConfig } = $props()
 
+  // Constants
+  const EMPTY_RULE = { label: '', type: RULE_TYPES.FIXED, value: 0, criteria: { appliesTo: [] }, category: RULE_CATEGORIES.BONUS }
+  const EMPTY_ERRORS = { label: false, value: false }
+  const CRITERIA_OPTIONS = {
+    gender: [{ value: CRITERIA_TYPES.MALE, label: 'Male' }, { value: CRITERIA_TYPES.FEMALE, label: 'Female' }],
+    marital: [{ value: CRITERIA_TYPES.SINGLE, label: 'Single' }, { value: CRITERIA_TYPES.MARRIED, label: 'Married' }]
+  }
+  const CONFIG_FIELDS = [
+    { key: 'workdayHours', label: 'Hours/Day', type: 'number', min: 1, max: 24, step: 0.5, fallback: 8 },
+    { key: 'overtimeRate', label: 'OT Rate', type: 'number', min: 0, max: 10, step: 0.1, fallback: 1.5, hint: 'OT multiplier' },
+    { key: 'undertimeRate', label: 'UT Rate', type: 'number', min: 0, max: 1, step: 0.1, fallback: 0.5, hint: 'UT multiplier' },
+    { key: 'workingDaysPerMonth', label: 'Days/Month', type: 'number', min: 1, max: 31, fallback: 22 },
+    { key: 'currencySymbol', label: 'Currency', type: 'text', fallback: '$' },
+    { key: 'monthDays', label: 'Month Days', type: 'number', min: 28, max: 31, fallback: 30 },
+    { key: 'firstDayWeekday', label: 'Week Start', type: 'select', fallback: 'Saturday', options: ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] }
+  ]
+  const RULE_TYPE_OPTIONS = [
+    { value: RULE_TYPES.FIXED, label: 'Fixed' },
+    { value: RULE_TYPES.DAYS_MULTIPLIER, label: 'Days ×' },
+    { value: RULE_TYPES.PERCENTAGE_MONTHLY, label: '% Monthly' },
+    { value: RULE_TYPES.PERCENTAGE_BASE, label: '% Base' },
+    { value: RULE_TYPES.HOURLY_MULTIPLIER, label: 'Hourly ×' }
+  ]
+
   // Form state
   let showRuleDialog = $state(false)
   let editingRule = $state(null)
-  let errors = $state({ label: false, value: false, gender: false, marital: false })
-  let newRule = $state({
-    label: '',
-    type: RULE_TYPES.FIXED,
-    value: 0,
-    criteria: { appliesTo: [] },
-    category: RULE_CATEGORIES.BONUS
-  })
+  let errors = $state({ ...EMPTY_ERRORS })
+  let newRule = $state({ ...EMPTY_RULE })
+  let draggedRule = $state(null)
 
-  // Gender options
-  const genderOptions = [
-    { value: CRITERIA_TYPES.MALE, label: 'Male' },
-    { value: CRITERIA_TYPES.FEMALE, label: 'Female' }
-  ]
+  // Criteria selection helpers
+  const getCriteriaSelection = (types) => newRule.criteria.appliesTo.find(c => types.includes(c)) || ''
+  const getGenderSelection = () => getCriteriaSelection([CRITERIA_TYPES.MALE, CRITERIA_TYPES.FEMALE])
+  const getMaritalSelection = () => getCriteriaSelection([CRITERIA_TYPES.SINGLE, CRITERIA_TYPES.MARRIED])
 
-  // Marital status options
-  const maritalStatusOptions = [
-    { value: CRITERIA_TYPES.SINGLE, label: 'Single' },
-    { value: CRITERIA_TYPES.MARRIED, label: 'Married' }
-  ]
-
-  // Helper to get current selection
-  const getGenderSelection = () => {
-    return newRule.criteria.appliesTo.find(c => c === CRITERIA_TYPES.MALE || c === CRITERIA_TYPES.FEMALE) || ''
-  }
-
-  const getMaritalSelection = () => {
-    return newRule.criteria.appliesTo.find(c => c === CRITERIA_TYPES.SINGLE || c === CRITERIA_TYPES.MARRIED) || ''
-  }
-
-  // Handle dialog close
-  const handleDialogClose = () => {
+  // Form reset
+  const resetForm = () => {
     showRuleDialog = false
     editingRule = null
-    newRule = {
-      label: '',
-      type: RULE_TYPES.FIXED,
-      value: 0,
-      criteria: { appliesTo: [] },
-      category: RULE_CATEGORIES.BONUS
-    }
+    errors = { ...EMPTY_ERRORS }
+    newRule = { ...EMPTY_RULE }
   }
 
-  // Basic config handlers
+  // Basic config handler
   const updateBasicConfigField = (field, value) => {
     basicConfigData = { ...basicConfigData, [field]: value }
     updateBasicConfig({ [field]: value })
   }
 
-  // Clear all storage data
+  // Storage reset
   const resetAllStorage = async () => {
-    if (!await confirmDialog('DANGEROUS: This will clear ALL data (employees, attendance, payroll, rules, config). This cannot be undone. Continue?')) {
-      return
-    }
-    
-    // Clear all local storage
+    if (!await confirmDialog('DANGEROUS: Clear ALL data? Cannot be undone.')) return
     localStorage.clear()
-    toasts.success('All data cleared. Page will reload.')
-    
-    // Reload page after short delay
+    toasts.success('All data cleared. Reloading...')
     setTimeout(() => window.location.reload(), 1000)
   }
 
   // Rule form handlers
-  const startAddRule = () => {
-    newRule = {
-      label: '',
-      type: RULE_TYPES.FIXED,
-      value: 0,
-      criteria: { appliesTo: [] },
-      category: RULE_CATEGORIES.BONUS
-    }
-    showRuleDialog = true
-  }
-
-  const startEditRule = (rule) => {
-    editingRule = rule
-    newRule = { ...rule }
-    showRuleDialog = true
-  }
+  const startAddRule = () => { newRule = { ...EMPTY_RULE }; showRuleDialog = true }
+  const startEditRule = (rule) => { editingRule = rule; newRule = { ...rule }; showRuleDialog = true }
 
   const saveRule = () => {
-    errors = { label: false, value: false, gender: false, marital: false }
+    const validations = [
+      [!newRule.label?.trim(), 'label'],
+      [!newRule.value && newRule.value !== 0, 'value']
+    ]
+    errors = validations.filter(([c]) => c).reduce((acc, [, f]) => ({ ...acc, [f]: true }), { ...EMPTY_ERRORS })
     
-    if (!newRule.label || newRule.label.trim() === '') {
-      errors.label = true
-    }
-    
-    if (!newRule.value || newRule.value === 0) {
-      errors.value = true
-    }
-    
-    if (errors.label || errors.value) {
-      toasts.error('Please fix the errors below')
-      return
-    }
+    if (Object.values(errors).some(Boolean)) return toasts.error('Fix errors below')
     
     try {
-      if (editingRule) {
-        updateRule(editingRule.id, newRule)
-        toasts.success('Rule updated')
-      } else {
-        addRule(newRule)
-        toasts.success('Rule added')
-      }
-      cancelRuleForm()
-      errors = { label: false, value: false, gender: false, marital: false }
-    } catch (error) {
-      toasts.error(error.message)
-    }
-  }
-
-  const cancelRuleForm = () => {
-    showRuleDialog = false
-    editingRule = null
-    errors = { label: false, value: false, gender: false, marital: false }
-    newRule = {
-      label: '',
-      type: RULE_TYPES.FIXED,
-      value: 0,
-      criteria: { appliesTo: [] },
-      category: RULE_CATEGORIES.BONUS
-    }
+      editingRule ? updateRule(editingRule.id, newRule) : addRule(newRule)
+      toasts.success(editingRule ? 'Rule updated' : 'Rule added')
+      resetForm()
+    } catch (e) { toasts.error(e.message) }
   }
 
   const deleteRule = async (id) => {
-    if (await confirmDialog('Delete this rule?')) {
-      removeRule(id)
-      toasts.success('Rule deleted')
-    }
-  }
-
-  const toggleRuleEnabled = (id) => {
-    toggleRule(id)
+    if (await confirmDialog('Delete this rule?')) { removeRule(id); toasts.success('Rule deleted') }
   }
 
   const handleResetRules = async () => {
-    if (await confirmDialog('Reset all rules to defaults? This will remove any custom rules.')) {
-      resetRules()
-      toasts.success('Rules reset to defaults')
-    }
+    if (await confirmDialog('Reset rules to defaults?')) { resetRules(); toasts.success('Rules reset') }
   }
 
-  // Sortable rules list
-  let draggedRule = $state(null)
-
-  const handleDragStart = (event, rule) => {
-    draggedRule = rule
-    event.dataTransfer.effectAllowed = 'move'
-  }
-
-  const handleDragOver = (event) => {
-    event.preventDefault()
-    event.dataTransfer.dropEffect = 'move'
-  }
-
-  const handleDrop = (event, targetRule) => {
-    event.preventDefault()
+  // Drag handlers
+  const handleDragStart = (e, rule) => { draggedRule = rule; e.dataTransfer.effectAllowed = 'move' }
+  const handleDragOver = (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' }
+  
+  const handleDrop = (e, targetRule) => {
+    e.preventDefault()
     if (!draggedRule || draggedRule.id === targetRule.id) return
-
-    const currentRules = $rules
-    const draggedIndex = currentRules.findIndex(r => r.id === draggedRule.id)
-    const targetIndex = currentRules.findIndex(r => r.id === targetRule.id)
-
-    const reordered = [...currentRules]
-    const [dragged] = reordered.splice(draggedIndex, 1)
-    reordered.splice(targetIndex, 0, dragged)
-
-    const ruleIds = reordered.map(r => r.id)
-    reorderRules(ruleIds)
-
+    const reordered = [...$rules]
+    const [dragged] = reordered.splice(reordered.findIndex(r => r.id === draggedRule.id), 1)
+    reordered.splice(reordered.findIndex(r => r.id === targetRule.id), 0, dragged)
+    reorderRules(reordered.map(r => r.id))
     draggedRule = null
   }
 
+  // Event handler factory - consolidated
+  const withStop = (fn) => (e, ...args) => { e?.stopPropagation(); fn(...args) }
+  const handleToggleClick = withStop((id) => toggleRule(id))
+  const handleEditClick = withStop(startEditRule)
+  const handleDeleteClick = withStop(deleteRule)
+
   const handleRuleCardClick = (e, rule) => {
-    if (!e || !e.target) return
-    const button = e.target.closest('button')
-    if (button) return
-    const footer = e.target.closest('.wizard-footer')
-    if (footer) return
+    if (e?.target?.closest('button, .wizard-footer')) return
     startEditRule(rule)
-  }
-
-  const handleToggleClick = (e, id) => {
-    if (!e) return
-    e.stopPropagation()
-    toggleRuleEnabled(id)
-  }
-
-  const handleEditClick = (e, rule) => {
-    if (!e) return
-    e.stopPropagation()
-    startEditRule(rule)
-  }
-
-  const handleDeleteClick = (e, id) => {
-    if (!e) return
-    e.stopPropagation()
-    deleteRule(id)
   }
 </script>
 
 <div class="rules-container">
-  <!-- Basic Configuration -->
   <section class="basic-config">
-    <h3>Basic Configuration</h3>
+    <h3>Config</h3>
     <div class="config-grid">
-      <label class="field">
-        <span>Working Hours/Day</span>
-            <input
-              type="number"
-              min="1"
-              max="24"
-              step="0.5"
-              value={basicConfigData.workdayHours || 8}
-              oninput={(e) => updateBasicConfigField('workdayHours', +e.target.value || 8)}
-            />
-      </label>
-      <label class="field">
-        <span>Overtime Rate (multiplier)</span>
-        <input
-          type="number"
-          min="0"
-          max="10"
-          step="0.1"
-          value={basicConfigData.overtimeRate ?? 1.5}
-          oninput={(e) => updateBasicConfigField('overtimeRate', +e.currentTarget.value || 1.5)}
-        />
-        <small>Rate multiplier for hours worked over standard (e.g., 1.5 = 1.5x hourly rate)</small>
-      </label>
-      <label class="field">
-        <span>Undertime Rate (multiplier)</span>
-        <input
-          type="number"
-          min="0"
-          max="1"
-          step="0.1"
-          value={basicConfigData.undertimeRate ?? 0.5}
-          oninput={(e) => updateBasicConfigField('undertimeRate', +e.currentTarget.value || 0.5)}
-        />
-        <small>Rate multiplier for hours worked under standard (e.g., 0.5 = 0.5x hourly rate)</small>
-      </label>
-      <label class="field">
-        <span>Working Days/Month</span>
-        <input
-          type="number"
-          min="1"
-          max="31"
-          value={basicConfigData.workingDaysPerMonth}
-          oninput={(e) => updateBasicConfigField('workingDaysPerMonth', +e.target.value || 22)}
-        />
-      </label>
-      <label class="field">
-        <span>Currency Symbol</span>
-        <input
-          type="text"
-          value={basicConfigData.currencySymbol || '$'}
-          oninput={(e) => updateBasicConfigField('currencySymbol', e.target.value || '$')}
-        />
-      </label>
-      <label class="field">
-        <span>Days in Month</span>
-        <input
-          type="number"
-          min="28"
-          max="31"
-          value={basicConfigData.monthDays || 30}
-          oninput={(e) => updateBasicConfigField('monthDays', +e.target.value || 30)}
-        />
-      </label>
-      <label class="field">
-        <span>First Day Weekday</span>
-        <select
-          value={basicConfigData.firstDayWeekday || 'Saturday'}
-          onchange={(e) => updateBasicConfigField('firstDayWeekday', e.target.value || 'Saturday')}
-        >
-          <option value="Saturday">Saturday</option>
-          <option value="Sunday">Sunday</option>
-          <option value="Monday">Monday</option>
-          <option value="Tuesday">Tuesday</option>
-          <option value="Wednesday">Wednesday</option>
-          <option value="Thursday">Thursday</option>
-          <option value="Friday">Friday</option>
-        </select>
-      </label>
+      {#each CONFIG_FIELDS as f}
+        <label class="field">
+          <span>{f.label}</span>
+          {#if f.type === 'select'}
+            <select value={basicConfigData[f.key] || f.fallback} onchange={(e) => updateBasicConfigField(f.key, e.target.value || f.fallback)}>
+              {#each f.options as opt}<option value={opt}>{opt}</option>{/each}
+            </select>
+          {:else}
+            <input type={f.type} min={f.min} max={f.max} step={f.step}
+              value={basicConfigData[f.key] ?? f.fallback}
+              oninput={(e) => updateBasicConfigField(f.key, f.type === 'number' ? +e.target.value || f.fallback : e.target.value || f.fallback)} />
+          {/if}
+          {#if f.hint}<small>{f.hint}</small>{/if}
+        </label>
+      {/each}
     </div>
-    
     <div class="config-actions">
       <button class="danger" onclick={resetAllStorage}>
-        <Icon icon="tabler:alert-triangle" width="3rem" height="3rem" style="width: 3rem; height: 3rem" />
-        Reset Storage (DANGEROUS)
+        <Icon icon="tabler:alert-triangle" width="1rem" height="1rem" />
+        Reset
       </button>
     </div>
   </section>
@@ -312,198 +154,105 @@
       <h3>Calculation Rules</h3>
       <div class="rules-actions">
         <button class="secondary" onclick={handleResetRules}>
-          <Icon icon="tabler:refresh" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
-          Reset to Defaults
+          <Icon icon="tabler:refresh" width="1rem" height="1rem" />
+          Reset
         </button>
         <button class="primary" onclick={startAddRule}>
-          <Icon icon="tabler:plus" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
-          Add Rule
+          <Icon icon="tabler:plus" width="1rem" height="1rem" />
+          Add
         </button>
       </div>
     </div>
 
-    <!-- Rules List -->
     <div class="rules-list">
       {#each $rules as rule (rule.id)}
-        <div
-          class="rule-card"
-          class:disabled={!rule.enabled}
-          data-category={rule.category}
-          draggable="true"
-          role="listitem"
-          onclick={(e) => handleRuleCardClick(e, rule)}
-          ondragstart={(e) => handleDragStart(e, rule)}
-          ondragover={(e) => handleDragOver(e)}
-          ondrop={(e) => handleDrop(e, rule)}
-        >
-          <div class="rule-info">
-            <div class="rule-header">
-              <h4>{rule.label}</h4>
-              <div class="rule-badges">
-                <span class="badge category-{rule.category}">{rule.category}</span>
-                <span class="badge type-{rule.type}">{rule.type.replace('_', ' ')}</span>
-              </div>
-            </div>
-            <div class="rule-details">
-              <p class="rule-value">{rule.value}</p>
-              {#if rule.criteria.appliesTo.length > 0}
-                <p class="rule-applies">
-                  {#each rule.criteria.appliesTo as criteria}
-                    <span class="criteria-badge">
-                      {[genderOptions, maritalStatusOptions].flat().find(opt => opt.value === criteria)?.label || criteria}
-                    </span>
-                  {/each}
-                </p>
-              {/if}
-              <p class="rule-order">{rule.order}</p>
-            </div>
+        <div class="rule-card" class:disabled={!rule.enabled} data-category={rule.category} draggable="true" role="button" tabindex="0"
+          onclick={(e) => handleRuleCardClick(e, rule)} onkeydown={(e) => e.key === 'Enter' && handleRuleCardClick(e, rule)}
+          ondragstart={(e) => handleDragStart(e, rule)} ondragover={handleDragOver} ondrop={(e) => handleDrop(e, rule)}>
+          <div class="rule-header">
+            <h4>{rule.label}</h4>
+            <span class="badge category-{rule.category}">{rule.category}</span>
+            <span class="badge type-{rule.type}">{RULE_TYPE_OPTIONS.find(o => o.value === rule.type)?.label || rule.type}</span>
           </div>
-
+          <div class="rule-details">
+            <span class="rule-value">{rule.value}</span>
+            {#each rule.criteria.appliesTo as c}
+              <span class="criteria-badge">{[...CRITERIA_OPTIONS.gender, ...CRITERIA_OPTIONS.marital].find(o => o.value === c)?.label || c}</span>
+            {/each}
+            <span class="rule-order">{rule.order}</span>
+          </div>
           <div class="rule-actions">
-            <button
-              class="toggle-btn"
-              class:enabled={rule.enabled}
-              onclick={(e) => handleToggleClick(e, rule.id)}
-            >
-              <Icon icon={rule.enabled ? "tabler:eye" : "tabler:eye-closed"} width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
-              </button>
-              <button class="edit-btn" onclick={(e) => handleEditClick(e, rule)}>
-                <Icon icon="tabler:edit" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
-              </button>
-              <button class="delete-btn" onclick={(e) => handleDeleteClick(e, rule.id)}>
-                <Icon icon="tabler:trash" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
-            </button>
+            <button class="toggle-btn" class:enabled={rule.enabled} onclick={(e) => handleToggleClick(e, rule.id)}>
+              <Icon icon={rule.enabled ? "tabler:eye" : "tabler:eye-closed"} width="1rem" height="1rem" /></button>
+            <button class="edit-btn" onclick={(e) => handleEditClick(e, rule)}>
+              <Icon icon="tabler:edit" width="1rem" height="1rem" /></button>
+            <button class="delete-btn" onclick={(e) => handleDeleteClick(e, rule.id)}>
+              <Icon icon="tabler:trash" width="1rem" height="1rem" /></button>
           </div>
         </div>
       {/each}
     </div>
   </section>
 
-  <!-- Add/Edit Rule Form -->
-  <Dialog
-    bind:open={showRuleDialog}
-    title={editingRule ? 'Edit Rule' : 'Add New Rule'}
-    size="medium"
-  >
-
-        <div class="form-grid">
-          <label class="field" class:error={errors.label}>
-            <span>Rule Label</span>
-            <input
-              type="text"
-              value={newRule.label}
-              oninput={(e) => {
-                newRule.label = e.target.value
-                if (errors.label) errors.label = false
-              }}
-              placeholder="e.g., Performance Bonus"
-            />
-          </label>
-
-          <label class="field">
-            <span>Type</span>
-            <select
-              value={newRule.type}
-              onchange={(e) => newRule.type = e.target.value}
-            >
-              <option value={RULE_TYPES.FIXED}>Fixed Amount</option>
-              <option value={RULE_TYPES.DAYS_MULTIPLIER}>Days Multiplier</option>
-              <option value={RULE_TYPES.PERCENTAGE_MONTHLY}>Percentage of Monthly Salary</option>
-              <option value={RULE_TYPES.PERCENTAGE_BASE}>Percentage of Base Salary</option>
-              <option value={RULE_TYPES.HOURLY_MULTIPLIER}>Hourly Multiplier</option>
-            </select>
-          </label>
-
-          <label class="field" class:error={errors.value}>
-            <span>Value</span>
-            <input
-              type="number"
-              min="0"
-              step={newRule.type === RULE_TYPES.PERCENTAGE_MONTHLY || newRule.type === RULE_TYPES.PERCENTAGE_BASE ? "0.01" : "1"}
-              value={newRule.value}
-              oninput={(e) => {
-                newRule.value = +e.target.value
-                if (errors.value) errors.value = false
-              }}
-            />
-          </label>
-
-          <label class="field">
-            <span>Category</span>
-            <select
-              value={newRule.category}
-              onchange={(e) => newRule.category = e.target.value}
-            >
-              <option value={RULE_CATEGORIES.BONUS}>Bonus</option>
-              <option value={RULE_CATEGORIES.DEDUCTION}>Deduction</option>
-            </select>
-          </label>
-
-          <div class="field criteria-field">
-            <span>Applies To</span>
-            
-            <div class="radio-groups-grid">
-              <div class="radio-group">
-                <span class="group-label">Gender</span>
-                <div class="radio-options">
-                  {#each genderOptions as option}
-                    <label class="radio-label">
-                      <input
-                        type="radio"
-                        name="gender"
-                        value={option.value}
-                        checked={getGenderSelection() === option.value}
-                        onchange={() => {
-                          const filtered = newRule.criteria.appliesTo.filter(c => 
-                            c !== CRITERIA_TYPES.MALE && c !== CRITERIA_TYPES.FEMALE
-                          )
-                          newRule.criteria.appliesTo = [...filtered, option.value]
-                          // No validation required; empty selection means applies to all
-                        }}
-                      />
-                      <span>{option.label}</span>
-                    </label>
-                  {/each}
-                </div>
-              </div>
-
-              <div class="radio-group">
-                <span class="group-label">Marital Status</span>
-                <div class="radio-options">
-                  {#each maritalStatusOptions as option}
-                    <label class="radio-label">
-                      <input
-                        type="radio"
-                        name="marital"
-                        value={option.value}
-                        checked={getMaritalSelection() === option.value}
-                        onchange={() => {
-                          const filtered = newRule.criteria.appliesTo.filter(c => 
-                            c !== CRITERIA_TYPES.SINGLE && c !== CRITERIA_TYPES.MARRIED
-                          )
-                          newRule.criteria.appliesTo = [...filtered, option.value]
-                          // No validation required; empty selection means applies to all
-                        }}
-                      />
-                      <span>{option.label}</span>
-                    </label>
-                  {/each}
-                </div>
-              </div>
+  <Dialog bind:open={showRuleDialog} title={editingRule ? 'Edit' : 'Add Rule'} size="medium">
+    <div class="form-grid">
+      <label class="field" class:error={errors.label}>
+        <span>Label</span>
+        <input type="text" value={newRule.label} placeholder="Rule name"
+          oninput={(e) => { newRule.label = e.target.value; errors.label = false }} />
+      </label>
+      <label class="field">
+        <span>Type</span>
+        <select value={newRule.type} onchange={(e) => newRule.type = e.target.value}>
+          {#each RULE_TYPE_OPTIONS as o}<option value={o.value}>{o.label}</option>{/each}
+        </select>
+      </label>
+      <label class="field" class:error={errors.value}>
+        <span>Value</span>
+        <input type="number" min="0" step={newRule.type.includes('percentage') ? 0.01 : 1} value={newRule.value}
+          oninput={(e) => { newRule.value = +e.target.value; errors.value = false }} />
+      </label>
+      <label class="field">
+        <span>Category</span>
+        <select value={newRule.category} onchange={(e) => newRule.category = e.target.value}>
+          <option value={RULE_CATEGORIES.BONUS}>Bonus</option>
+          <option value={RULE_CATEGORIES.DEDUCTION}>Deduction</option>
+        </select>
+      </label>
+      <div class="field criteria-field">
+        <span>Applies To</span>
+        <div class="radio-groups-grid">
+          <div class="radio-group">
+            <span class="group-label">Gender</span>
+            <div class="radio-options">
+              {#each CRITERIA_OPTIONS.gender as o}
+                <label class="radio-label">
+                  <input type="radio" name="gender" value={o.value} checked={getGenderSelection() === o.value}
+                    onchange={() => newRule.criteria.appliesTo = [...newRule.criteria.appliesTo.filter(c => c !== CRITERIA_TYPES.MALE && c !== CRITERIA_TYPES.FEMALE), o.value]} />
+                  <span>{o.label}</span>
+                </label>
+              {/each}
+            </div>
+          </div>
+          <div class="radio-group">
+            <span class="group-label">Marital</span>
+            <div class="radio-options">
+              {#each CRITERIA_OPTIONS.marital as o}
+                <label class="radio-label">
+                  <input type="radio" name="marital" value={o.value} checked={getMaritalSelection() === o.value}
+                    onchange={() => newRule.criteria.appliesTo = [...newRule.criteria.appliesTo.filter(c => c !== CRITERIA_TYPES.SINGLE && c !== CRITERIA_TYPES.MARRIED), o.value]} />
+                  <span>{o.label}</span>
+                </label>
+              {/each}
             </div>
           </div>
         </div>
-
-        <div class="form-actions">
-          <button class="secondary" onclick={cancelRuleForm}>
-            <Icon icon="tabler:x" style="width: var(--icon-size); height: var(--icon-size)" />
-            Cancel
-          </button>
-          <button class="primary" onclick={saveRule}>
-            <Icon icon="tabler:check" style="width: var(--icon-size); height: var(--icon-size)" />
-            Save
-          </button>
-        </div>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="secondary" onclick={resetForm}><Icon icon="tabler:x" width="1rem" height="1rem" />Cancel</button>
+      <button class="primary" onclick={saveRule}><Icon icon="tabler:check" width="1rem" height="1rem" />Save</button>
+    </div>
   </Dialog>
 </div>
 
@@ -512,38 +261,43 @@
 
   .rules-container
     @extend %grid
-    gap: 3rem
+    gap: 1.5rem
 
   .basic-config, .rules-management
     @extend %card-base
+    padding: 0.875rem
 
     h3
-      margin-bottom: 1.5rem
+      margin-bottom: 1rem
+      font-size: 1.5rem
       color: var(--primary)
 
   .config-grid
-    @include auto-grid(250px)
-    gap: 1.5rem
+    @include auto-grid(200px)
+    gap: 1rem
     align-items: start
 
   .field
     @extend %grid
-    gap: 0.5rem
+    gap: 0.35rem
     min-height: fit-content
 
     span
       font-weight: 600
+      font-size: 0.9rem
       color: var(--fg)
 
     input, select
       @extend %input-base
+      padding: 0.5rem 0.75rem
+      font-size: 1rem
 
     small
-      font-size: 1rem
+      font-size: 0.85rem
       color: var(--fg-muted)
       opacity: 0.7
-      margin-top: -0.25rem
-      line-height: 1.4
+      margin-top: -0.15rem
+      line-height: 1.3
 
     &.error input
       background: var(--error-bg)
@@ -557,7 +311,7 @@
   .config-actions
     @extend %flex
     justify-content: flex-end
-    margin-top: 1rem
+    margin-top: 0.75rem
 
     button.danger
       @extend %button-base
@@ -570,14 +324,16 @@
 
   .rules-header
     @extend %flex-between
-    margin-bottom: 2rem
+    margin-bottom: 1rem
 
   .rules-actions
     @extend %flex
-    gap: 1rem
+    gap: 0.5rem
 
     button
       @extend %button-base
+      padding: 0.5rem 0.75rem
+      font-size: 0.9rem
 
       &.primary
         @extend %button-primary
@@ -586,103 +342,110 @@
         @extend %button-secondary
 
   .rules-list
-    @include auto-grid(380px)
-    gap: 1rem
+    @include auto-grid(260px)
+    gap: 0.5rem
 
   .rule-card
-    @include card-draggable(1rem)
+    @extend %card-base
+    display: grid
+    gap: 0.35rem
     cursor: pointer
-    flex-direction: column
-    padding: 1.25rem
+    padding: 0.65rem
+    border: 2px solid transparent
 
     &:hover
       background: var(--surface-medium)
+      border-color: var(--primary)
+      box-shadow: 0 4px 16px color-mix(in oklab, var(--primary) 20%, transparent)
+      transform: translateY(-2px)
+
+      h4
+        color: var(--secondary)
 
     &.disabled
       opacity: 0.6
       background: var(--surface-muted)
 
+      &:hover
+        transform: none
+        box-shadow: none
+
     &[data-category="bonus"]
       background: var(--surface-success)
+
+      &:hover
+        border-color: var(--success)
+        box-shadow: 0 4px 16px color-mix(in oklab, var(--success) 25%, transparent)
 
     &[data-category="deduction"]
       background: color-mix(in oklab, var(--error) 12%, transparent)
 
-  .rule-info
-    @include card-content
-    width: 100%
+      &:hover
+        border-color: var(--error)
+        box-shadow: 0 4px 16px color-mix(in oklab, var(--error) 20%, transparent)
 
-    .rule-header
-      margin-bottom: 0.75rem
+  .rule-header
+    @extend %flex
+    align-items: center
+    gap: 0.35rem
+    flex-wrap: wrap
 
-      h4
-        @include card-title(1.6rem)
-        margin-bottom: 0.5rem
-        line-height: 1.3
+    h4
+      @include card-title(1.15rem)
+      margin: 0
+      line-height: 1.2
 
-    .rule-badges
-      @extend %flex
-      gap: 0.5rem
-      margin-bottom: 0.75rem
-      flex-wrap: wrap
+  .badge
+    padding: 0.2rem 0.4rem
+    border-radius: 0.4rem
+    font-size: 0.85rem
+    font-weight: 600
 
-    .badge
-      padding: 0.5rem 0.75rem
-      border-radius: var(--radius)
-      font-size: 1.8rem
-      font-weight: 700
+    &.category-bonus
+      background: var(--success-bg)
+      color: var(--success)
 
-      &.category-bonus
-        background: var(--success-bg)
-        color: var(--success)
+    &.category-deduction
+      background: var(--error-bg)
+      color: var(--error)
 
-      &.category-deduction
-        background: var(--error-bg)
-        color: var(--error)
+    &.type-fixed, &.type-days_multiplier, &.type-percentage_monthly, &.type-percentage_base, &.type-hourly_multiplier
+      background: var(--primary-bg)
+      color: var(--primary)
 
-      &.type-fixed, &.type-days_multiplier, &.type-percentage_monthly, &.type-percentage_base, &.type-hourly_multiplier
-        background: var(--primary-bg)
-        color: var(--primary)
+  .rule-details
+    @extend %flex
+    align-items: center
+    gap: 0.35rem
+    flex-wrap: wrap
 
-    .rule-details
-      display: grid
-      gap: 0.75rem
+  .rule-value
+    font-size: 1.75rem
+    color: var(--fg)
+    line-height: 1
+    font-weight: 700
 
-      .rule-value
-        font-size: 4.5rem
-        color: var(--fg)
-        margin: 0
-        line-height: 1.2
-        font-weight: 700
-
-      .rule-applies
-        display: flex
-        flex-wrap: wrap
-        gap: 0.5rem
-        align-items: center
-        margin: 0
-
-      .rule-order
-        display: inline-flex
-        align-items: center
-        justify-content: center
-        width: 4.5rem
-        height: 4.5rem
-        border-radius: 50%
-        background: var(--primary-bg)
-        color: var(--primary)
-        font-size: 2.8rem
-        font-weight: 700
-        margin: 0
-        flex-shrink: 0
+  .rule-order
+    display: inline-flex
+    align-items: center
+    justify-content: center
+    width: 1.5rem
+    height: 1.5rem
+    border-radius: 50%
+    background: var(--primary-bg)
+    color: var(--primary)
+    font-size: 0.85rem
+    font-weight: 700
+    margin-left: auto
+    flex-shrink: 0
 
   .rule-actions
     @extend %flex
-    gap: 0.5rem
+    gap: 0.35rem
     flex-shrink: 0
     margin-top: auto
-    padding-top: 0.75rem
-    --icon-btn-size: 2.25rem
+    padding-top: 0.5rem
+    --icon-btn-size: 1.75rem
 
   .toggle-btn, .edit-btn, .delete-btn
     @include card-action-btn
@@ -703,13 +466,13 @@
     color: var(--error)
 
   .form-grid
-    @include auto-grid(200px)
-    gap: 1.5rem
-    margin-bottom: 2rem
+    @include auto-grid(180px)
+    gap: 1rem
+    margin-bottom: 1.25rem
 
   .form-actions
     @extend %flex
-    gap: 1rem
+    gap: 0.75rem
     justify-content: flex-end
 
     button
@@ -725,38 +488,38 @@
     grid-column: 1 / -1
 
   .radio-groups-grid
-    margin-top: 1rem
+    margin-top: 0.75rem
     display: grid
     grid-template-columns: repeat(2, 1fr)
-    gap: 1.5rem
+    gap: 1rem
 
   .radio-group
     .group-label
       display: block
-      font-size: 0.875rem
+      font-size: 0.8rem
       font-weight: 600
       color: var(--fg)
-      margin-bottom: 0.75rem
+      margin-bottom: 0.5rem
 
     &.error .group-label
       color: var(--error)
 
     &.error
-      padding: 1rem
+      padding: 0.75rem
       border-radius: var(--radius)
       background: var(--error-bg)
 
   .radio-options
     display: flex
-    gap: 0.5rem
+    gap: 0.35rem
 
   .radio-label
     display: flex
     align-items: center
-    gap: 0.5rem
+    gap: 0.35rem
     cursor: pointer
-    padding: 0.75rem 1rem
-    border-radius: var(--radius)
+    padding: 0.5rem 0.75rem
+    border-radius: 0.5rem
     background: var(--surface-muted)
     @extend %transition
 
@@ -764,13 +527,13 @@
       background: var(--surface-medium)
 
     input[type="radio"]
-      width: 1.25rem
-      height: 1.25rem
+      width: 1rem
+      height: 1rem
       cursor: pointer
       accent-color: var(--primary)
 
     span
-      font-size: 0.875rem
+      font-size: 0.8rem
       color: var(--fg)
       user-select: none
 
@@ -784,13 +547,12 @@
 
   .criteria-badge
     display: inline-block
-    padding: 0.5rem 0.75rem
+    padding: 0.2rem 0.4rem
     background: var(--primary-bg)
     color: var(--primary)
-    border-radius: var(--radius)
-    font-size: 1.9rem
-    font-weight: 700
+    border-radius: 0.35rem
+    font-size: 0.9rem
+    font-weight: 600
     white-space: nowrap
-    word-break: keep-all
     flex-shrink: 0
 </style>
