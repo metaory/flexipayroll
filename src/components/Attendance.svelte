@@ -61,7 +61,7 @@
     // 10:00 AM-5:00 PM: 1-hour intervals (7 columns)
     ...Array.from({ length: 7 }, (_, i) => ({
       hour: 10 + i,
-      label: `${10 + i}:00`,
+      label: `${10 + i}-${11 + i}`,
       duration: 1
     })),
     // 5:00-8:00 PM: 15-min intervals (13 columns)
@@ -188,8 +188,14 @@
     // Load fresh data from storage to ensure we have the latest saved state
     const employeeData = getAttendance(period, employeeId) || {}
 
+    // Default work hours: 8:00 to 16:00 (8 hours)
+    const defaultEntry = 8
+    const defaultExit = 16
+    
+    // Only fill defaults if employee has NO data at all for this period (brand new)
+    const isNewEmployee = Object.keys(employeeData).length === 0
+
     // Create data array - days as rows, time slots as columns
-    // Only load saved data - don't pre-fill empty days
     const data = calendarDays.map(day => {
       const dayData = employeeData[day.date]
 
@@ -199,7 +205,10 @@
         return timeSlots.map(slot => slotOverlaps(slot, entryTime, exitTime))
       }
 
-      return timeSlots.map(() => false)
+      // New employee - fill with defaults; existing employee - leave empty
+      return isNewEmployee 
+        ? timeSlots.map(slot => slotOverlaps(slot, defaultEntry, defaultExit))
+        : timeSlots.map(() => false)
     })
 
     // Create BitGrid with days as rows, time slots as columns
@@ -243,15 +252,22 @@
     timeSlots.map((_, slotIndex) => grid.setCell(dayIndex, slotIndex, false))
   }
 
-  // Ensure grid cells match saved attendance data exactly
+  // Ensure grid cells match saved attendance data exactly, save defaults only for brand new employees
   const loadExistingAttendanceData = (employeeId, grid) => {
     // Re-fetch latest data to ensure we have the most current state
     const employeeData = getAttendance(period, employeeId) || {}
+    
+    // Default work hours: 8:00 to 16:00 (8 hours)
+    const defaultEntry = 8
+    const defaultExit = 16
+    
+    // Only fill defaults if employee has NO data at all for this period (brand new)
+    const isNewEmployee = Object.keys(employeeData).length === 0
 
     calendarDays.map((day, dayIndex) => {
       const dayData = employeeData[day.date]
 
-      // Regular day with entry/exit times
+      // Regular day with entry/exit times - load saved data
       if (dayData?.type === DAY_TYPES.REGULAR && dayData.entryTime && dayData.exitTime) {
         const entryTime = parseTime(dayData.entryTime)
         const exitTime = parseTime(dayData.exitTime)
@@ -261,7 +277,20 @@
         return
       }
 
-      // Non-regular day or no data - clear all slots
+      // New employee with no data - fill with defaults and save
+      if (isNewEmployee) {
+        timeSlots.map((slot, slotIndex) => {
+          grid.setCell(dayIndex, slotIndex, slotOverlaps(slot, defaultEntry, defaultExit))
+        })
+        updateAttendance(employeeId, day.date, {
+          type: DAY_TYPES.REGULAR,
+          entryTime: formatTimeFromHour(defaultEntry),
+          exitTime: formatTimeFromHour(defaultExit)
+        })
+        return
+      }
+
+      // Existing employee, day with no data - clear cells
       clearDaySlots(grid, dayIndex)
     })
   }
@@ -638,25 +667,26 @@
         padding-top: 1.5rem
         padding-bottom: 1.5rem
 
-    // Hide scrollbar when not needed
+    // Thick scrollbars
     &::-webkit-scrollbar
-      width: 10px
-      height: 10px
+      width: 16px
+      height: 16px
 
     &::-webkit-scrollbar-track
       background: var(--surface-muted)
-      border-radius: 5px
+      border-radius: 8px
 
     &::-webkit-scrollbar-thumb
       background: var(--border)
-      border-radius: 5px
+      border-radius: 8px
+      border: 3px solid var(--surface-muted)
       transition: background 0.2s ease
 
       &:hover
         background: var(--primary)
 
     // Firefox scrollbar
-    scrollbar-width: thin
+    scrollbar-width: auto
     scrollbar-color: var(--border) var(--surface-muted)
 
   .grid-loading

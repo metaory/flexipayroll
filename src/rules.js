@@ -7,6 +7,8 @@
 // RULE TYPES & STRUCTURE
 // ============================================================================
 
+import { calculateWorkingHours } from './core.js'
+
 export const RULE_TYPES = {
   FIXED: 'fixed',
   DAYS_MULTIPLIER: 'days_multiplier', 
@@ -132,12 +134,13 @@ export const calculateRuleValue = (rule, employee, attendance, config) => {
   
   const hourlyRate = employee.dailySalary / config.workdayHours
   
-  const actualDaysWorked = Object.values(attendance || {}).filter(dayData => 
-    dayData && (
-      (dayData.type === 'regular' && dayData.entryTime && dayData.exitTime) ||
-      dayData.type === 'holiday'
-    )
-  ).length
+  const { totalHours: actualHoursWorked, actualDays: actualDaysWorked } = Object.values(attendance || {}).reduce((acc, d) => {
+    if (d?.type === 'regular' && d.entryTime && d.exitTime) 
+      return { totalHours: acc.totalHours + calculateWorkingHours(d.entryTime, d.exitTime), actualDays: acc.actualDays + 1 }
+    if (d?.type === 'holiday') 
+      return { totalHours: acc.totalHours + config.workdayHours, actualDays: acc.actualDays + 1 }
+    return acc
+  }, { totalHours: 0, actualDays: 0 })
   
   const expectedMonthDays = config.monthDays || 30
   const daysWorkedProportion = expectedMonthDays > 0 ? Math.min(actualDaysWorked / expectedMonthDays, 1.0) : 0
@@ -152,10 +155,13 @@ export const calculateRuleValue = (rule, employee, attendance, config) => {
 
 export const applyRules = (employee, attendance, rules, config) => {
   const hourlyRate = employee.dailySalary / config.workdayHours
-  const actualDays = Object.values(attendance || {}).filter(d => 
-    d && ((d.type === 'regular' && d.entryTime && d.exitTime) || d.type === 'holiday')
-  ).length
-  const totalHours = actualDays * 8
+  const { totalHours, actualDays } = Object.values(attendance || {}).reduce((acc, d) => {
+    if (d?.type === 'regular' && d.entryTime && d.exitTime) 
+      return { totalHours: acc.totalHours + calculateWorkingHours(d.entryTime, d.exitTime), actualDays: acc.actualDays + 1 }
+    if (d?.type === 'holiday') 
+      return { totalHours: acc.totalHours + config.workdayHours, actualDays: acc.actualDays + 1 }
+    return acc
+  }, { totalHours: 0, actualDays: 0 })
   const baseSalary = totalHours * hourlyRate
 
   // Jadid employees get base salary only

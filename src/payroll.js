@@ -3,7 +3,7 @@
  * Declarative step definitions with minimal complexity
  */
 
-import { calculateDailyRate, calculateHourlyRate } from './core.js'
+import { calculateDailyRate, calculateHourlyRate, calculateWorkingHours } from './core.js'
 import { applyRules, RULE_TYPES } from './rules.js'
 
 // Step definitions - simplified for rules-based system
@@ -20,18 +20,14 @@ export const calculateEmployeePayroll = (employee, attendance, adjustments, rule
   const dailyRate = calculateDailyRate(employee.dailySalary)
   const hourlyRate = calculateHourlyRate(employee.dailySalary, basicConfig.workdayHours)
   
-  // Count actual days with attendance data
-  const actualDays = Object.values(attendance || {}).filter(dayData => 
-    dayData && (
-      (dayData.type === 'regular' && dayData.entryTime && dayData.exitTime) ||
-      dayData.type === 'holiday'
-    )
-  ).length
-  
-  // Calculate total hours: actual days × 8 hours (standard day)
-  // Each day counts as exactly 8 hours, regardless of actual entry/exit times
-  const standardDayHours = 8
-  const totalHours = actualDays * standardDayHours
+  // Calculate actual hours worked from attendance data
+  const { totalHours, actualDays } = Object.values(attendance || {}).reduce((acc, d) => {
+    if (d?.type === 'regular' && d.entryTime && d.exitTime) 
+      return { totalHours: acc.totalHours + calculateWorkingHours(d.entryTime, d.exitTime), actualDays: acc.actualDays + 1 }
+    if (d?.type === 'holiday') 
+      return { totalHours: acc.totalHours + basicConfig.workdayHours, actualDays: acc.actualDays + 1 }
+    return acc
+  }, { totalHours: 0, actualDays: 0 })
   
   // Apply rules engine (this calculates baseSalary internally)
   const ruleResults = applyRules(employee, attendance, rules, basicConfig)
@@ -297,17 +293,17 @@ export const buildCalculationSteps = (result) => {
   // Step 3: Base Salary
   const baseSalaryCalc = result.totalHours * result.hourlyRate
   const daysWorked = result.actualDays || 0
-  const standardDayHours = 8
+  const avgHoursPerDay = daysWorked > 0 ? (result.totalHours / daysWorked).toFixed(1) : 0
   steps.push({
     label: 'Base Salary',
-    formula: 'Actual Days × 8 hours × Hourly Rate',
-    formulaWithValues: `${daysWorked} days × ${standardDayHours}h = ${result.totalHours}h × ${result.hourlyRate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/h = ${baseSalaryCalc.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+    formula: 'Actual Hours Worked × Hourly Rate',
+    formulaWithValues: `${result.totalHours.toFixed(1)}h × ${result.hourlyRate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/h = ${baseSalaryCalc.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
     result: result.baseSalary,
-    explanation: `Base salary calculated as ${daysWorked} days worked × ${standardDayHours} hours per day = ${result.totalHours} hours × hourly rate. Each day counts as exactly ${standardDayHours} hours.`,
+    explanation: `Base salary calculated from actual hours worked (${result.totalHours.toFixed(1)}h across ${daysWorked} days, avg ${avgHoursPerDay}h/day) × hourly rate.`,
     inputs: { 
       actualDays: daysWorked,
-      hoursPerDay: standardDayHours,
       totalHours: result.totalHours,
+      avgHoursPerDay,
       hourlyRate: result.hourlyRate 
     },
     type: 'base'
