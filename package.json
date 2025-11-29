@@ -2,7 +2,7 @@
   "name": "flexipayroll",
   "description": "A lightweight, browser-based payroll management system for SMEs",
   "private": true,
-  "version": "2.1.0",
+  "version": "2.2.0",
   "type": "module",
   "license": "AGPL-3.0",
   "scripts": {
