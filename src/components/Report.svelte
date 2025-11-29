@@ -59,28 +59,24 @@
     {#each results as result}
       {@const employeeId = result.employee.id}
       {@const isExpanded = expandedCards[employeeId]}
-      <button class="report-card" class:expanded={isExpanded} onclick={() => { expandedCards = { ...expandedCards, [employeeId]: !isExpanded } }}>
-        <header>
-          <div class="header-top">
-            <h3 class="name">{result.employee.name}</h3>
-            <span class="period">{period}</span>
-          </div>
-          <div class="header-stats">
-            <div class="stat">
-              <Icon icon="tabler:calendar-check" width="1.1rem" height="1.1rem" />
-              <span>{result.actualDays} days</span>
-            </div>
-            <div class="stat">
-              <Icon icon="tabler:clock-hour-4" width="1.1rem" height="1.1rem" />
-              <span>{formatHours(result.totalHours)}</span>
-            </div>
-          </div>
-          <div class="header-amount">
-            <span class="label">Take-Home Salary</span>
-            <span class="amount">{fmt(result.finalSalary || 0)}</span>
-          </div>
-        </header>
-        
+      <div class="report-card" class:expanded={isExpanded} role="button" tabindex="0" onclick={() => { expandedCards = { ...expandedCards, [employeeId]: !isExpanded } }} onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (expandedCards = { ...expandedCards, [employeeId]: !isExpanded })}>
+        <div class="top">
+          <h3>{result.employee.name}</h3>
+          <span>{period}</span>
+        </div>
+        <div class="stats">
+          <span><Icon icon="tabler:calendar-check" width="1.1rem" height="1.1rem" />{result.actualDays} days</span>
+          <span><Icon icon="tabler:clock-hour-4" width="1.1rem" height="1.1rem" />{formatHours(result.totalHours)}</span>
+        </div>
+        <div class="amount">
+          <span>Take-Home Salary</span>
+          <b>{fmt(result.finalSalary || 0)}</b>
+        </div>
+        {#if !isExpanded}
+          <button class="quick-print" onclick={(e) => { e.stopPropagation(); printEmployeeReport(result, period, $basicConfig.currencySymbol, $basicConfig.organizationName) }} title="Print">
+            <Icon icon="tabler:printer" width="1.4rem" height="1.2rem" />
+          </button>
+        {/if}
         {#if isExpanded}
           <div class="breakdown">
             {#each getCalculationBreakdown(result) as item}
@@ -90,18 +86,18 @@
               </div>
             {/each}
           </div>
-          <div class="actions" onclick={(e) => e.stopPropagation()}>
-            <button class="btn details" onclick={() => openCalculationDialog(result)}>
+          <div class="actions">
+            <button class="btn details" onclick={(e) => { e.stopPropagation(); openCalculationDialog(result) }}>
               <Icon icon="tabler:calculator" width="1.1rem" height="1.1rem" />
               View Details
             </button>
-            <button class="btn print" onclick={() => printEmployeeReport(result, period, $basicConfig.currencySymbol)}>
+            <button class="btn print" onclick={(e) => { e.stopPropagation(); printEmployeeReport(result, period, $basicConfig.currencySymbol, $basicConfig.organizationName) }}>
               <Icon icon="tabler:printer" width="1.1rem" height="1.1rem" />
               Print
             </button>
           </div>
         {/if}
-      </button>
+      </div>
     {/each}
   </div>
 {/if}
@@ -166,6 +162,7 @@
     
   .report-card
     @extend %card-base
+    position: relative
     display: block
     width: 100%
     text-align: left
@@ -182,59 +179,67 @@
     &.expanded
       border-color: var(--secondary)
       
-    header
-      display: grid
-      gap: 0.85rem
-      
-      .header-top
-        display: flex
-        justify-content: space-between
-        align-items: baseline
-        gap: 0.75rem
+    .top
+      display: flex
+      justify-content: space-between
+      align-items: baseline
+      gap: 0.75rem
+      h3
+        font-weight: 700
+        color: var(--primary)
+        font-size: 1.2rem
+        margin: 0
+      span
+        font-size: 0.85rem
+        color: var(--fg-muted)
         
-        .name
-          font-weight: 700
-          color: var(--primary)
-          font-size: 1.2rem
-          margin: 0
-          
-        .period
-          font-size: 0.85rem
-          color: var(--fg-muted)
-          
-      .header-stats
+    .stats
+      display: flex
+      gap: 1.25rem
+      margin: 0.85rem 0
+      span
         display: flex
-        gap: 1.25rem
-        
-        .stat
-          display: flex
-          align-items: center
-          gap: 0.4rem
-          font-size: 0.9rem
-          color: var(--fg-muted)
-          
-          span
-            font-weight: 500
-          
-      .header-amount
-        display: flex
-        justify-content: space-between
         align-items: center
-        padding: 0.75rem 1rem
-        background: var(--success-bg)
-        border-radius: 0.6rem
-        border-left: 4px solid var(--success)
+        gap: 0.4rem
+        font-size: 0.9rem
+        font-weight: 500
+        color: var(--fg-muted)
         
-        .label
-          font-size: 0.85rem
-          color: var(--fg)
-          font-weight: 600
+    .amount
+      display: flex
+      justify-content: space-between
+      align-items: center
+      padding: 0.75rem 1rem
+      background: var(--success-bg)
+      border-radius: 0.6rem
+      border-left: 4px solid var(--success)
+      span
+        font-size: 0.85rem
+        color: var(--fg)
+        font-weight: 600
+      b
+        font-family: 'JetBrains Mono', monospace
+        font-weight: 700
+        font-size: 1.25rem
+        color: var(--success)
           
-        .amount
-          font-family: 'JetBrains Mono', monospace
-          font-weight: 700
-          font-size: 1.25rem
-          color: var(--success)
+  .quick-print
+    position: absolute
+    top: 0.75rem
+    right: 0.75rem
+    opacity: 0
+    padding: 0.65rem
+    border: none
+    border-radius: 0.5rem
+    background: var(--neutral)
+    color: white
+    cursor: pointer
+    @extend %transition
+    &:hover
+      background: color-mix(in oklab, var(--neutral) 80%, black)
+      
+  .report-card:hover .quick-print
+    opacity: 1
         
   .breakdown
     display: grid

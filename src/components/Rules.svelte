@@ -16,6 +16,7 @@
     marital: [{ value: CRITERIA_TYPES.SINGLE, label: 'Single' }, { value: CRITERIA_TYPES.MARRIED, label: 'Married' }]
   }
   const CONFIG_FIELDS = [
+    { key: 'organizationName', label: 'Organization', type: 'text', fallback: '' },
     { key: 'workdayHours', label: 'Hours/Day', type: 'number', min: 1, max: 24, step: 0.5, fallback: 8 },
     { key: 'overtimeRate', label: 'OT Rate', type: 'number', min: 0, max: 10, step: 0.1, fallback: 1.5, hint: 'OT multiplier' },
     { key: 'undertimeRate', label: 'UT Rate', type: 'number', min: 0, max: 1, step: 0.1, fallback: 0.5, hint: 'UT multiplier' },

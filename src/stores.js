@@ -27,6 +27,7 @@ const KEYS = {
 // ============================================================================
 
 const DEFAULT_BASIC_CONFIG = {
+  organizationName: 'XPayroll',
   workdayHours: 8,
   workingDaysPerMonth: 22,
   currencySymbol: '$',

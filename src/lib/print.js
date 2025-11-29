@@ -46,7 +46,7 @@ const getAppliedRules = (result) => {
   return applied
 }
 
-export const printEmployeeReport = (result, period, currencySymbol = '$') => {
+export const printEmployeeReport = (result, period, currencySymbol = '$', organizationName = '') => {
   const fmt = (v) => formatCurrency(v, 'id-ID', 'IDR', currencySymbol)
   const applied = getAppliedRules(result)
   
@@ -59,7 +59,7 @@ export const printEmployeeReport = (result, period, currencySymbol = '$') => {
 </head>
 <body>
   <div class="header">
-    <h1>PAYSLIP</h1>
+    ${organizationName ? `<h1>${organizationName}</h1><p style="font-size:12pt;font-weight:bold;margin:0.3rem 0">PAYSLIP</p>` : '<h1>PAYSLIP</h1>'}
     <p>${result.employee.name} · ${period}</p>
   </div>
   
@@ -91,6 +91,7 @@ export const printEmployeeReport = (result, period, currencySymbol = '$') => {
   const win = window.open('', '_blank', 'width=800,height=600')
   win.document.write(html)
   win.document.close()
+  win.onafterprint = () => win.close()
   win.focus()
   win.print()
 }
