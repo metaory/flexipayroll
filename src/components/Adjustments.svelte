@@ -251,8 +251,9 @@
     @extend %transition
 
     &:hover
-      border-color: var(--border)
-      box-shadow: 0 4px 12px color-mix(in oklab, var(--primary) 15%, transparent)
+      border-color: var(--primary)
+      box-shadow: 0 4px 16px color-mix(in oklab, var(--primary) 20%, transparent)
+      transform: translateY(-2px)
 
   .employee-header
     @extend %flex-between
@@ -301,8 +302,8 @@
     @extend %transition
 
     &:hover
-      border-color: var(--border)
-      transform: translateX(4px)
+      border-color: var(--primary)
+      transform: translateY(-2px)
 
     &[data-positive="true"]
       background: var(--surface-success)

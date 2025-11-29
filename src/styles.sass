@@ -53,6 +53,10 @@ $light-bg: hsl(0deg 0% 100% / 70%)
     --secondary: #{$secondary}
     --surface: #{color.mix($primary, transparent, 8%)}
     --surface-secondary: #{color.mix($secondary, transparent, 8%)}
+    --surface-muted: #{color.mix($primary, transparent, 5%)}
+    --surface-medium: #{color.mix($primary, transparent, 15%)}
+    --surface-light: #{color.mix($primary, transparent, 3%)}
+    --primary-bg: #{color.mix($primary, transparent, 15%)}
     --border: #{color.mix($primary, transparent, 25%)}
     --border-muted: #{color.mix($primary, transparent, 15%)}
   @else
@@ -67,6 +71,10 @@ $light-bg: hsl(0deg 0% 100% / 70%)
     --secondary: #{$secondary}
     --surface: #{color.mix($primary, transparent, 8%)}
     --surface-secondary: #{color.mix($secondary, transparent, 8%)}
+    --surface-muted: #{color.mix($primary, transparent, 5%)}
+    --surface-medium: #{color.mix($primary, transparent, 15%)}
+    --surface-light: #{color.mix($primary, transparent, 3%)}
+    --primary-bg: #{color.mix($primary, transparent, 15%)}
     --border: #{color.mix($primary, transparent, 25%)}
     --border-muted: #{color.mix($primary, transparent, 15%)}
 
@@ -74,9 +82,10 @@ $light-bg: hsl(0deg 0% 100% / 70%)
     $semantic: semantic-color($name, $dark)
     --#{$name}: #{$semantic}
     --surface-#{$name}: #{color.mix($semantic, transparent, 12%)}
+    --#{$name}-bg: #{color.mix($semantic, transparent, 15%)}
     --on-#{$name}: #{if($dark, black, white)}
-    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1)
-    --radius: #{$radius}
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1)
+  --radius: #{$radius}
 
 
 :root

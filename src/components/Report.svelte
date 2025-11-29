@@ -17,101 +17,41 @@
     dialogOpen = true
   }
   
-  // Helper function to get applied rules by category
+  const fmt = (v) => formatCurrency(v, 'id-ID', 'IDR', $basicConfig.currencySymbol)
+  
   const getAppliedRules = (result) => {
-    const applied = { bonuses: [], deductions: [], adjustments: [] }
-    
-    Object.entries(result.ruleResults).forEach(([category, rules]) => {
-      if (category === 'bonuses' || category === 'deductions') {
-        Object.entries(rules).forEach(([ruleId, ruleData]) => {
-          // Handle percentage rules that store finalValue separately
-          const value = ruleData.finalValue !== undefined ? ruleData.finalValue : ruleData.value
-          if (value > 0) {
-            const rule = ruleData.rule
-            const percentage = rule.type === 'percentage_monthly' || rule.type === 'percentage_base' 
-              ? ` (${(rule.value * 100).toFixed(1)}%)` 
-              : ''
-            
-            applied[category].push({
-              id: ruleId,
-              label: rule.label + percentage,
-              value: value,
-              type: rule.type
-            })
-          }
-        })
-      }
+    const applied = { bonuses: [], deductions: [] }
+    Object.entries(result.ruleResults).map(([category, rules]) => {
+      if (category !== 'bonuses' && category !== 'deductions') return
+      Object.entries(rules).map(([ruleId, ruleData]) => {
+        const value = ruleData.finalValue !== undefined ? ruleData.finalValue : ruleData.value
+        if (value > 0) {
+          const rule = ruleData.rule
+          const pct = rule.type === 'percentage_monthly' || rule.type === 'percentage_base' 
+            ? ` (${(rule.value * 100).toFixed(1)}%)` : ''
+          applied[category].push({ id: ruleId, label: rule.label + pct, value, type: rule.type })
+        }
+      })
     })
-    
     return applied
   }
   
-  // Helper to format calculation breakdown
   const getCalculationBreakdown = (result) => {
-    const breakdown = []
     const applied = getAppliedRules(result)
-    
-    // Base Salary
-    breakdown.push({
-      label: 'Base Salary',
-      value: result.baseSalary,
-      type: 'base',
-      sign: '+'
-    })
-    
-    // Bonuses
-    applied.bonuses.forEach(bonus => {
-      breakdown.push({
-        label: bonus.label,
-        value: bonus.value,
-        type: 'bonus',
-        sign: '+'
-      })
-    })
-    
-    // Adjustments
-    if (result.adjustmentTotal !== 0) {
-      breakdown.push({
-        label: 'Adjustments',
-        value: result.adjustmentTotal,
-        type: 'adjustment',
-        sign: result.adjustmentTotal > 0 ? '+' : ''
-      })
-    }
-    
-    // Gross Salary subtotal
-    breakdown.push({
-      label: 'Gross Salary',
-      value: result.grossSalary,
-      type: 'subtotal',
-      sign: '='
-    })
-    
-    // Deductions
-    applied.deductions.forEach(deduction => {
-      breakdown.push({
-        label: deduction.label,
-        value: deduction.value,
-        type: 'deduction',
-        sign: '-'
-      })
-    })
-    
-    // Final Salary
-    breakdown.push({
-      label: 'Take-Home Salary',
-      value: result.finalSalary || 0,
-      type: 'final',
-      sign: '='
-    })
-    
-    return breakdown
+    return [
+      { label: 'Base Salary', value: result.baseSalary, type: 'base', sign: '+' },
+      ...applied.bonuses.map(b => ({ label: b.label, value: b.value, type: 'bonus', sign: '+' })),
+      ...(result.adjustmentTotal !== 0 ? [{ label: 'Adjustments', value: result.adjustmentTotal, type: 'adjustment', sign: result.adjustmentTotal > 0 ? '+' : '-' }] : []),
+      { label: 'Gross Salary', value: result.grossSalary, type: 'subtotal', sign: '=' },
+      ...applied.deductions.map(d => ({ label: d.label, value: d.value, type: 'deduction', sign: '-' })),
+      { label: 'Take-Home', value: result.finalSalary || 0, type: 'final', sign: '=' }
+    ]
   }
 </script>
 
 {#if results.length === 0}
   <div class="empty">
-    <Icon icon="tabler:file-text" width="2.5rem" height="2.5rem" />
+    <Icon icon="tabler:file-text" width="3rem" height="3rem" />
     <p>No employees to report</p>
   </div>
 {:else}
@@ -119,70 +59,49 @@
     {#each results as result}
       {@const employeeId = result.employee.id}
       {@const isExpanded = expandedCards[employeeId]}
-      <div class="report-card" class:collapsed={!isExpanded}>
-        <button 
-          class="card-header-btn"
-          onclick={() => {
-            expandedCards = { ...expandedCards, [employeeId]: !isExpanded }
-          }}
-        >
-          <header>
-            <div class="header-content">
-              <Icon 
-                icon={isExpanded ? "tabler:chevron-down" : "tabler:chevron-right"} 
-                width="2.5rem" 
-                height="2.5rem" 
-                style="width: var(--icon-size); height: var(--icon-size)" 
-              />
-              <div class="header-text">
-                <h3>{result.employee.name}</h3>
-                <span>Payslip - {period}</span>
-              </div>
+      <button class="report-card" class:expanded={isExpanded} onclick={() => { expandedCards = { ...expandedCards, [employeeId]: !isExpanded } }}>
+        <header>
+          <div class="header-top">
+            <h3 class="name">{result.employee.name}</h3>
+            <span class="period">{period}</span>
+          </div>
+          <div class="header-stats">
+            <div class="stat">
+              <Icon icon="tabler:calendar-check" width="1.1rem" height="1.1rem" />
+              <span>{result.actualDays} days</span>
             </div>
-            {#if !isExpanded}
-              <div class="collapsed-salary">
-                <span class="collapsed-label">Take-Home:</span>
-                <span class="collapsed-amount">
-                  {formatCurrency(result.finalSalary || 0, 'id-ID', 'IDR', $basicConfig.currencySymbol)}
-                </span>
-              </div>
-            {/if}
-          </header>
-        </button>
-        
-        {#if isExpanded}
-          <div class="summary">
-            <div class="line hours">
-              <span>Hours Worked:</span>
+            <div class="stat">
+              <Icon icon="tabler:clock-hour-4" width="1.1rem" height="1.1rem" />
               <span>{formatHours(result.totalHours)}</span>
             </div>
-            
+          </div>
+          <div class="header-amount">
+            <span class="label">Take-Home Salary</span>
+            <span class="amount">{fmt(result.finalSalary || 0)}</span>
+          </div>
+        </header>
+        
+        {#if isExpanded}
+          <div class="breakdown">
             {#each getCalculationBreakdown(result) as item}
-              {@const valueClass = item.type === 'bonus' ? 'bonus' 
-                : item.type === 'deduction' ? 'deduction' 
-                : item.type === 'adjustment' ? (item.value > 0 ? 'bonus' : 'deduction')
-                : item.type === 'final' ? 'final-amount' : ''}
-              <div class="line" class:subtotal={item.type === 'subtotal'} class:final={item.type === 'final'} class:adjustment={item.type === 'adjustment'}>
-                <span>{item.label}:</span>
-                <span class={valueClass}>
-                  {item.sign}{formatCurrency(Math.abs(item.value), 'id-ID', 'IDR', $basicConfig.currencySymbol)}
-                </span>
+              <div class="row {item.type}">
+                <span class="row-label">{item.label}</span>
+                <span class="row-value">{item.sign}{fmt(Math.abs(item.value))}</span>
               </div>
             {/each}
           </div>
-
-          <div class="card-actions">
-            <button class="view-details-btn" onclick={() => openCalculationDialog(result)}>
-              <Icon icon="tabler:calculator" width="1rem" height="1rem" />
-              Details
+          <div class="actions" onclick={(e) => e.stopPropagation()}>
+            <button class="btn details" onclick={() => openCalculationDialog(result)}>
+              <Icon icon="tabler:calculator" width="1.1rem" height="1.1rem" />
+              View Details
             </button>
-            <button class="print-btn" onclick={() => printEmployeeReport(result, period, $basicConfig.currencySymbol)}>
-              <Icon icon="tabler:printer" width="1rem" height="1rem" />
+            <button class="btn print" onclick={() => printEmployeeReport(result, period, $basicConfig.currencySymbol)}>
+              <Icon icon="tabler:printer" width="1.1rem" height="1.1rem" />
               Print
             </button>
           </div>
         {/if}
-      </div>
+      </button>
     {/each}
   </div>
 {/if}
@@ -190,60 +109,48 @@
 {#if selectedResult}
   <Dialog bind:open={dialogOpen} title="{selectedResult.employee.name} - Calculation Details" size="large">
     <div class="dialog-summary">
-      <div class="summary-line">
-        <span>Hours Worked:</span>
-        <span>{formatHours(selectedResult.totalHours)}</span>
+      <div class="summary-header">
+        <div class="summary-stat">
+          <Icon icon="tabler:clock-hour-4" width="1.2rem" height="1.2rem" />
+          <span>{formatHours(selectedResult.totalHours)}</span>
+        </div>
+        <div class="summary-stat">
+          <Icon icon="tabler:calendar-check" width="1.2rem" height="1.2rem" />
+          <span>{selectedResult.actualDays} days</span>
+        </div>
       </div>
       
-      <div class="summary-line">
-        <span>Base Salary:</span>
-        <span>{formatCurrency(selectedResult.baseSalary, 'id-ID', 'IDR', $basicConfig.currencySymbol)}</span>
-      </div>
-      
-      {#each getAppliedRules(selectedResult).bonuses as bonus}
-        <div class="summary-line">
-          <span>{bonus.label}:</span>
-          <span class="bonus">+{formatCurrency(bonus.value, 'id-ID', 'IDR', $basicConfig.currencySymbol)}</span>
-        </div>
-      {/each}
-      
-      {#each getAppliedRules(selectedResult).deductions as deduction}
-        <div class="summary-line">
-          <span>{deduction.label}:</span>
-          <span class="deduction">-{formatCurrency(deduction.value, 'id-ID', 'IDR', $basicConfig.currencySymbol)}</span>
-        </div>
-      {/each}
-      
-      {#if selectedResult.adjustmentTotal !== 0}
-        <div class="summary-line adjustment">
-          <span>Adjustments:</span>
-          <span class={selectedResult.adjustmentTotal > 0 ? 'bonus' : 'deduction'}>
-            {selectedResult.adjustmentTotal > 0 ? '+' : '-'}{formatCurrency(Math.abs(selectedResult.adjustmentTotal), 'id-ID', 'IDR', $basicConfig.currencySymbol)}
-          </span>
-        </div>
-      {/if}
-      
-      <div class="summary-line">
-        <span>Gross Salary:</span>
-        <span>{formatCurrency(selectedResult.grossSalary, 'id-ID', 'IDR', $basicConfig.currencySymbol)}</span>
-      </div>
-      
-      <div class="summary-line final">
-        <span>Take-Home:</span>
-        <span class="final-amount">{formatCurrency(selectedResult.finalSalary, 'id-ID', 'IDR', $basicConfig.currencySymbol)}</span>
+      <div class="summary-rows">
+        <div class="row base"><span>Base Salary</span><span>{fmt(selectedResult.baseSalary)}</span></div>
+        {#each getAppliedRules(selectedResult).bonuses as bonus}
+          <div class="row bonus"><span>{bonus.label}</span><span>+{fmt(bonus.value)}</span></div>
+        {/each}
+        {#if selectedResult.adjustmentTotal !== 0}
+          <div class="row adjustment"><span>Adjustments</span><span>{selectedResult.adjustmentTotal > 0 ? '+' : '-'}{fmt(Math.abs(selectedResult.adjustmentTotal))}</span></div>
+        {/if}
+        <div class="row subtotal"><span>Gross Salary</span><span>{fmt(selectedResult.grossSalary)}</span></div>
+        {#each getAppliedRules(selectedResult).deductions as ded}
+          <div class="row deduction"><span>{ded.label}</span><span>-{fmt(ded.value)}</span></div>
+        {/each}
+        <div class="row final"><span>Take-Home</span><span>{fmt(selectedResult.finalSalary)}</span></div>
       </div>
     </div>
     
-    <div class="calculation-steps">
-      {#each buildCalculationSteps(selectedResult) as step, index}
-        <div class="calculation-step" class:bonus={step.type === 'bonus'} class:deduction={step.type === 'deduction'} class:adjustment={step.type === 'adjustment'} class:summary={step.type === 'summary'} class:final={step.type === 'final'} class:base={step.type === 'base'}>
-          <span class="step-number">{index + 1}</span>
-          <div class="step-header">
-            <span class="step-label">{step.label}</span>
-            <span class="step-result">{formatCurrency(step.result, 'id-ID', 'IDR', $basicConfig.currencySymbol)}</span>
+    <h4 class="steps-title">Calculation Steps</h4>
+    <div class="steps">
+      {#each buildCalculationSteps(selectedResult) as step, i}
+        <div class="step {step.type}">
+          <span class="num">{i + 1}</span>
+          <div class="step-content">
+            <div class="step-head">
+              <span class="step-label">{step.label}</span>
+              <span class="step-result">{fmt(step.result)}</span>
+            </div>
+            <div class="step-formulas">
+              <span class="formula">{step.formula}</span>
+              <span class="calc">{step.formulaWithValues}</span>
+            </div>
           </div>
-          <span class="formula-text">{step.formula}</span>
-          <span class="calculation-text">{step.formulaWithValues}</span>
         </div>
       {/each}
     </div>
@@ -254,315 +161,378 @@
   @use "../styles.sass" as *
   
   .report-grid
-    @include auto-grid(260px)
-    gap: 0.5rem
+    @include auto-grid(300px)
+    gap: 1rem
     
   .report-card
     @extend %card-base
-    --card-scale: 1
-    padding: 0.65rem
+    display: block
+    width: 100%
+    text-align: left
+    padding: 1rem
     border: 2px solid transparent
+    cursor: pointer
     @extend %transition
     
     &:hover
       border-color: var(--primary)
-      box-shadow: 0 4px 16px color-mix(in oklab, var(--primary) 20%, transparent)
       transform: translateY(-2px)
-    
-    &.collapsed .card-header-btn
-      margin-bottom: 0
-        
-    .card-header-btn
-      width: 100%
-      background: none
-      border: none
-      padding: 0
-      margin: 0
-      cursor: pointer
-      text-align: left
-      @extend %transition
+      box-shadow: 0 6px 20px color-mix(in oklab, var(--primary) 20%, transparent)
       
-      &:hover .header-text h3
-        color: var(--secondary)
+    &.expanded
+      border-color: var(--secondary)
+      
+    header
+      display: grid
+      gap: 0.85rem
+      
+      .header-top
+        display: flex
+        justify-content: space-between
+        align-items: baseline
+        gap: 0.75rem
         
-      header
-        @extend %flex-between
-        align-items: flex-start
-        margin-bottom: 0
-        padding-bottom: 0.5rem
-        border-bottom: 2px solid var(--border-muted)
+        .name
+          font-weight: 700
+          color: var(--primary)
+          font-size: 1.2rem
+          margin: 0
+          
+        .period
+          font-size: 0.85rem
+          color: var(--fg-muted)
+          
+      .header-stats
+        display: flex
+        gap: 1.25rem
         
-        .header-content
-          @extend %flex
+        .stat
+          display: flex
           align-items: center
-          gap: 0.35rem
-          flex: 1
+          gap: 0.4rem
+          font-size: 0.9rem
+          color: var(--fg-muted)
           
-          .header-text
-            @extend %grid
-            gap: 0.15rem
-            
-            h3
-              @include card-title(1.1rem)
-              margin: 0
-              
-            span
-              @include card-text(0.85rem)
-              
-        .collapsed-salary
-          @extend %grid
-          gap: 0.15rem
-          text-align: right
-          margin-left: 0.75rem
+          span
+            font-weight: 500
           
-          .collapsed-label
-            @include card-text(0.75rem)
-            color: var(--fg-muted)
-            font-weight: 600
-            
-          .collapsed-amount
-            @include card-title(1.15rem)
-            color: var(--success)
-            font-weight: 700
+      .header-amount
+        display: flex
+        justify-content: space-between
+        align-items: center
+        padding: 0.75rem 1rem
+        background: var(--success-bg)
+        border-radius: 0.6rem
+        border-left: 4px solid var(--success)
         
-  .summary
-    @extend %grid
-    gap: 0.25rem
-    margin-top: 0.5rem
+        .label
+          font-size: 0.85rem
+          color: var(--fg)
+          font-weight: 600
+          
+        .amount
+          font-family: 'JetBrains Mono', monospace
+          font-weight: 700
+          font-size: 1.25rem
+          color: var(--success)
+        
+  .breakdown
+    display: grid
+    gap: 0.5rem
+    margin-top: 1rem
+    padding-top: 1rem
+    border-top: 2px solid var(--border-muted)
     
-  .line
-    @extend %flex-between
-    padding: 0.2rem 0
-    @include card-text(0.9rem)
+  .row
+    display: flex
+    justify-content: space-between
+    align-items: center
+    padding: 0.6rem 0.85rem
+    border-radius: 0.5rem
+    @extend %transition
     
-    &.hours
-      border-bottom: 1px solid var(--border-muted)
-      margin-bottom: 0.15rem
-      padding-bottom: 0.35rem
-      
-      span:last-child
-        font-weight: 600
-        color: var(--info)
-    
-    span:first-child
-      font-weight: 600
-      color: var(--fg)
-      font-size: 0.85rem
-      
-    span:last-child
-      font-weight: 600
+    .row-label
       font-size: 0.9rem
+      color: var(--fg)
+      font-weight: 500
       
-      &.bonus
+    .row-value
+      font-family: 'JetBrains Mono', monospace
+      font-weight: 600
+      font-size: 0.95rem
+      
+    &.base
+      background: var(--success-bg)
+      border-left: 4px solid var(--success)
+      
+      .row-value
         color: var(--success)
         
-      &.deduction
+    &.bonus
+      background: var(--success-bg)
+      border-left: 4px solid var(--success)
+      
+      .row-value
+        color: var(--success)
+        
+    &.deduction
+      background: var(--error-bg)
+      border-left: 4px solid var(--error)
+      
+      .row-value
         color: var(--error)
         
-      &.final-amount
-        color: var(--success)
-        font-size: 1.25rem
-    
-    &.subtotal
-      border-top: 1px solid var(--border-muted)
-      margin-top: 0.25rem
-      padding: 0.35rem 0.4rem
-      background: var(--surface-muted)
-      margin-left: -0.4rem
-      margin-right: -0.4rem
-      border-radius: 0.25rem
+    &.adjustment
+      background: var(--warning-bg)
+      border-left: 4px solid var(--warning)
       
-      span:last-child
+      .row-value
+        color: var(--warning)
+        
+    &.subtotal
+      background: var(--surface-medium)
+      border-left: 4px solid var(--primary)
+      margin-top: 0.35rem
+      
+      .row-label
+        font-weight: 700
+        
+      .row-value
         font-weight: 700
         color: var(--primary)
         
     &.final
-      margin-top: 0.35rem
-      padding-top: 0.5rem
-      border-top: 2px solid var(--success)
+      background: var(--success-bg)
+      border: 2px solid var(--success)
+      margin-top: 0.5rem
+      padding: 0.75rem 1rem
       
-      span:first-child
+      .row-label
         font-weight: 700
-        font-size: 0.9rem
-
-    &.adjustment
-      background: var(--surface-secondary)
-      margin-left: -0.4rem
-      margin-right: -0.4rem
-      padding: 0.25rem 0.4rem
-      border-radius: 0.25rem
-      border-left: 3px solid var(--warning)
+        font-size: 1rem
+        
+      .row-value
+        color: var(--success)
+        font-size: 1.25rem
+        font-weight: 700
       
+  .actions
+    display: flex
+    gap: 0.65rem
+    margin-top: 1rem
+    
+  .btn
+    flex: 1
+    display: flex
+    align-items: center
+    justify-content: center
+    gap: 0.5rem
+    padding: 0.65rem 1rem
+    border: none
+    border-radius: 0.6rem
+    font-weight: 600
+    font-size: 0.9rem
+    cursor: pointer
+    color: white
+    @extend %transition
+    
+    &:hover
+      transform: translateY(-2px)
+      box-shadow: 0 4px 12px color-mix(in oklab, var(--primary) 25%, transparent)
+    
+    &.details
+      background: var(--primary)
+      &:hover
+        background: var(--secondary)
+        
+    &.print
+      background: var(--neutral)
+      &:hover
+        background: color-mix(in oklab, var(--neutral) 80%, black)
+        box-shadow: 0 4px 12px color-mix(in oklab, var(--neutral) 25%, transparent)
+        
   .empty
     @extend %grid
     place-items: center
-    gap: 1rem
-    padding: 3rem
-    text-align: center
+    gap: 1.25rem
+    padding: 4rem
     color: var(--fg-muted)
     
     p
       margin: 0
-
-  .card-actions
-    @extend %flex
-    gap: 0.35rem
-    margin-top: 0.35rem
-
-  .view-details-btn, .print-btn
-    @extend %flex
-    align-items: center
-    justify-content: center
-    gap: 0.35rem
-    flex: 1
-    padding: 0.35rem
-    color: white
-    border: none
-    border-radius: 0.4rem
-    font-weight: 600
-    cursor: pointer
-    font-size: 0.8rem
-    @extend %transition
-
-    &:hover
-      transform: translateY(-1px)
-
-  .view-details-btn
-    background: var(--primary)
-    &:hover
-      background: var(--secondary)
-
-  .print-btn
-    background: var(--neutral)
-    &:hover
-      background: color-mix(in oklab, var(--neutral) 80%, black)
-
+      font-size: 1.1rem
+      
   .dialog-summary
-    @extend %grid
-    gap: 0.25rem
-    margin-bottom: 1rem
-    padding: 0.65rem
-    background: var(--surface-secondary)
-    border-radius: var(--radius)
-    border: 2px solid var(--border-muted)
-
-  .summary-line
-    @extend %flex-between
-    padding: 0.15rem 0
-    font-size: 0.85rem
+    margin-bottom: 1.25rem
     
-    span:first-child
-      color: var(--fg-muted)
-      font-size: 0.8rem
+    .summary-header
+      display: flex
+      gap: 2rem
+      padding: 1rem 1.25rem
+      background: var(--surface-secondary)
+      border-radius: 0.6rem
+      margin-bottom: 1rem
       
-    span:last-child
-      font-weight: 600
-      color: var(--fg)
+      .summary-stat
+        display: flex
+        align-items: center
+        gap: 0.5rem
+        font-size: 1rem
+        color: var(--fg)
+        font-weight: 600
+        
+    .summary-rows
+      display: grid
+      gap: 0.4rem
       
-      &.bonus
-        color: var(--success)
+      .row
+        display: flex
+        justify-content: space-between
+        align-items: center
+        padding: 0.5rem 0.85rem
+        border-radius: 0.45rem
+        font-size: 0.9rem
         
-      &.deduction
-        color: var(--error)
-        
-      &.final-amount
-        color: var(--success)
+        span:first-child
+          color: var(--fg)
+          font-weight: 500
+          
+        span:last-child
+          font-family: 'JetBrains Mono', monospace
+          font-weight: 600
+          
+        &.base, &.bonus
+          background: var(--success-bg)
+          border-left: 4px solid var(--success)
+          span:last-child
+            color: var(--success)
+            
+        &.deduction
+          background: var(--error-bg)
+          border-left: 4px solid var(--error)
+          span:last-child
+            color: var(--error)
+            
+        &.adjustment
+          background: var(--warning-bg)
+          border-left: 4px solid var(--warning)
+          span:last-child
+            color: var(--warning)
+            
+        &.subtotal
+          background: var(--surface-medium)
+          border-left: 4px solid var(--primary)
+          margin-top: 0.3rem
+          span:first-child
+            font-weight: 700
+          span:last-child
+            color: var(--primary)
+            font-weight: 700
+            
+        &.final
+          background: var(--success-bg)
+          border: 2px solid var(--success)
+          margin-top: 0.4rem
+          padding: 0.65rem 0.85rem
+          span:first-child
+            font-weight: 700
+          span:last-child
+            color: var(--success)
+            font-size: 1.1rem
+            font-weight: 700
 
-    &.adjustment
-      background: var(--surface-muted)
-      margin: 0.15rem -0.4rem
-      padding: 0.25rem 0.4rem
-      border-radius: 0.25rem
-      border-left: 3px solid var(--warning)
-        font-size: 1.1rem
-        
-    &.final
-      margin-top: 0.25rem
-      padding-top: 0.5rem
-      border-top: 2px solid var(--success)
+  .steps-title
+    font-size: 1rem
+    color: var(--fg)
+    margin: 0 0 0.75rem 0
+    font-weight: 700
 
-  .calculation-steps
-    @extend %grid
-    gap: 0.3rem
-
-  .calculation-step
+  .steps
     display: grid
-    grid-template-columns: 1.15rem 1fr
-    align-items: start
-    gap: 0.35rem 0.75rem
-    padding: 0.4rem 0.65rem
-    background: var(--surface-secondary)
-    border-radius: 0.35rem
-    border-left: 3px solid var(--border-muted)
-    @extend %transition
+    gap: 0.5rem
 
+  .step
+    display: grid
+    grid-template-columns: 1.5rem 1fr
+    gap: 0.65rem
+    padding: 0.65rem 0.85rem
+    background: var(--surface-secondary)
+    border-radius: 0.5rem
+    border-left: 4px solid var(--border-muted)
+    
     &.base
       border-left-color: var(--info)
-
+      
     &.bonus
       border-left-color: var(--success)
-
+      background: var(--success-bg)
+      
     &.deduction
       border-left-color: var(--error)
-
+      background: var(--error-bg)
+      
     &.adjustment
       border-left-color: var(--warning)
-
+      background: var(--warning-bg)
+      
     &.summary
       border-left-color: var(--primary)
       background: var(--surface-muted)
-
+      
     &.final
       border-left-color: var(--success)
       background: var(--success-bg)
+      border: 2px solid var(--success)
+      border-left-width: 4px
 
-  .step-number
-    @extend %grid
+  .num
+    display: grid
     place-items: center
-    width: 1.15rem
-    height: 1.15rem
+    width: 1.5rem
+    height: 1.5rem
     background: var(--border-muted)
     color: var(--fg)
     border-radius: 50%
     font-weight: 700
-    font-size: 0.6rem
-    flex-shrink: 0
+    font-size: 0.75rem
 
-  .step-header
-    @extend %flex-between
-    gap: 0.5rem
-    grid-column: 2
-
+  .step-content
+    display: grid
+    gap: 0.45rem
+    
+  .step-head
+    display: flex
+    justify-content: space-between
+    align-items: center
+    gap: 0.65rem
+    
     .step-label
       font-weight: 600
       color: var(--fg)
-      font-size: 0.85rem
-
+      font-size: 0.9rem
+      
     .step-result
+      font-family: 'JetBrains Mono', monospace
       font-weight: 700
       color: var(--primary)
-      font-size: 0.85rem
+      font-size: 0.95rem
 
-  .formula-text
-    grid-column: 2
+  .step-formulas
+    display: grid
+    gap: 0.3rem
+
+  .formula, .calc
     font-family: 'JetBrains Mono', monospace
+    font-size: 0.75rem
+    padding: 0.3rem 0.5rem
+    border-radius: 0.3rem
+    line-height: 1.45
+
+  .formula
     color: var(--fg-muted)
-    font-size: 0.7rem
     background: var(--bg-muted)
-    padding: 0.2rem 0.4rem
-    border-radius: 0.25rem
-    line-height: 1.4
-    margin-top: 0.15rem
-
-  .calculation-text
-    grid-column: 2
-    font-family: 'JetBrains Mono', monospace
+    
+  .calc
     color: var(--primary)
-    font-size: 0.7rem
     background: var(--primary-bg)
-    padding: 0.2rem 0.4rem
-    border-radius: 0.25rem
-    line-height: 1.4
-    margin-top: 0.15rem
-
 </style>
