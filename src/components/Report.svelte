@@ -4,6 +4,7 @@
   import { formatCurrency, formatHours } from '../core.js'
   import { buildCalculationSteps } from '../payroll.js'
   import { basicConfig } from '../stores.js'
+  import { printEmployeeReport } from '../lib/print.js'
   
   let { results = [], period = '' } = $props()
   
@@ -157,19 +158,29 @@
             </div>
             
             {#each getCalculationBreakdown(result) as item}
-              <div class="line" class:subtotal={item.type === 'subtotal'} class:final={item.type === 'final'}>
+              {@const valueClass = item.type === 'bonus' ? 'bonus' 
+                : item.type === 'deduction' ? 'deduction' 
+                : item.type === 'adjustment' ? (item.value > 0 ? 'bonus' : 'deduction')
+                : item.type === 'final' ? 'final-amount' : ''}
+              <div class="line" class:subtotal={item.type === 'subtotal'} class:final={item.type === 'final'} class:adjustment={item.type === 'adjustment'}>
                 <span>{item.label}:</span>
-                <span class={item.type === 'bonus' ? 'bonus' : item.type === 'deduction' ? 'deduction' : item.type === 'final' ? 'final-amount' : ''}>
-                  {item.sign}{formatCurrency(item.value, 'id-ID', 'IDR', $basicConfig.currencySymbol)}
+                <span class={valueClass}>
+                  {item.sign}{formatCurrency(Math.abs(item.value), 'id-ID', 'IDR', $basicConfig.currencySymbol)}
                 </span>
               </div>
             {/each}
           </div>
 
-          <button class="view-details-btn" onclick={() => openCalculationDialog(result)}>
-            <Icon icon="tabler:calculator" width="1rem" height="1rem" />
-            View Calculation Details
-          </button>
+          <div class="card-actions">
+            <button class="view-details-btn" onclick={() => openCalculationDialog(result)}>
+              <Icon icon="tabler:calculator" width="1rem" height="1rem" />
+              Details
+            </button>
+            <button class="print-btn" onclick={() => printEmployeeReport(result, period, $basicConfig.currencySymbol)}>
+              <Icon icon="tabler:printer" width="1rem" height="1rem" />
+              Print
+            </button>
+          </div>
         {/if}
       </div>
     {/each}
@@ -204,10 +215,10 @@
       {/each}
       
       {#if selectedResult.adjustmentTotal !== 0}
-        <div class="summary-line">
+        <div class="summary-line adjustment">
           <span>Adjustments:</span>
           <span class={selectedResult.adjustmentTotal > 0 ? 'bonus' : 'deduction'}>
-            {selectedResult.adjustmentTotal > 0 ? '+' : ''}{formatCurrency(selectedResult.adjustmentTotal, 'id-ID', 'IDR', $basicConfig.currencySymbol)}
+            {selectedResult.adjustmentTotal > 0 ? '+' : '-'}{formatCurrency(Math.abs(selectedResult.adjustmentTotal), 'id-ID', 'IDR', $basicConfig.currencySymbol)}
           </span>
         </div>
       {/if}
@@ -373,6 +384,14 @@
       span:first-child
         font-weight: 700
         font-size: 0.9rem
+
+    &.adjustment
+      background: var(--surface-secondary)
+      margin-left: -0.4rem
+      margin-right: -0.4rem
+      padding: 0.25rem 0.4rem
+      border-radius: 0.25rem
+      border-left: 3px solid var(--warning)
       
   .empty
     @extend %grid
@@ -385,15 +404,18 @@
     p
       margin: 0
 
-  .view-details-btn
+  .card-actions
+    @extend %flex
+    gap: 0.35rem
+    margin-top: 0.35rem
+
+  .view-details-btn, .print-btn
     @extend %flex
     align-items: center
     justify-content: center
     gap: 0.35rem
-    width: 100%
-    margin-top: 0.35rem
+    flex: 1
     padding: 0.35rem
-    background: var(--primary)
     color: white
     border: none
     border-radius: 0.4rem
@@ -403,8 +425,17 @@
     @extend %transition
 
     &:hover
-      background: var(--secondary)
       transform: translateY(-1px)
+
+  .view-details-btn
+    background: var(--primary)
+    &:hover
+      background: var(--secondary)
+
+  .print-btn
+    background: var(--neutral)
+    &:hover
+      background: color-mix(in oklab, var(--neutral) 80%, black)
 
   .dialog-summary
     @extend %grid
@@ -436,6 +467,13 @@
         
       &.final-amount
         color: var(--success)
+
+    &.adjustment
+      background: var(--surface-muted)
+      margin: 0.15rem -0.4rem
+      padding: 0.25rem 0.4rem
+      border-radius: 0.25rem
+      border-left: 3px solid var(--warning)
         font-size: 1.1rem
         
     &.final

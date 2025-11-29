@@ -45,33 +45,32 @@
     return `${finalH.toString().padStart(2, '0')}:${finalM.toString().padStart(2, '0')}`
   }
 
+  // Format compact time range label
+  const formatRangeLabel = (startHour, startMin, durationHours) => {
+    const endMin = startMin + durationHours * 60
+    const endHour = startHour + Math.floor(endMin / 60)
+    const endMinutes = endMin % 60
+    const startStr = startMin === 0 ? `${startHour}` : `${startHour}:${startMin.toString().padStart(2, '0')}`
+    const endStr = endMinutes === 0 ? `${endHour}` : `${endHour}:${endMinutes.toString().padStart(2, '0')}`
+    return `${startStr}-${endStr}`
+  }
+
   // Time slots with variable granularity
   const timeSlots = [
-    // 8:00-10:00 AM: 15-min intervals (8 columns)
-    ...Array.from({ length: 8 }, (_, i) => {
-      const totalMinutes = 8 * 60 + (i * 15) // Convert to total minutes from midnight
-      const hour = Math.floor(totalMinutes / 60)
-      const minutes = totalMinutes % 60
-      return {
-        hour: hour + (minutes / 60),
-        label: `${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`,
-        duration: 0.25
-      }
-    }),
-    // 10:00 AM-5:00 PM: 1-hour intervals (7 columns)
-    ...Array.from({ length: 7 }, (_, i) => ({
-      hour: 10 + i,
-      label: `${10 + i}-${11 + i}`,
+    // 8:00 AM - 4:00 PM: 1-hour intervals (8 columns)
+    ...Array.from({ length: 8 }, (_, i) => ({
+      hour: 8 + i,
+      label: `${8 + i}-${9 + i}`,
       duration: 1
     })),
-    // 5:00-8:00 PM: 15-min intervals (13 columns)
-    ...Array.from({ length: 13 }, (_, i) => {
-      const totalMinutes = 17 * 60 + (i * 15) // Convert to total minutes from midnight
+    // 4:00 PM - 8:00 PM: 15-min intervals (16 columns)
+    ...Array.from({ length: 16 }, (_, i) => {
+      const totalMinutes = 16 * 60 + (i * 15)
       const hour = Math.floor(totalMinutes / 60)
       const minutes = totalMinutes % 60
       return {
         hour: hour + (minutes / 60),
-        label: `${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`,
+        label: formatRangeLabel(hour, minutes, 0.25),
         duration: 0.25
       }
     })
@@ -365,7 +364,7 @@
         <div class="header-content">
           <div class="header-title">
             <h4>Attendance Tracking - {period}</h4>
-            <p class="text-muted">Click and drag to mark working hours. Empty days = no work/absent. Rows = days, Columns = time slots (15-min for 8-10 AM & 5-8 PM, 1-hour for 10 AM-5 PM)</p>
+            <p class="text-muted">Click and drag to mark working hours. Empty days = no work/absent. Rows = days, Columns = time slots (1-hour for 8-16, 15-min for 16-20)</p>
           </div>
           <div class="header-actions">
             <div class="attendance-summary">
