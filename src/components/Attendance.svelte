@@ -1,7 +1,7 @@
 <script>
   import Icon from '@iconify/svelte'
-  import { tick, untrack } from 'svelte'
-  import { DAY_TYPES, calculateWorkingHours, getDaysInMonth, getWeekdays, getWeekdayName } from '../core.js'
+  import { untrack } from 'svelte'
+  import { DAY_TYPES, getDaysInMonth, getWeekdays, getWeekdayName } from '../core.js'
   import { setAttendance, removeAttendance, getAttendance } from '../stores.js'
   import BitGrid from 'bit-grid-component'
 
@@ -22,30 +22,21 @@
     })
   })
 
-  // Time formatting utilities
-  const formatTimeSlot = (hour, minutes) => {
-    const h = Math.floor(hour)
-    const m = Math.floor(minutes)
-    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`
-  }
-
   const parseTime = (timeString) => {
-    if (!timeString || typeof timeString !== 'string') return 8 // Default to 8 AM
+    if (!timeString || typeof timeString !== 'string') return 8
     const [h, m] = timeString.split(':').map(Number)
     return h + (m / 60)
   }
 
   const formatTimeFromHour = (decimalHour) => {
-    if (typeof decimalHour !== 'number' || isNaN(decimalHour)) return '08:00' // Default to 8 AM
+    if (typeof decimalHour !== 'number' || isNaN(decimalHour)) return '08:00'
     const h = Math.floor(decimalHour)
     const m = Math.round((decimalHour - h) * 60)
-    // Ensure minutes don't exceed 59
     const finalH = h + Math.floor(m / 60)
     const finalM = m % 60
     return `${finalH.toString().padStart(2, '0')}:${finalM.toString().padStart(2, '0')}`
   }
 
-  // Format compact time range label
   const formatRangeLabel = (startHour, startMin, durationHours) => {
     const endMin = startMin + durationHours * 60
     const endHour = startHour + Math.floor(endMin / 60)
@@ -76,28 +67,18 @@
     })
   ]
 
-  // Attendance data structure: { [employeeId]: { [date]: { type, entryTime, exitTime, notes } } }
   let attendanceData = $state({})
   let attendanceGrids = $state({})
   let initializedPeriod = $state('')
-  let isLoadingData = $state({})
-  // All employees collapsed by default (empty object means all are false/collapsed)
   let expandedEmployees = $state({})
 
-  // Clean up grids only when period changes (not when collapsing)
   const cleanupGrids = () => {
     untrack(() => {
       Object.keys(attendanceGrids).map(employeeId => {
-        const container = document.getElementById(`attendance-grid-${employeeId}`)
-        if (container) {
-          const grid = attendanceGrids[employeeId]
-          if (grid && grid.parentNode) {
-            grid.parentNode.removeChild(grid)
-          }
-        }
+        const grid = attendanceGrids[employeeId]
+        if (grid?.parentNode) grid.parentNode.removeChild(grid)
       })
       attendanceGrids = {}
-      isLoadingData = {}
     })
   }
 
@@ -105,15 +86,11 @@
   $effect(() => {
     if (!period || employees.length === 0) return
 
-    const periodChanged = period !== initializedPeriod
-
-    // Clean up old grids when period changes
-    if (periodChanged) {
+    if (period !== initializedPeriod) {
       cleanupGrids()
       initializedPeriod = period
     }
     
-    // Load fresh data from storage (untrack to prevent reactive loop)
     untrack(() => {
       attendanceData = employees.reduce((acc, emp) => {
         acc[emp.id] = getAttendance(period, emp.id)
@@ -122,164 +99,95 @@
     })
   })
 
-  // Re-initialize grids when calendarDays changes (e.g., config update) but only if period matches
+  // Re-initialize grids when calendarDays changes
   $effect(() => {
     if (calendarDays.length === 0 || employees.length === 0 || period !== initializedPeriod) return
     untrack(() => {
-      // Re-initialize only existing grids
       Object.keys(attendanceGrids).map(employeeId => {
-        const container = document.getElementById(`attendance-grid-${employeeId}`)
         const grid = attendanceGrids[employeeId]
-        if (container && grid) {
-          // Remove old grid
-          if (grid.parentNode) {
-            grid.parentNode.removeChild(grid)
-          }
+        if (grid?.parentNode) {
+          grid.parentNode.removeChild(grid)
           delete attendanceGrids[employeeId]
-          // Re-initialize
-          waitTicks(1).then(() => initializeAttendanceGrid(employeeId))
+          initializeAttendanceGrid(employeeId)
         }
       })
     })
   })
 
-  // Wait for DOM element to be ready
-  const waitForElement = (id, maxAttempts = 10) => {
-    const attempt = (count) => {
-      const element = document.getElementById(id)
-      if (element) return Promise.resolve(element)
-      if (count >= maxAttempts) return Promise.resolve(null)
-      return new Promise(resolve => setTimeout(() => attempt(count + 1).then(resolve), 50))
-    }
-    return attempt(0)
-  }
-
-  // Wait for DOM rendering (using setTimeout to avoid triggering effects)
-  const waitTicks = (count = 3) => {
-    const delay = 16 * count // ~16ms per frame, multiply by count
-    return new Promise(resolve => setTimeout(resolve, delay))
-  }
-
-  // Initialize grid when employee section is expanded (simple approach - wait for each)
+  // Initialize grid when employee section is expanded
   $effect(() => {
     if (!period || employees.length === 0 || calendarDays.length === 0) return
-
     employees
       .filter(emp => expandedEmployees[emp.id] && !untrack(() => attendanceGrids[emp.id]))
-      .map(emp => {
-        waitForElement(`attendance-grid-${emp.id}`)
-          .then(() => initializeAttendanceGrid(emp.id))
-      })
+      .map(emp => initializeAttendanceGrid(emp.id))
   })
 
-
-  // Initialize BitGrid for attendance tracking
   const initializeAttendanceGrid = (employeeId) => {
     const container = document.getElementById(`attendance-grid-${employeeId}`)
-    if (!container) return
+    if (!container || attendanceGrids[employeeId]) return
 
-    // Prevent double initialization
-    if (attendanceGrids[employeeId]) return
-
-    // Clear container (should be empty but just in case)
     container.innerHTML = ''
-
-    // Load fresh data from storage to ensure we have the latest saved state
     const employeeData = getAttendance(period, employeeId) || {}
-
-    // Default work hours: 8:00 to 16:00 (8 hours)
     const defaultEntry = 8
     const defaultExit = 16
-    
-    // Only fill defaults if employee has NO data at all for this period (brand new)
     const isNewEmployee = Object.keys(employeeData).length === 0
 
-    // Create data array - days as rows, time slots as columns
     const data = calendarDays.map(day => {
       const dayData = employeeData[day.date]
-
       if (dayData?.type === DAY_TYPES.REGULAR && dayData.entryTime && dayData.exitTime) {
         const entryTime = parseTime(dayData.entryTime)
         const exitTime = parseTime(dayData.exitTime)
         return timeSlots.map(slot => slotOverlaps(slot, entryTime, exitTime))
       }
-
-      // New employee - fill with defaults; existing employee - leave empty
       return isNewEmployee 
         ? timeSlots.map(slot => slotOverlaps(slot, defaultEntry, defaultExit))
         : timeSlots.map(() => false)
     })
 
-    // Create BitGrid with days as rows, time slots as columns
     const grid = new BitGrid({
-      data: data,
+      data,
       rowLabels: calendarDays.map(day => `${day.day} - ${day.weekdayName}`),
       colLabels: timeSlots.map(slot => slot.label),
       onChange: (newData) => handleGridChange(employeeId, newData)
     })
 
-    // Set loading flag BEFORE appending to prevent onChange from firing
-    untrack(() => {
-      isLoadingData = { ...isLoadingData, [employeeId]: true }
-      attendanceGrids[employeeId] = grid
-    })
-
-    container.appendChild(grid)
-
-    // After grid is created, ensure all cells match saved data exactly
-    waitTicks(3).then(() => {
+    // Use ready event to load existing data with silent updates
+    grid.addEventListener('ready', () => {
       loadExistingAttendanceData(employeeId, grid)
-      waitTicks(1).then(() => {
-        untrack(() => {
-          isLoadingData = { ...isLoadingData, [employeeId]: false }
-        })
-      })
-    })
+    }, { once: true })
 
+    untrack(() => { attendanceGrids[employeeId] = grid })
+    container.appendChild(grid)
     return grid
   }
 
-  // Check if slot overlaps with work period
   const slotOverlaps = (slot, entryTime, exitTime) => {
     const slotStart = typeof slot.hour === 'number' ? slot.hour : 0
     const slotEnd = slotStart + (slot.duration || 1)
     return slotStart < exitTime && slotEnd > entryTime
   }
 
-  // Clear all slots for a day
-  const clearDaySlots = (grid, dayIndex) => {
-    timeSlots.map((_, slotIndex) => grid.setCell(dayIndex, slotIndex, false))
-  }
-
-  // Ensure grid cells match saved attendance data exactly, save defaults only for brand new employees
   const loadExistingAttendanceData = (employeeId, grid) => {
-    // Re-fetch latest data to ensure we have the most current state
     const employeeData = getAttendance(period, employeeId) || {}
-    
-    // Default work hours: 8:00 to 16:00 (8 hours)
     const defaultEntry = 8
     const defaultExit = 16
-    
-    // Only fill defaults if employee has NO data at all for this period (brand new)
     const isNewEmployee = Object.keys(employeeData).length === 0
 
     calendarDays.map((day, dayIndex) => {
       const dayData = employeeData[day.date]
 
-      // Regular day with entry/exit times - load saved data
       if (dayData?.type === DAY_TYPES.REGULAR && dayData.entryTime && dayData.exitTime) {
         const entryTime = parseTime(dayData.entryTime)
         const exitTime = parseTime(dayData.exitTime)
         timeSlots.map((slot, slotIndex) => {
-          grid.setCell(dayIndex, slotIndex, slotOverlaps(slot, entryTime, exitTime))
+          grid.setCell(dayIndex, slotIndex, slotOverlaps(slot, entryTime, exitTime), true)
         })
         return
       }
 
-      // New employee with no data - fill with defaults and save
       if (isNewEmployee) {
         timeSlots.map((slot, slotIndex) => {
-          grid.setCell(dayIndex, slotIndex, slotOverlaps(slot, defaultEntry, defaultExit))
+          grid.setCell(dayIndex, slotIndex, slotOverlaps(slot, defaultEntry, defaultExit), true)
         })
         updateAttendance(employeeId, day.date, {
           type: DAY_TYPES.REGULAR,
@@ -289,15 +197,12 @@
         return
       }
 
-      // Existing employee, day with no data - clear cells
-      clearDaySlots(grid, dayIndex)
+      // Clear cells silently
+      timeSlots.map((_, slotIndex) => grid.setCell(dayIndex, slotIndex, false, true))
     })
   }
 
-  // Handle grid changes for specific employee
   const handleGridChange = (employeeId, gridData) => {
-    if (isLoadingData[employeeId]) return
-
     calendarDays.map((day, dayIndex) => {
       const dayRow = gridData[dayIndex]
       const selectedIndices = dayRow
@@ -326,10 +231,7 @@
     })
   }
 
-
-  // Update attendance data and persist
   const updateAttendance = (employeeId, date, data) => {
-    // Update local state (untrack to prevent reactive loop)
     untrack(() => {
       attendanceData = {
         ...attendanceData,
@@ -340,12 +242,9 @@
       }
     })
 
-    // Persist to store
-    if (Object.keys(data).length > 0) {
-      setAttendance(period, employeeId, date, data)
-    } else {
-      removeAttendance(period, employeeId, date)
-    }
+    Object.keys(data).length > 0
+      ? setAttendance(period, employeeId, date, data)
+      : removeAttendance(period, employeeId, date)
   }
 
 </script>
