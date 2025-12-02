@@ -1,6 +1,6 @@
 <script>
   import Icon from '@iconify/svelte'
-  import { formatCurrency } from '../core.js'
+  import { formatCurrency, stringToColor } from '../core.js'
   import { addAdjustment, updateAdjustment, removeAdjustment, getAdjustments, basicConfig } from '../stores.js'
   import { toasts } from '../lib/toast.js'
   import { confirmDialog } from '../lib/dialog.js'
@@ -131,7 +131,7 @@
 
     <div class="adjustments-grid">
       {#each employees as employee}
-        <div class="employee-adjustments">
+        <div class="employee-adjustments" style="--emp-color: {stringToColor(employee.name)}">
           <div class="employee-header">
             <h4>{employee.name}</h4>
             <div class="employee-meta">
@@ -190,10 +190,10 @@
               {#if editingAdjustments[employee.id]}
                 <button class="secondary" onclick={() => resetForm(employee.id)}>
                   <Icon icon="tabler:x" width="1rem" height="1rem" />Cancel</button>
-                <button class="primary" onclick={() => handleUpdateAdjustment(employee.id)}>
+                <button class="primary" onclick={() => handleUpdateAdjustment(employee.id)} disabled={!adjustmentForms[employee.id]?.label || !adjustmentForms[employee.id]?.amount}>
                   <Icon icon="tabler:check" width="1rem" height="1rem" />Update</button>
               {:else}
-                <button class="primary" onclick={() => handleAddAdjustment(employee.id)}>
+                <button class="primary" onclick={() => handleAddAdjustment(employee.id)} disabled={!adjustmentForms[employee.id]?.label || !adjustmentForms[employee.id]?.amount}>
                   <Icon icon="tabler:plus" width="1rem" height="1rem" />Add</button>
               {/if}
             </div>
@@ -248,6 +248,9 @@
     @extend %card-base
     padding: 0.75rem
     border: 2px solid transparent
+    border-left: 6px solid var(--emp-color)
+    border-top-left-radius: 0
+    border-bottom-left-radius: 0
     @extend %transition
 
     &:hover
@@ -262,6 +265,7 @@
 
     h4
       @include card-title(1.15rem)
+      color: var(--emp-color)
 
   .employee-meta
     @extend %flex

@@ -18,8 +18,8 @@
   const CONFIG_FIELDS = [
     { key: 'organizationName', label: 'Organization', type: 'text', fallback: '' },
     { key: 'workdayHours', label: 'Hours/Day', type: 'number', min: 1, max: 24, step: 0.5, fallback: 8 },
-    { key: 'overtimeRate', label: 'OT Rate', type: 'number', min: 0, max: 10, step: 0.1, fallback: 1.5, hint: 'OT multiplier' },
-    { key: 'undertimeRate', label: 'UT Rate', type: 'number', min: 0, max: 1, step: 0.1, fallback: 0.5, hint: 'UT multiplier' },
+    { key: 'overtimeRate', label: 'OT Rate', type: 'number', min: 0, max: 10, step: 0.1, fallback: 1.5 },
+    { key: 'undertimeRate', label: 'UT Rate', type: 'number', min: 0, max: 1, step: 0.1, fallback: 0.5 },
     { key: 'workingDaysPerMonth', label: 'Days/Month', type: 'number', min: 1, max: 31, fallback: 22 },
     { key: 'currencySymbol', label: 'Currency', type: 'text', fallback: '$' },
     { key: 'monthDays', label: 'Month Days', type: 'number', min: 28, max: 31, fallback: 30 },
@@ -137,7 +137,7 @@
               value={basicConfigData[f.key] ?? f.fallback}
               oninput={(e) => updateBasicConfigField(f.key, f.type === 'number' ? +e.target.value || f.fallback : e.target.value || f.fallback)} />
           {/if}
-          {#if f.hint}<small>{f.hint}</small>{/if}
+          <small>{f.key}</small>
         </label>
       {/each}
     </div>

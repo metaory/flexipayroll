@@ -7,8 +7,6 @@
 // RULE TYPES & STRUCTURE
 // ============================================================================
 
-import { calculateWorkingHours } from './core.js'
-
 export const RULE_TYPES = {
   FIXED: 'fixed',
   DAYS_MULTIPLIER: 'days_multiplier', 
@@ -129,43 +127,50 @@ const RULE_CALCULATORS = {
   [RULE_TYPES.HOURLY_MULTIPLIER]: (rule, _, __, hourlyRate) => hourlyRate * rule.value
 }
 
-export const calculateRuleValue = (rule, employee, attendance, config) => {
+export const calculateRuleValue = (rule, employee, attendanceItems, config) => {
   if (!appliesToEmployee(rule, employee)) return 0
   
   const hourlyRate = employee.dailySalary / config.workdayHours
   
-  const { totalHours: actualHoursWorked, actualDays: actualDaysWorked } = Object.values(attendance || {}).reduce((acc, d) => {
-    if (d?.type === 'regular' && d.entryTime && d.exitTime) 
-      return { totalHours: acc.totalHours + calculateWorkingHours(d.entryTime, d.exitTime), actualDays: acc.actualDays + 1 }
-    if (d?.type === 'holiday') 
-      return { totalHours: acc.totalHours + config.workdayHours, actualDays: acc.actualDays + 1 }
-    return acc
-  }, { totalHours: 0, actualDays: 0 })
-  
+  // New attendance model: items adjust hours from expected full attendance
+  // Apply OT rate for positive hours, UT rate for negative hours
   const expectedMonthDays = config.monthDays || 30
+  const hoursAdjustment = (attendanceItems || []).reduce((sum, item) => {
+    const hours = item.hours || 0
+    if (hours > 0) return sum + (hours * (config.overtimeRate || 1.5))
+    if (hours < 0) return sum + (hours * (config.undertimeRate || 0.5))
+    return sum
+  }, 0)
+  const actualDaysWorked = expectedMonthDays + (hoursAdjustment / config.workdayHours)
   const daysWorkedProportion = expectedMonthDays > 0 ? Math.min(actualDaysWorked / expectedMonthDays, 1.0) : 0
   
   const calculator = RULE_CALCULATORS[rule.type]
-  return calculator ? calculator(rule, employee, attendance, hourlyRate, daysWorkedProportion) : 0
+  return calculator ? calculator(rule, employee, attendanceItems, hourlyRate, daysWorkedProportion) : 0
 }
 
 // ============================================================================
 // RULE PROCESSING
 // ============================================================================
 
-export const applyRules = (employee, attendance, rules, config) => {
+export const applyRules = (employee, attendanceItems, rules, config) => {
   const hourlyRate = employee.dailySalary / config.workdayHours
-  const { totalHours, actualDays } = Object.values(attendance || {}).reduce((acc, d) => {
-    if (d?.type === 'regular' && d.entryTime && d.exitTime) 
-      return { totalHours: acc.totalHours + calculateWorkingHours(d.entryTime, d.exitTime), actualDays: acc.actualDays + 1 }
-    if (d?.type === 'holiday') 
-      return { totalHours: acc.totalHours + config.workdayHours, actualDays: acc.actualDays + 1 }
-    return acc
-  }, { totalHours: 0, actualDays: 0 })
+  
+  // New attendance model: items adjust hours from expected full attendance
+  // Apply OT rate for positive hours, UT rate for negative hours
+  const expectedDays = config.monthDays || 30
+  const expectedHours = expectedDays * config.workdayHours
+  const hoursAdjustment = (attendanceItems || []).reduce((sum, item) => {
+    const hours = item.hours || 0
+    if (hours > 0) return sum + (hours * (config.overtimeRate || 1.5))
+    if (hours < 0) return sum + (hours * (config.undertimeRate || 0.5))
+    return sum
+  }, 0)
+  const totalHours = expectedHours + hoursAdjustment
+  const actualDays = expectedDays + (hoursAdjustment / config.workdayHours)
   const baseSalary = totalHours * hourlyRate
 
-  // Jadid employees get base salary only
-  if (employee.jadid) {
+  // Probationary employees get base salary only
+  if (employee.probationary) {
     return { baseSalary, bonuses: {}, deductions: {}, grossSalary: baseSalary, totalHours, actualDays }
   }
   
@@ -173,7 +178,7 @@ export const applyRules = (employee, attendance, rules, config) => {
   const processedRules = [...rules]
     .sort((a, b) => a.order - b.order)
     .filter(r => r.enabled)
-    .map(rule => ({ rule, value: calculateRuleValue(rule, employee, attendance, config) }))
+    .map(rule => ({ rule, value: calculateRuleValue(rule, employee, attendanceItems, config) }))
     .filter(({ value }) => value > 0)
 
   // Categorize rules

@@ -105,6 +105,16 @@ export const getDefaultHours = (dayType, workdayHours = 8) => {
 }
 
 // ============================================================================
+// COLOR UTILITIES
+// ============================================================================
+
+export const stringToColor = (str) => {
+  const hash = [...str].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0)
+  const hue = Math.abs(hash) % 360
+  return `hsl(${hue}, 65%, 55%)`
+}
+
+// ============================================================================
 // FORMAT UTILITIES
 // ============================================================================
 
@@ -247,6 +257,8 @@ export const filterEmployees = (employees, query) => {
 // STORAGE UTILITIES
 // ============================================================================
 
+const SESSION_PREFIX = 'xpayroll_'
+
 export const storage = {
   get: (key, defaultValue = null) => {
     try {
@@ -273,6 +285,35 @@ export const storage = {
     } catch {
       return false
     }
+  },
+
+  exportSession: () => {
+    const data = Object.keys(localStorage)
+      .filter(k => k.startsWith(SESSION_PREFIX))
+      .reduce((acc, k) => ({ ...acc, [k]: localStorage.getItem(k) }), {})
+    return btoa(JSON.stringify(data))
+  },
+
+  importSession: (encoded) => {
+    const data = JSON.parse(atob(encoded))
+    Object.entries(data).map(([k, v]) => localStorage.setItem(k, v))
+    location.reload()
+  },
+
+  downloadSession: () => {
+    const blob = new Blob([storage.exportSession()], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `xpayroll-session-${new Date().toISOString().slice(0, 10)}.txt`
+    a.click()
+    URL.revokeObjectURL(url)
+  },
+
+  loadSessionFile: (file) => {
+    const reader = new FileReader()
+    reader.onload = (e) => storage.importSession(e.target.result)
+    reader.readAsText(file)
   }
 }
 

@@ -2,17 +2,31 @@
   import Payroll from './components/Payroll.svelte'
   import Icon from '@iconify/svelte'
   import { theme, toggleTheme } from './stores.js'
+  import { storage } from './core.js'
+
+  let fileInput = $state()
 
   // Apply theme to document on mount and changes
   $effect(() => {
     const isDark = $theme.mode === 'dark'
     document.documentElement.classList.toggle('dark', isDark)
-  });
+  })
+
+  const handleLoad = (e) => storage.loadSessionFile(e.target.files[0])
 </script>
 
-<button class="theme-toggle" onclick={toggleTheme} aria-label="Toggle color scheme">
-  <Icon icon={$theme.mode === 'dark' ? 'line-md:moon-filled-to-sunny-filled-transition' : 'line-md:sunny-outline-to-moon-alt-loop-transition'} width="1.5rem" height="1.5rem" />
-</button>
+<div class="toolbar">
+  <button class="toolbar-btn" onclick={() => storage.downloadSession()} aria-label="Save session">
+    <Icon icon="tabler:device-floppy" width="1.5rem" height="1.5rem" />
+  </button>
+  <button class="toolbar-btn" onclick={() => fileInput.click()} aria-label="Load session">
+    <Icon icon="tabler:folder-open" width="1.5rem" height="1.5rem" />
+  </button>
+  <button class="toolbar-btn" onclick={toggleTheme} aria-label="Toggle color scheme">
+    <Icon icon={$theme.mode === 'dark' ? 'line-md:moon-filled-to-sunny-filled-transition' : 'line-md:sunny-outline-to-moon-alt-loop-transition'} width="1.5rem" height="1.5rem" />
+  </button>
+</div>
+<input type="file" accept=".txt" bind:this={fileInput} onchange={handleLoad} hidden />
 
 <main class="app-content">
   <Payroll />
@@ -54,10 +68,18 @@
     position: relative
     z-index: 1
 
-  .theme-toggle
+  .toolbar
     position: fixed
     top: 1rem
     right: 1rem
+    display: flex
+    z-index: 1000
+    background: var(--surface)
+    border: 2px solid var(--border-muted)
+    border-radius: 2rem
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15)
+
+  .toolbar-btn
     width: 3.5rem
     height: 3.5rem
     border-radius: 50%
@@ -65,24 +87,21 @@
     @extend %transition
     @extend %grid
     place-items: center
-    background: var(--surface)
-    border: 2px solid var(--border-muted)
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15)
-    z-index: 1000
+    background: transparent
+    border: none
 
     &:hover
       background: var(--surface-medium)
-      border-color: var(--primary)
-      transform: scale(1.1)
-      box-shadow: 0 6px 20px color-mix(in oklab, var(--primary) 30%, transparent)
 
     :global(svg)
       color: var(--primary)
 
   @media (max-width: $mobile)
-    .theme-toggle
+    .toolbar
       top: 0.5rem
       right: 0.5rem
+
+    .toolbar-btn
       width: 3rem
       height: 3rem
 

@@ -3,7 +3,7 @@
  * Declarative step definitions with minimal complexity
  */
 
-import { calculateDailyRate, calculateHourlyRate, calculateWorkingHours } from './core.js'
+import { calculateDailyRate, calculateHourlyRate } from './core.js'
 import { applyRules, RULE_TYPES } from './rules.js'
 
 // Step definitions - simplified for rules-based system
@@ -16,21 +16,26 @@ export const STEPS = [
 ]
 
 // Pure calculation functions using rules engine
-export const calculateEmployeePayroll = (employee, attendance, adjustments, rules, basicConfig) => {
+export const calculateEmployeePayroll = (employee, attendanceItems, adjustments, rules, basicConfig) => {
   const dailyRate = calculateDailyRate(employee.dailySalary)
   const hourlyRate = calculateHourlyRate(employee.dailySalary, basicConfig.workdayHours)
   
-  // Calculate actual hours worked from attendance data
-  const { totalHours, actualDays } = Object.values(attendance || {}).reduce((acc, d) => {
-    if (d?.type === 'regular' && d.entryTime && d.exitTime) 
-      return { totalHours: acc.totalHours + calculateWorkingHours(d.entryTime, d.exitTime), actualDays: acc.actualDays + 1 }
-    if (d?.type === 'holiday') 
-      return { totalHours: acc.totalHours + basicConfig.workdayHours, actualDays: acc.actualDays + 1 }
-    return acc
-  }, { totalHours: 0, actualDays: 0 })
+  // Calculate hours from attendance items (new model)
+  // No items = full attendance, items adjust hours (negative = missed, positive = overtime)
+  // Apply OT rate (1.5x) for positive hours, UT rate (0.5x) for negative hours
+  const expectedDays = basicConfig.monthDays || 30
+  const expectedHours = expectedDays * basicConfig.workdayHours
+  const hoursAdjustment = (attendanceItems || []).reduce((sum, item) => {
+    const hours = item.hours || 0
+    if (hours > 0) return sum + (hours * (basicConfig.overtimeRate || 1.5))
+    if (hours < 0) return sum + (hours * (basicConfig.undertimeRate || 0.5))
+    return sum
+  }, 0)
+  const totalHours = expectedHours + hoursAdjustment
+  const actualDays = expectedDays + (hoursAdjustment / basicConfig.workdayHours)
   
   // Apply rules engine (this calculates baseSalary internally)
-  const ruleResults = applyRules(employee, attendance, rules, basicConfig)
+  const ruleResults = applyRules(employee, attendanceItems, rules, basicConfig)
   
   // Use baseSalary from ruleResults to ensure consistency
   const baseSalary = ruleResults.baseSalary
@@ -371,5 +376,5 @@ export const EMPLOYEE_FIELDS = [
   { key: 'maritalStatus', label: 'Marital Status', type: 'select', options: [{ value: 'single', label: 'Single' }, { value: 'married', label: 'Married' }] },
   { key: 'dailySalary', label: 'Daily Salary', type: 'number', required: true, min: 0 },
   { key: 'yearsOfExperience', label: 'Years of Experience', type: 'number', min: 0, step: 0.1 },
-  { key: 'jadid', label: 'Jadid (New Employee)', type: 'checkbox' }
+  { key: 'probationary', label: 'Probationary', type: 'checkbox' }
 ]

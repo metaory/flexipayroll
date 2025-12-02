@@ -2,7 +2,7 @@
   import Icon from '@iconify/svelte'
   import { EMPLOYEE_FIELDS } from '../payroll.js'
   import { addEmployee, updateEmployee, removeEmployee, basicConfig } from '../stores.js'
-  import { generateEmployeeId, formatCurrency, calculateHourlyRate } from '../core.js'
+  import { generateEmployeeId, formatCurrency, calculateHourlyRate, stringToColor } from '../core.js'
   import { toasts } from '../lib/toast.js'
   import { confirmDialog } from '../lib/dialog.js'
   import Dialog from './Dialog.svelte'
@@ -16,7 +16,7 @@
     maritalStatus: 'single',
     dailySalary: '',
     yearsOfExperience: '',
-    jadid: false
+    probationary: false
   }
 
   const EMPTY_ERRORS = {
@@ -49,7 +49,7 @@
 
   const startEditEmployee = (employee) => {
     editingEmployee = employee
-    newEmployee = { ...employee, jadid: Boolean(employee.jadid) }
+    newEmployee = { ...employee, probationary: Boolean(employee.probationary) }
     showEmployeeDialog = true
   }
 
@@ -76,7 +76,7 @@
         ...newEmployee, 
         dailySalary: parseInt(newEmployee.dailySalary),
         yearsOfExperience: parseFloat(newEmployee.yearsOfExperience),
-        jadid: Boolean(newEmployee.jadid)
+        probationary: Boolean(newEmployee.probationary)
       }
       
       if (editingEmployee) {
@@ -126,10 +126,10 @@
       {#if employees.length > 0}
         <div class="employee-cards">
           {#each employees as employee}
-            <div class="employee-card" role="button" tabindex="0" onclick={() => startEditEmployee(employee)} onkeydown={(e) => e.key === 'Enter' && startEditEmployee(employee)}>
+            <div class="employee-card" style="--emp-color: {stringToColor(employee.name)}" role="button" tabindex="0" onclick={() => startEditEmployee(employee)} onkeydown={(e) => e.key === 'Enter' && startEditEmployee(employee)}>
               <div class="employee-info">
                 <h4>{employee.name}</h4>
-                <p>{employee.gender} • {employee.maritalStatus}{#if employee.jadid} • <span class="jadid-badge">Jadid (New)</span>{/if}</p>
+                <p>{employee.gender} • {employee.maritalStatus}{#if employee.probationary} • <span class="probationary-badge">Probationary</span>{/if}</p>
                 <p class="salary">{formatCurrency(employee.dailySalary || 0, 'id-ID', 'IDR', $basicConfig.currencySymbol)}/day</p>
                 {#if employee.dailySalary}
                   <p class="monthly-ref">({formatCurrency((employee.dailySalary || 0) * 30, 'id-ID', 'IDR', $basicConfig.currencySymbol)}/month)</p>
@@ -283,6 +283,9 @@
     cursor: pointer
     padding: 0.65rem
     border: 2px solid transparent
+    border-left: 6px solid var(--emp-color)
+    border-top-left-radius: 0
+    border-bottom-left-radius: 0
 
     &:hover
       background: var(--surface-medium)
@@ -299,6 +302,7 @@
     h4
       @include card-title(1.2rem)
       margin-bottom: 0.25rem
+      color: var(--emp-color)
 
     p
       @include card-text(0.95rem)
@@ -317,7 +321,7 @@
       &.monthly-ref
         font-size: 0.8rem
 
-    .jadid-badge
+    .probationary-badge
       display: inline-block
       padding: 0.15rem 0.4rem
       background: var(--accent)

@@ -53,14 +53,17 @@
     align-items: center
     gap: 2rem
     padding: 2rem
-    @extend %glass
     background: transparent
+    backdrop-filter: brightness(0.6)
 
   .step-info
     display: grid
     grid-template-columns: auto 1fr
     align-items: center
     gap: 1rem
+
+    > :global(svg)
+      color: var(--primary)
 
     h1
       margin: 0
@@ -119,8 +122,6 @@
     justify-content: space-between
     gap: 1rem
     padding: 1.5rem 2rem
-    @extend %glass
-    background: transparent
 
     button
       @extend %button-base

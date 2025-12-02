@@ -1,317 +1,170 @@
 <script>
   import Icon from '@iconify/svelte'
-  import { untrack } from 'svelte'
-  import { DAY_TYPES, getDaysInMonth, getWeekdays, getWeekdayName } from '../core.js'
-  import { setAttendance, removeAttendance, getAttendance } from '../stores.js'
-  import BitGrid from 'bit-grid-component'
+  import { addAttendanceItem, updateAttendanceItem, removeAttendanceItem, getAttendanceItems } from '../stores.js'
+  import { stringToColor } from '../core.js'
+  import { toasts } from '../lib/toast.js'
+  import { confirmDialog } from '../lib/dialog.js'
 
-  let { employees = [], period = '', basicConfig = {} } = $props()
+  let { employees = [], period = '' } = $props()
 
-  // Reactive computation of calendar days
-  const calendarDays = $derived.by(() => {
-    const daysInMonth = basicConfig.monthDays || getDaysInMonth(period)
-    const weekdays = getWeekdays(period)
-    const firstDayWeekday = basicConfig?.firstDayWeekday || 'Saturday'
+  // Form state per employee
+  let forms = $state({})
+  let editing = $state({})
 
-    return Array.from({ length: daysInMonth }, (_, i) => {
-      const day = i + 1
-      const date = `${period}-${String(day).padStart(2, '0')}`
-      const isWeekday = weekdays.includes(date)
-      const weekdayName = getWeekdayName(day, firstDayWeekday)
-      return { day, date, isWeekday, weekdayName }
-    })
-  })
+  // Initialize form state
+  const initForms = () => employees.reduce((acc, emp) => {
+    acc[emp.id] = { label: '', hours: '' }
+    return acc
+  }, {})
 
-  const parseTime = (timeString) => {
-    if (!timeString || typeof timeString !== 'string') return 8
-    const [h, m] = timeString.split(':').map(Number)
-    return h + (m / 60)
+  // Load attendance items for all employees
+  const loadItems = () => employees.reduce((acc, emp) => {
+    acc[emp.id] = getAttendanceItems(period, emp.id)
+    return acc
+  }, {})
+
+  let itemsData = $state(loadItems())
+  
+  $effect(() => { forms = initForms() })
+  $effect(() => { itemsData = loadItems() })
+
+  const handleAdd = (employeeId) => {
+    const form = forms[employeeId]
+    if (!form.label || !form.hours) return toasts.error('Label and hours required')
+
+    const hours = parseFloat(form.hours)
+    if (isNaN(hours)) return toasts.error('Invalid hours')
+
+    addAttendanceItem(period, employeeId, { label: form.label, hours })
+    toasts.success('Attendance item added')
+    resetForm(employeeId)
+    itemsData = loadItems()
   }
 
-  const formatTimeFromHour = (decimalHour) => {
-    if (typeof decimalHour !== 'number' || isNaN(decimalHour)) return '08:00'
-    const h = Math.floor(decimalHour)
-    const m = Math.round((decimalHour - h) * 60)
-    const finalH = h + Math.floor(m / 60)
-    const finalM = m % 60
-    return `${finalH.toString().padStart(2, '0')}:${finalM.toString().padStart(2, '0')}`
+  const handleEdit = (employeeId, item) => {
+    editing[employeeId] = item
+    forms[employeeId] = { label: item.label, hours: item.hours.toString() }
   }
 
-  const formatRangeLabel = (startHour, startMin, durationHours) => {
-    const endMin = startMin + durationHours * 60
-    const endHour = startHour + Math.floor(endMin / 60)
-    const endMinutes = endMin % 60
-    const startStr = startMin === 0 ? `${startHour}` : `${startHour}:${startMin.toString().padStart(2, '0')}`
-    const endStr = endMinutes === 0 ? `${endHour}` : `${endHour}:${endMinutes.toString().padStart(2, '0')}`
-    return `${startStr}-${endStr}`
-  }
-
-  // Time slots with variable granularity
-  const timeSlots = [
-    // 8:00 AM - 4:00 PM: 1-hour intervals (8 columns)
-    ...Array.from({ length: 8 }, (_, i) => ({
-      hour: 8 + i,
-      label: `${8 + i}-${9 + i}`,
-      duration: 1
-    })),
-    // 4:00 PM - 8:00 PM: 15-min intervals (16 columns)
-    ...Array.from({ length: 16 }, (_, i) => {
-      const totalMinutes = 16 * 60 + (i * 15)
-      const hour = Math.floor(totalMinutes / 60)
-      const minutes = totalMinutes % 60
-      return {
-        hour: hour + (minutes / 60),
-        label: formatRangeLabel(hour, minutes, 0.25),
-        duration: 0.25
-      }
-    })
-  ]
-
-  let attendanceData = $state({})
-  let attendanceGrids = $state({})
-  let initializedPeriod = $state('')
-  let expandedEmployees = $state({})
-
-  const cleanupGrids = () => {
-    untrack(() => {
-      Object.keys(attendanceGrids).map(employeeId => {
-        const grid = attendanceGrids[employeeId]
-        if (grid?.parentNode) grid.parentNode.removeChild(grid)
-      })
-      attendanceGrids = {}
-    })
-  }
-
-  // Load attendance data for current period
-  $effect(() => {
-    if (!period || employees.length === 0) return
-
-    if (period !== initializedPeriod) {
-      cleanupGrids()
-      initializedPeriod = period
-    }
+  const handleUpdate = (employeeId) => {
+    const form = forms[employeeId]
+    const item = editing[employeeId]
     
-    untrack(() => {
-      attendanceData = employees.reduce((acc, emp) => {
-        acc[emp.id] = getAttendance(period, emp.id)
-        return acc
-      }, {})
-    })
-  })
+    if (!form.label || !form.hours) return toasts.error('Label and hours required')
 
-  // Re-initialize grids when calendarDays changes
-  $effect(() => {
-    if (calendarDays.length === 0 || employees.length === 0 || period !== initializedPeriod) return
-    untrack(() => {
-      Object.keys(attendanceGrids).map(employeeId => {
-        const grid = attendanceGrids[employeeId]
-        if (grid?.parentNode) {
-          grid.parentNode.removeChild(grid)
-          delete attendanceGrids[employeeId]
-          initializeAttendanceGrid(employeeId)
-        }
-      })
-    })
-  })
+    const hours = parseFloat(form.hours)
+    if (isNaN(hours)) return toasts.error('Invalid hours')
 
-  // Initialize grid when employee section is expanded
-  $effect(() => {
-    if (!period || employees.length === 0 || calendarDays.length === 0) return
-    employees
-      .filter(emp => expandedEmployees[emp.id] && !untrack(() => attendanceGrids[emp.id]))
-      .map(emp => initializeAttendanceGrid(emp.id))
-  })
-
-  const initializeAttendanceGrid = (employeeId) => {
-    const container = document.getElementById(`attendance-grid-${employeeId}`)
-    if (!container || attendanceGrids[employeeId]) return
-
-    container.innerHTML = ''
-    const employeeData = getAttendance(period, employeeId) || {}
-    const defaultEntry = 8
-    const defaultExit = 16
-    const isNewEmployee = Object.keys(employeeData).length === 0
-
-    const data = calendarDays.map(day => {
-      const dayData = employeeData[day.date]
-      if (dayData?.type === DAY_TYPES.REGULAR && dayData.entryTime && dayData.exitTime) {
-        const entryTime = parseTime(dayData.entryTime)
-        const exitTime = parseTime(dayData.exitTime)
-        return timeSlots.map(slot => slotOverlaps(slot, entryTime, exitTime))
-      }
-      return isNewEmployee 
-        ? timeSlots.map(slot => slotOverlaps(slot, defaultEntry, defaultExit))
-        : timeSlots.map(() => false)
-    })
-
-    const grid = new BitGrid({
-      data,
-      rowLabels: calendarDays.map(day => `${day.day} - ${day.weekdayName}`),
-      colLabels: timeSlots.map(slot => slot.label),
-      onChange: (newData) => handleGridChange(employeeId, newData)
-    })
-
-    // Use ready event to load existing data with silent updates
-    grid.addEventListener('ready', () => {
-      loadExistingAttendanceData(employeeId, grid)
-    }, { once: true })
-
-    untrack(() => { attendanceGrids[employeeId] = grid })
-    container.appendChild(grid)
-    return grid
+    updateAttendanceItem(period, employeeId, item.id, { label: form.label, hours })
+    toasts.success('Attendance item updated')
+    resetForm(employeeId)
+    itemsData = loadItems()
   }
 
-  const slotOverlaps = (slot, entryTime, exitTime) => {
-    const slotStart = typeof slot.hour === 'number' ? slot.hour : 0
-    const slotEnd = slotStart + (slot.duration || 1)
-    return slotStart < exitTime && slotEnd > entryTime
+  const handleDelete = async (employeeId, itemId) => {
+    if (await confirmDialog('Delete this attendance item?')) {
+      removeAttendanceItem(period, employeeId, itemId)
+      toasts.success('Attendance item deleted')
+      itemsData = loadItems()
+    }
   }
 
-  const loadExistingAttendanceData = (employeeId, grid) => {
-    const employeeData = getAttendance(period, employeeId) || {}
-    const defaultEntry = 8
-    const defaultExit = 16
-    const isNewEmployee = Object.keys(employeeData).length === 0
-
-    calendarDays.map((day, dayIndex) => {
-      const dayData = employeeData[day.date]
-
-      if (dayData?.type === DAY_TYPES.REGULAR && dayData.entryTime && dayData.exitTime) {
-        const entryTime = parseTime(dayData.entryTime)
-        const exitTime = parseTime(dayData.exitTime)
-        timeSlots.map((slot, slotIndex) => {
-          grid.setCell(dayIndex, slotIndex, slotOverlaps(slot, entryTime, exitTime), true)
-        })
-        return
-      }
-
-      if (isNewEmployee) {
-        timeSlots.map((slot, slotIndex) => {
-          grid.setCell(dayIndex, slotIndex, slotOverlaps(slot, defaultEntry, defaultExit), true)
-        })
-        updateAttendance(employeeId, day.date, {
-          type: DAY_TYPES.REGULAR,
-          entryTime: formatTimeFromHour(defaultEntry),
-          exitTime: formatTimeFromHour(defaultExit)
-        })
-        return
-      }
-
-      // Clear cells silently
-      timeSlots.map((_, slotIndex) => grid.setCell(dayIndex, slotIndex, false, true))
-    })
+  const resetForm = (employeeId) => {
+    forms[employeeId] = { label: '', hours: '' }
+    delete editing[employeeId]
   }
 
-  const handleGridChange = (employeeId, gridData) => {
-    calendarDays.map((day, dayIndex) => {
-      const dayRow = gridData[dayIndex]
-      const selectedIndices = dayRow
-        .map((selected, i) => selected ? i : -1)
-        .filter(i => i >= 0)
+  const getTotal = (employeeId) => 
+    (itemsData[employeeId] || []).reduce((sum, item) => sum + item.hours, 0)
 
-      if (selectedIndices.length === 0) {
-        removeAttendance(period, employeeId, day.date)
-        untrack(() => {
-          attendanceData = {
-            ...attendanceData,
-            [employeeId]: { ...attendanceData[employeeId], [day.date]: undefined }
-          }
-        })
-        return
-      }
-
-      const firstSlot = timeSlots[selectedIndices[0]]
-      const lastSlot = timeSlots[selectedIndices[selectedIndices.length - 1]]
-
-      updateAttendance(employeeId, day.date, {
-        type: DAY_TYPES.REGULAR,
-        entryTime: formatTimeFromHour(firstSlot.hour),
-        exitTime: formatTimeFromHour(lastSlot.hour + lastSlot.duration)
-      })
-    })
+  const formatHours = (hours) => {
+    const sign = hours > 0 ? '+' : ''
+    return `${sign}${hours} hrs`
   }
-
-  const updateAttendance = (employeeId, date, data) => {
-    untrack(() => {
-      attendanceData = {
-        ...attendanceData,
-        [employeeId]: {
-          ...attendanceData[employeeId],
-          [date]: data
-        }
-      }
-    })
-
-    Object.keys(data).length > 0
-      ? setAttendance(period, employeeId, date, data)
-      : removeAttendance(period, employeeId, date)
-  }
-
 </script>
 
 <div class="attendance-container">
   {#if employees.length === 0}
     <div class="empty">
-      <Icon icon="tabler:users-group" width="4rem" height="4rem" style="width: 4rem; height: 4rem" />
-      <p>No employees to track attendance for</p>
-      <p class="text-muted">Add employees first to record attendance</p>
+      <Icon icon="tabler:clock" width="2.5rem" height="2.5rem" />
+      <p>No employees</p>
+      <p class="text-muted">Add employees first</p>
     </div>
   {:else}
-    <!-- Compact header with controls -->
-    <div class="attendance-grids-section">
-      <div class="grid-header">
-        <div class="header-content">
-          <div class="header-title">
-            <h4>Attendance Tracking - {period}</h4>
-            <p class="text-muted">Click and drag to mark working hours. Empty days = no work/absent. Rows = days, Columns = time slots (1-hour for 8-16, 15-min for 16-20)</p>
-          </div>
-          <div class="header-actions">
-            <div class="attendance-summary">
-              <span>{employees.length} employees</span>
-              <span>{calendarDays.length} days</span>
-            </div>
-            <button
-              class="toggle-all-btn"
-              onclick={() => {
-                const allExpanded = employees.every(emp => expandedEmployees[emp.id])
-                expandedEmployees = employees.reduce((acc, emp) => {
-                  acc[emp.id] = !allExpanded
-                  return acc
-                }, {})
-              }}
-            >
-              <Icon icon="tabler:list" width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
-              {employees.every(emp => expandedEmployees[emp.id]) ? 'Collapse All' : 'Expand All'}
-            </button>
-          </div>
-        </div>
+    <div class="attendance-header">
+      <h3>Attendance - {period}</h3>
+      <div class="attendance-summary">
+        <span>{employees.length} employees</span>
+        <span>Hours deviation (negative = missed)</span>
       </div>
+    </div>
 
+    <div class="attendance-grid">
       {#each employees as employee}
-        <div class="employee-attendance-section" class:collapsed={!expandedEmployees[employee.id]}>
-          <button
-            class="employee-header"
-            onclick={() => {
-              expandedEmployees = { ...expandedEmployees, [employee.id]: !expandedEmployees[employee.id] }
-            }}
-          >
-            <div class="employee-info">
-              <Icon icon={expandedEmployees[employee.id] ? "tabler:chevron-down" : "tabler:chevron-right"} width="2.5rem" height="2.5rem" style="width: var(--icon-size); height: var(--icon-size)" />
-              <h5>{employee.name}</h5>
+        <div class="employee-attendance" style="--emp-color: {stringToColor(employee.name)}">
+          <div class="employee-header">
+            <h4>{employee.name}</h4>
+            <div class="employee-meta">
+              <span>{employee.gender} • {employee.maritalStatus}</span>
+              <span class="total-hours" class:positive={getTotal(employee.id) > 0} class:negative={getTotal(employee.id) < 0}>
+                Total: {formatHours(getTotal(employee.id))}
+              </span>
             </div>
-            <span class="employee-meta">{employee.gender} • {employee.maritalStatus}</span>
-          </button>
-          <div 
-            id="attendance-grid-{employee.id}" 
-            class="attendance-grid-container"
-            style:display={expandedEmployees[employee.id] ? 'grid' : 'none'}
-          >
-            {#if !attendanceGrids[employee.id]}
-              <div class="grid-loading">
-                <Icon icon="line-md:loading-loop" width="3rem" height="3rem" style="width: 3rem; height: 3rem" />
-                <span>Loading attendance grid...</span>
+          </div>
+
+          <div class="current-items">
+            {#if (itemsData[employee.id] || []).length === 0}
+              <div class="no-items">
+                <Icon icon="tabler:check" width="1rem" height="1rem" />
+                <span>Full attendance</span>
               </div>
+            {:else}
+              {#each (itemsData[employee.id] || []) as item}
+                <div class="item" data-positive={item.hours > 0}>
+                  <div class="item-info">
+                    <span class="item-label">{item.label}</span>
+                    <span class="item-hours" class:positive={item.hours > 0} class:negative={item.hours < 0}>
+                      {formatHours(item.hours)}
+                    </span>
+                  </div>
+                  <div class="item-actions">
+                    <button class="edit-btn" onclick={() => handleEdit(employee.id, item)}>
+                      <Icon icon="tabler:edit" width="1rem" height="1rem" /></button>
+                    <button class="delete-btn" onclick={() => handleDelete(employee.id, item.id)}>
+                      <Icon icon="tabler:trash" width="1rem" height="1rem" /></button>
+                  </div>
+                </div>
+              {/each}
             {/if}
+          </div>
+
+          <div class="item-form">
+            <div class="form-fields">
+              <input
+                type="text"
+                placeholder="Label (e.g., Sick leave, Overtime)"
+                value={forms[employee.id]?.label || ''}
+                oninput={(e) => forms[employee.id] = { ...forms[employee.id], label: e.currentTarget.value }}
+              />
+              <input
+                type="number"
+                placeholder="Hours (+/-)"
+                step="0.5"
+                value={forms[employee.id]?.hours || ''}
+                oninput={(e) => forms[employee.id] = { ...forms[employee.id], hours: e.currentTarget.value }}
+              />
+            </div>
+            <div class="form-actions">
+              {#if editing[employee.id]}
+                <button class="secondary" onclick={() => resetForm(employee.id)}>
+                  <Icon icon="tabler:x" width="1rem" height="1rem" />Cancel</button>
+                <button class="primary" onclick={() => handleUpdate(employee.id)} disabled={!forms[employee.id]?.label || !forms[employee.id]?.hours}>
+                  <Icon icon="tabler:check" width="1rem" height="1rem" />Update</button>
+              {:else}
+                <button class="primary" onclick={() => handleAdd(employee.id)} disabled={!forms[employee.id]?.label || !forms[employee.id]?.hours}>
+                  <Icon icon="tabler:plus" width="1rem" height="1rem" />Add</button>
+              {/if}
+            </div>
           </div>
         </div>
       {/each}
@@ -324,284 +177,191 @@
 
   .attendance-container
     @extend %grid
-    gap: 0.5rem
-    padding-top: 0.5rem
+    gap: 1rem
+    padding-top: 0.75rem
+
+  .attendance-header
+    @extend %flex-between
+
+    h3
+      margin: 0
+      font-size: 1.5rem
+      @extend %gradient-text
 
   .attendance-summary
     @extend %flex
-    gap: 1rem
+    gap: 0.75rem
     color: var(--fg-muted)
-    font-size: 0.875rem
+    font-size: 0.8rem
 
     span
-      padding: 0.75rem 1.5rem
-      font-weight: 700
-      font-size: 1.2rem
+      padding: 0.5rem 1rem
+      font-weight: 600
+      font-size: 0.8rem
       cursor: default
-      border-radius: 0.5rem
-      transition: all 0.3s ease
-      position: relative
-      overflow: hidden
 
-      &::after
-        content: ''
-        position: absolute
-        top: 0
-        left: -100%
-        width: 100%
-        height: 100%
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)
-        transition: left 0.5s ease
-
-      &:hover::after
-        left: 100%
-
-      // First span (employees count)
       &:nth-child(1)
         color: var(--primary)
-        background: var(--primary-bg)
-        border: 2px solid var(--primary)
 
-        &:hover
-          transform: scale(1.05)
-          box-shadow: 0 4px 12px color-mix(in oklab, var(--primary) 25%, transparent)
-
-      // Second span (days count)
       &:nth-child(2)
-        background: linear-gradient(135deg, var(--info-bg) 0%, color-mix(in oklab, var(--info) 30%, transparent) 100%)
+        background: var(--info-bg)
         color: var(--info)
-        border: 2px solid var(--info)
 
-        &:hover
-          transform: scale(1.05)
-          box-shadow: 0 4px 12px color-mix(in oklab, var(--info) 25%, transparent)
+  .attendance-grid
+    @include auto-grid(280px)
+    gap: 0.75rem
+    align-items: start
 
-  .toggle-all-btn
-    @extend %button-base
-    @extend %button-outline
-    padding: 0.75rem 1.25rem
-    font-size: 1.15rem
-    position: relative
-    overflow: hidden
-
-    &::before
-      content: ''
-      position: absolute
-      top: 50%
-      left: 50%
-      width: 0
-      height: 0
-      border-radius: 50%
-      background: var(--primary-bg)
-      transform: translate(-50%, -50%)
-      transition: width 0.4s ease, height 0.4s ease
+  .employee-attendance
+    @extend %card-base
+    padding: 0.75rem
+    border: 2px solid transparent
+    border-left: 6px solid var(--emp-color)
+    border-top-left-radius: 0
+    border-bottom-left-radius: 0
+    @extend %transition
 
     &:hover
-      background: var(--primary-bg)
-      color: var(--primary)
       border-color: var(--primary)
+      box-shadow: 0 4px 16px color-mix(in oklab, var(--primary) 20%, transparent)
       transform: translateY(-2px)
-      box-shadow: 0 4px 12px color-mix(in oklab, var(--primary) 25%, transparent)
 
-      &::before
-        width: 300px
-        height: 300px
+  .employee-header
+    @extend %flex-between
+    margin-bottom: 0.75rem
+    padding-bottom: 0.5rem
 
-  .attendance-grids-section
-    @extend %card-base
-    margin-bottom: 0.5rem
-    max-width: 100%
-    overflow: hidden
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08)
+    h4
+      @include card-title(1.15rem)
+      color: var(--emp-color)
 
-    .grid-header
-      margin-bottom: 1rem
-      padding: 1rem 1.25rem
-      background: linear-gradient(135deg, var(--surface-muted) 0%, var(--surface-secondary) 100%)
-      border-radius: var(--radius)
-      border: 2px solid var(--border-muted)
-
-      .header-content
-        @extend %flex-between
-        gap: 2rem
-        align-items: flex-start
-
-        @media (max-width: 900px)
-          flex-direction: column
-          gap: 1rem
-
-      .header-title
-        flex: 1
-        min-width: 0
-
-        h4
-          margin: 0 0 0.5rem 0
-          @extend %gradient-text
-          font-size: 1.75rem
-
-        p
-          margin: 0
-          font-size: 1.05rem
-          color: var(--fg-muted)
-          line-height: 1.5
-
-      .header-actions
-        @extend %flex
-        gap: 1rem
-        align-items: center
-        flex-shrink: 0
-
-        @media (max-width: 900px)
-          width: 100%
-          justify-content: space-between
-
-  .employee-attendance-section
-    margin-bottom: 0.5rem
-    background: var(--surface-secondary)
-    border-radius: var(--radius)
-    border: 3px solid var(--border-muted)
-    overflow: hidden
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1)
-    position: relative
-
-    &:last-child
-      margin-bottom: 0
-
-    &.collapsed
-      background: var(--surface-muted)
-      border-color: transparent
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1)
-
-      &:hover
-        border-color: var(--border-muted)
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15)
-        transform: translateY(-2px)
-
-    &:not(.collapsed)
-      border-color: var(--primary)
-      box-shadow: 0 4px 20px color-mix(in oklab, var(--primary) 20%, transparent)
-
-    .employee-header
-      @extend %flex-between
-      width: 100%
-      padding: 0.875rem 1.25rem
-      background: transparent
-      cursor: pointer
-      transition: all 0.3s ease
-      text-align: left
-      position: relative
-
-      &::before
-        content: ''
-        position: absolute
-        left: 0
-        top: 0
-        bottom: 0
-        width: 4px
-        background: var(--primary)
-        transform: scaleY(0)
-        transition: transform 0.3s ease
-        transform-origin: top
-
-      &:hover
-        background: var(--surface-medium)
-        padding-left: 2rem
-
-        &::before
-          transform: scaleY(1)
-
-        .employee-info h5
-          color: var(--secondary)
-          transform: translateX(0.5rem)
-
-        .employee-meta
-          color: var(--fg)
-
-      .employee-info
-        @extend %flex
-        gap: 1rem
-        align-items: center
-        transition: all 0.3s ease
-
-        :global(svg)
-          transition: all 0.3s ease
-          color: var(--primary)
-
-        h5
-          margin: 0
-          color: var(--primary)
-          font-size: 1.5rem
-          font-weight: 600
-          transition: all 0.3s ease
-
-      .employee-meta
-        color: var(--fg-muted)
-        font-size: 1.3rem
-        transition: all 0.3s ease
-        font-weight: 500
-
-  .attendance-grid-container
-    display: grid
-    border-top: 2px solid var(--border-muted)
-    padding: 1.5rem
-    overflow-x: auto
-    overflow-y: auto
-    max-height: 70vh
-    min-height: 300px
-    width: 100%
-    background: var(--bg)
-    animation: slideDown 0.3s ease-out
-    position: relative
-
-    @keyframes slideDown
-      from
-        opacity: 0
-        max-height: 0
-        padding-top: 0
-        padding-bottom: 0
-      to
-        opacity: 1
-        max-height: 70vh
-        padding-top: 1.5rem
-        padding-bottom: 1.5rem
-
-    // Thick scrollbars
-    &::-webkit-scrollbar
-      width: 16px
-      height: 16px
-
-    &::-webkit-scrollbar-track
-      background: var(--surface-muted)
-      border-radius: 8px
-
-    &::-webkit-scrollbar-thumb
-      background: var(--border)
-      border-radius: 8px
-      border: 3px solid var(--surface-muted)
-      transition: background 0.2s ease
-
-      &:hover
-        background: var(--primary)
-
-    // Firefox scrollbar
-    scrollbar-width: auto
-    scrollbar-color: var(--border) var(--surface-muted)
-
-  .grid-loading
+  .employee-meta
     @extend %flex
     flex-direction: column
+    align-items: flex-end
+    gap: 0.25rem
+
+    span:first-child
+      @include card-text(0.9rem)
+
+    .total-hours
+      font-weight: 600
+      color: var(--fg)
+      font-size: 1rem
+
+      &.positive
+        color: var(--success)
+
+      &.negative
+        color: var(--error)
+
+  .current-items
+    @extend %grid
+    gap: 0.35rem
+    margin-bottom: 0.75rem
+
+  .no-items
+    @extend %flex
     align-items: center
-    justify-content: center
-    gap: 1rem
-    min-height: 300px
-    color: var(--fg-muted)
+    gap: 0.35rem
+    padding: 0.5rem
+    color: var(--success)
+    font-size: 0.85rem
+    background: var(--surface-success)
+    border-radius: var(--radius)
 
-    :global(svg)
-      color: var(--primary)
+  .item
+    @extend %flex-between
+    padding: 0.5rem
+    background: var(--surface-secondary)
+    border-radius: 0.5rem
+    border: 2px solid transparent
+    @extend %transition
 
-    span
-      font-size: 1.2rem
-      font-weight: 500
+    &:hover
+      border-color: var(--primary)
+      transform: translateY(-2px)
+
+    &[data-positive="true"]
+      background: var(--surface-success)
+
+      &:hover
+        border-color: var(--success)
+
+    &[data-positive="false"]
+      background: color-mix(in oklab, var(--error) 12%, transparent)
+
+      &:hover
+        border-color: var(--error)
+
+  .item-info
+    @extend %flex
+    flex-direction: column
+    gap: 0.15rem
+
+    .item-label
+      font-weight: 600
+      color: var(--fg)
+      font-size: 0.9rem
+
+    .item-hours
+      font-weight: 600
+      font-size: 1rem
+
+      &.positive
+        color: var(--success)
+
+      &.negative
+        color: var(--error)
+
+  .item-actions
+    @extend %flex
+    gap: 0.35rem
+
+  .edit-btn, .delete-btn
+    @include card-action-btn
+    --icon-btn-size: 1.75rem
+
+    &:hover
+      background: var(--surface-medium)
+
+  .edit-btn:hover
+    background: var(--primary-bg)
+    color: var(--primary)
+
+  .delete-btn:hover
+    background: var(--error-bg)
+    color: var(--error)
+
+  .item-form
+    @extend %grid
+    gap: 0.5rem
+
+  .form-fields
+    @extend %grid
+    grid-template-columns: 1fr
+    gap: 0.5rem
+
+    input
+      @extend %input-base
+      padding: 0.5rem 0.75rem
+      font-size: 0.9rem
+
+  .form-actions
+    @extend %flex
+    gap: 0.5rem
+    justify-content: flex-end
+
+    button
+      @extend %button-base
+      padding: 0.5rem 0.75rem
+      font-size: 0.85rem
+
+      &.primary
+        @extend %button-primary
+
+      &.secondary
+        @extend %button-secondary
 
   .empty
     @extend %grid

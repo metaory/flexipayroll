@@ -7,17 +7,15 @@
   import Report from './Report.svelte'
   import Icon from '@iconify/svelte'
   
-  import { employees, rules, basicConfig, currentPeriod, attendance, adjustments } from '../stores.js'
+  import { employees, rules, basicConfig, currentPeriod, attendanceItems, adjustments, wizardStep } from '../stores.js'
   import { STEPS, calculateEmployeePayroll } from '../payroll.js'
   
-  let currentStep = $state(0)
-  
   // Reactive calculations
-  const currentStepData = $derived(STEPS[currentStep])
+  const currentStepData = $derived(STEPS[$wizardStep])
   
   const results = $derived($employees.map(emp => calculateEmployeePayroll(
     emp, 
-    $attendance[$currentPeriod]?.[emp.id] || {}, 
+    $attendanceItems[$currentPeriod]?.[emp.id] || [],
     $adjustments[$currentPeriod]?.[emp.id] || [],
     $rules,
     $basicConfig
@@ -25,15 +23,33 @@
   
   // Wizard navigation
   const handleNext = () => {
-    if (currentStep < STEPS.length - 1) currentStep++
+    if ($wizardStep < STEPS.length - 1) wizardStep.update(s => s + 1)
   }
   
   const handlePrev = () => {
-    if (currentStep > 0) currentStep--
+    if ($wizardStep > 0) wizardStep.update(s => s - 1)
+  }
+
+  const KEYMAP = {
+    ' ': handleNext,
+    ArrowRight: handleNext,
+    ArrowLeft: handlePrev,
+    '1': () => wizardStep.set(0),
+    '2': () => wizardStep.set(1),
+    '3': () => wizardStep.set(2),
+    '4': () => wizardStep.set(3),
+    '5': () => wizardStep.set(4)
+  }
+
+  const handleKey = (e) => {
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return
+    KEYMAP[e.key]?.()
   }
 </script>
 
-<Wizard {currentStep} onNext={handleNext} onPrev={handlePrev}>
+<svelte:window onkeydown={handleKey} />
+
+<Wizard currentStep={$wizardStep} onNext={handleNext} onPrev={handlePrev}>
   
   {#if currentStepData.id === 'config'}
     <Rules basicConfigData={$basicConfig} />
@@ -45,7 +61,6 @@
     <Attendance 
       employees={$employees} 
       period={$currentPeriod}
-      basicConfig={$basicConfig}
     />
   
   {:else if currentStepData.id === 'adjustments'}

@@ -1,7 +1,7 @@
 <script>
   import Icon from '@iconify/svelte'
   import Dialog from './Dialog.svelte'
-  import { formatCurrency, formatHours } from '../core.js'
+  import { formatCurrency, formatHours, stringToColor } from '../core.js'
   import { buildCalculationSteps } from '../payroll.js'
   import { basicConfig } from '../stores.js'
   import { printEmployeeReport } from '../lib/print.js'
@@ -59,7 +59,7 @@
     {#each results as result}
       {@const employeeId = result.employee.id}
       {@const isExpanded = expandedCards[employeeId]}
-      <div class="report-card" class:expanded={isExpanded} role="button" tabindex="0" onclick={() => { expandedCards = { ...expandedCards, [employeeId]: !isExpanded } }} onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (expandedCards = { ...expandedCards, [employeeId]: !isExpanded })}>
+      <div class="report-card" style="--emp-color: {stringToColor(result.employee.name)}" class:expanded={isExpanded} role="button" tabindex="0" onclick={() => { expandedCards = { ...expandedCards, [employeeId]: !isExpanded } }} onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (expandedCards = { ...expandedCards, [employeeId]: !isExpanded })}>
         <div class="top">
           <h3>{result.employee.name}</h3>
           <span>{period}</span>
@@ -168,6 +168,9 @@
     text-align: left
     padding: 1rem
     border: 2px solid transparent
+    border-left: 6px solid var(--emp-color)
+    border-top-left-radius: 0
+    border-bottom-left-radius: 0
     cursor: pointer
     @extend %transition
     
@@ -186,7 +189,7 @@
       gap: 0.75rem
       h3
         font-weight: 700
-        color: var(--primary)
+        color: var(--emp-color)
         font-size: 1.2rem
         margin: 0
       span

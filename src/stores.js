@@ -13,13 +13,15 @@ import { DEFAULT_RULES, createRule, validateRule, getNextOrder } from './rules.j
 
 const KEYS = {
   EMPLOYEES: 'xpayroll_employees',
-  ATTENDANCE: 'xpayroll_attendance', 
+  ATTENDANCE: 'xpayroll_attendance',
+  ATTENDANCE_ITEMS: 'xpayroll_attendance_items',
   PAYROLL: 'xpayroll_payroll',
   RULES: 'xpayroll_rules',
   BASIC_CONFIG: 'xpayroll_basic_config',
   ADJUSTMENTS: 'xpayroll_adjustments',
   THEME: 'xpayroll_theme',
-  SETTINGS: 'xpayroll_settings'
+  SETTINGS: 'xpayroll_settings',
+  WIZARD_STEP: 'xpayroll_wizard_step'
 }
 
 // ============================================================================
@@ -60,6 +62,10 @@ export const DEFAULT_SETTINGS = {
 export const theme = writable(storage.get(KEYS.THEME, DEFAULT_THEME))
 theme.subscribe(value => storage.set(KEYS.THEME, value))
 
+// Wizard step store
+export const wizardStep = writable(storage.get(KEYS.WIZARD_STEP, 0))
+wizardStep.subscribe(value => storage.set(KEYS.WIZARD_STEP, value))
+
 // Rules store
 export const rules = writable(storage.get(KEYS.RULES, DEFAULT_RULES))
 rules.subscribe(value => storage.set(KEYS.RULES, value))
@@ -90,7 +96,7 @@ basicConfig.subscribe(value => storage.set(KEYS.BASIC_CONFIG, value))
 const loadEmployees = () => {
   const loaded = storage.get(KEYS.EMPLOYEES, [])
   // Migrate monthlySalary to dailySalary (divide by 30)
-  // Ensure jadid field exists with default false
+  // Ensure probationary field exists with default false
   return loaded.map(emp => {
     const migrated = { ...emp }
     
@@ -101,9 +107,9 @@ const loadEmployees = () => {
       Object.assign(migrated, rest)
     }
     
-    // Ensure jadid field exists (default to false if not present)
-    if (migrated.jadid === undefined) {
-      migrated.jadid = false
+    // Ensure probationary field exists (default to false if not present)
+    if (migrated.probationary === undefined) {
+      migrated.probationary = false
     }
     
     return migrated
@@ -120,6 +126,10 @@ attendance.subscribe(value => storage.set(KEYS.ATTENDANCE, value))
 // Adjustments store
 export const adjustments = writable(storage.get(KEYS.ADJUSTMENTS, {}))
 adjustments.subscribe(value => storage.set(KEYS.ADJUSTMENTS, value))
+
+// Attendance items store (hours adjustment per employee)
+export const attendanceItems = writable(storage.get(KEYS.ATTENDANCE_ITEMS, {}))
+attendanceItems.subscribe(value => storage.set(KEYS.ATTENDANCE_ITEMS, value))
 
 // Payroll store
 export const payroll = writable(storage.get(KEYS.PAYROLL, {}))
@@ -256,6 +266,45 @@ export const removeAdjustment = (period, employeeId, adjustmentId) => {
 
 export const getAdjustments = (period, employeeId) => 
   get(adjustments)[period]?.[employeeId] || []
+
+// Attendance items actions
+export const addAttendanceItem = (period, employeeId, item) => {
+  attendanceItems.update(current => ({
+    ...current,
+    [period]: {
+      ...current[period],
+      [employeeId]: [
+        ...(current[period]?.[employeeId] || []),
+        { id: `att_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`, ...item }
+      ]
+    }
+  }))
+}
+
+export const updateAttendanceItem = (period, employeeId, itemId, updates) => {
+  attendanceItems.update(current => ({
+    ...current,
+    [period]: {
+      ...current[period],
+      [employeeId]: (current[period]?.[employeeId] || []).map(item => 
+        item.id === itemId ? { ...item, ...updates } : item
+      )
+    }
+  }))
+}
+
+export const removeAttendanceItem = (period, employeeId, itemId) => {
+  attendanceItems.update(current => ({
+    ...current,
+    [period]: {
+      ...current[period],
+      [employeeId]: (current[period]?.[employeeId] || []).filter(item => item.id !== itemId)
+    }
+  }))
+}
+
+export const getAttendanceItems = (period, employeeId) => 
+  get(attendanceItems)[period]?.[employeeId] || []
 
 // Payroll actions
 export const setPayroll = (period, employeeId, data) => {
