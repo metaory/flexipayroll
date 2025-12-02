@@ -162,22 +162,13 @@
     
   .report-card
     @extend %card-base
+    @include card-accent
     position: relative
     display: block
     width: 100%
     text-align: left
     padding: 1rem
-    border: 2px solid transparent
-    border-left: 6px solid var(--emp-color)
-    border-top-left-radius: 0
-    border-bottom-left-radius: 0
     cursor: pointer
-    @extend %transition
-    
-    &:hover
-      border-color: var(--primary)
-      transform: translateY(-2px)
-      box-shadow: 0 6px 20px color-mix(in oklab, var(--primary) 20%, transparent)
       
     &.expanded
       border-color: var(--secondary)

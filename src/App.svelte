@@ -70,13 +70,13 @@
 
   .toolbar
     position: fixed
-    top: 1rem
-    right: 1rem
+    top: 0.8rem
+    right: 40%
     display: flex
     z-index: 1000
     background: var(--surface)
     border: 2px solid var(--border-muted)
-    border-radius: 2rem
+    border-radius: 1rem
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15)
 
   .toolbar-btn

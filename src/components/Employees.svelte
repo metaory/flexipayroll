@@ -279,19 +279,13 @@
 
   .employee-card
     @include card-interactive(0.5rem)
+    @include card-accent
     --card-scale: 1
     cursor: pointer
     padding: 0.65rem
-    border: 2px solid transparent
-    border-left: 6px solid var(--emp-color)
-    border-top-left-radius: 0
-    border-bottom-left-radius: 0
 
     &:hover
       background: var(--surface-medium)
-      border-color: var(--primary)
-      box-shadow: 0 4px 16px color-mix(in oklab, var(--primary) 20%, transparent)
-      transform: translateY(-2px)
 
       h4
         color: var(--secondary)

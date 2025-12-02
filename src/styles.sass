@@ -15,7 +15,7 @@ $mobile: 768px
 $tablet: 1024px
 
 // $base: #6366f1
-$base: #e7a3db
+$base: #3d3a3a
 $dark-bg: hsl(225deg 70% 6% / 70%)
 $light-bg: hsl(0deg 0% 100% / 70%)
 
@@ -61,13 +61,13 @@ $light-bg: hsl(0deg 0% 100% / 70%)
     --border: #{color.mix($primary, transparent, 25%)}
     --border-muted: #{color.mix($primary, transparent, 15%)}
   @else
-    $primary: adj(0deg, 25%, 22%)
-    $secondary: adj(120deg, 35%, 17%)
-    --based: #dedeed
+    $primary: adj(0deg, 15%, 18%)
+    $secondary: adj(120deg, 20%, 15%)
+    --based: #eaeaea
     --bg: #{$light-bg}
     --bg-muted: #{color.mix($light-bg, transparent, 80%)}
-    --fg: #{adj(0deg, -30%, -35%)}
-    --fg-muted: #{adj(0deg, -50%, -15%)}
+    --fg: #{adj(0deg, -5%, -35%)}
+    --fg-muted: #{adj(0deg, -15%, -15%)}
     --primary: #{$primary}
     --secondary: #{$secondary}
     --surface: #{color.mix($primary, transparent, 8%)}
@@ -94,6 +94,7 @@ $light-bg: hsl(0deg 0% 100% / 70%)
   --card-scale: 1
   --icon-btn-size: 3rem
   --icon-size: 2.5rem
+  --card-accent-width: 2px
 
 @mixin generate-bitgrid-colors($dark: false)
   --grid-primary: var(--brand)
@@ -336,6 +337,20 @@ body
   justify-content: space-between
   gap: $gap
   min-width: 0
+
+@mixin card-accent
+  border: 2px solid transparent
+  border-left: var(--card-accent-width) solid var(--emp-color)
+  border-top-left-radius: 0
+  border-bottom-left-radius: 0
+
+  &:hover
+    border-color: var(--primary)
+    border-color: var(--emp-color)
+    border-left-width: 8px
+    border-radius: 2em
+    box-shadow: 0 4px 16px color-mix(in oklab, var(--primary) 20%, transparent)
+    transform: translateY(-2px)
 
 @mixin card-draggable($gap: 1rem)
   @include card-interactive($gap)

@@ -54,7 +54,7 @@
     gap: 2rem
     padding: 2rem
     background: transparent
-    backdrop-filter: brightness(0.6)
+    backdrop-filter: blur(4px)
 
   .step-info
     display: grid

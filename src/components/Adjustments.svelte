@@ -246,17 +246,8 @@
 
   .employee-adjustments
     @extend %card-base
+    @include card-accent
     padding: 0.75rem
-    border: 2px solid transparent
-    border-left: 6px solid var(--emp-color)
-    border-top-left-radius: 0
-    border-bottom-left-radius: 0
-    @extend %transition
-
-    &:hover
-      border-color: var(--primary)
-      box-shadow: 0 4px 16px color-mix(in oklab, var(--primary) 20%, transparent)
-      transform: translateY(-2px)
 
   .employee-header
     @extend %flex-between
