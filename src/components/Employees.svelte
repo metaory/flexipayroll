@@ -288,7 +288,7 @@
       background: var(--surface-medium)
 
       h4
-        color: var(--secondary)
+        color: var(--emp-color)
 
   .employee-info
     @include card-content
@@ -296,7 +296,7 @@
     h4
       @include card-title(1.2rem)
       margin-bottom: 0.25rem
-      color: var(--emp-color)
+      @extend %transition
 
     p
       @include card-text(0.95rem)

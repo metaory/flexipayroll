@@ -67,6 +67,8 @@ export const validateAttendance = (data) => {
 // CALCULATION UTILITIES
 // ============================================================================
 
+export const round2 = (n) => Math.round(n * 100) / 100
+
 export const calculateDailyRate = (dailySalary) => 
   dailySalary
 
@@ -287,16 +289,10 @@ export const storage = {
     }
   },
 
-  exportSession: () => {
-    const data = Object.keys(localStorage)
-      .filter(k => k.startsWith(SESSION_PREFIX))
-      .reduce((acc, k) => ({ ...acc, [k]: localStorage.getItem(k) }), {})
-    return btoa(JSON.stringify(data))
-  },
+  exportSession: () => btoa(JSON.stringify({ ...localStorage })),
 
   importSession: (encoded) => {
-    const data = JSON.parse(atob(encoded))
-    Object.entries(data).map(([k, v]) => localStorage.setItem(k, v))
+    Object.entries(JSON.parse(atob(encoded))).map(([k, v]) => localStorage.setItem(k, v))
     location.reload()
   },
 

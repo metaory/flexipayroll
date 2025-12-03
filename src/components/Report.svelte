@@ -169,6 +169,9 @@
     text-align: left
     padding: 1rem
     cursor: pointer
+
+    &:hover .top h3
+      color: var(--emp-color)
       
     &.expanded
       border-color: var(--secondary)
@@ -180,9 +183,9 @@
       gap: 0.75rem
       h3
         font-weight: 700
-        color: var(--emp-color)
         font-size: 1.2rem
         margin: 0
+        @extend %transition
       span
         font-size: 0.85rem
         color: var(--fg-muted)

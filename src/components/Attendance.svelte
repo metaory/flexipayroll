@@ -1,7 +1,7 @@
 <script>
   import Icon from '@iconify/svelte'
   import { addAttendanceItem, updateAttendanceItem, removeAttendanceItem, getAttendanceItems } from '../stores.js'
-  import { stringToColor } from '../core.js'
+  import { stringToColor, round2 } from '../core.js'
   import { toasts } from '../lib/toast.js'
   import { confirmDialog } from '../lib/dialog.js'
 
@@ -79,7 +79,7 @@
 
   const formatHours = (hours) => {
     const sign = hours > 0 ? '+' : ''
-    return `${sign}${hours} hrs`
+    return `${sign}${round2(hours)} hrs`
   }
 </script>
 
@@ -217,6 +217,9 @@
     @include card-accent
     padding: 0.75rem
 
+    &:hover h4
+      color: var(--emp-color)
+
   .employee-header
     @extend %flex-between
     margin-bottom: 0.75rem
@@ -224,7 +227,7 @@
 
     h4
       @include card-title(1.15rem)
-      color: var(--emp-color)
+      @extend %transition
 
   .employee-meta
     @extend %flex
