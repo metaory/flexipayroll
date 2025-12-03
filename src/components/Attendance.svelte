@@ -13,9 +13,28 @@
 
   // Initialize form state
   const initForms = () => employees.reduce((acc, emp) => {
-    acc[emp.id] = { label: '', hours: '' }
+    acc[emp.id] = { label: '', hours: '', minutes: '', isUnder: false }
     return acc
   }, {})
+
+  // Convert hour+minute+sign to decimal hours
+  const toDecimalHours = (h, m, isUnder) => {
+    const decimal = (parseInt(h) || 0) + (parseInt(m) || 0) / 60
+    return isUnder ? -decimal : decimal
+  }
+
+  // Split decimal hours back to hour/minute/sign for editing
+  const fromDecimalHours = (decimal) => {
+    const isUnder = decimal < 0
+    const abs = Math.abs(decimal)
+    const hours = Math.floor(abs)
+    const minutes = Math.round((abs - hours) * 60)
+    return { hours: hours.toString(), minutes: minutes.toString(), isUnder }
+  }
+
+  // Clamp inputs
+  const clampHour = (v) => Math.max(0, Math.min(99, parseInt(v) || 0))
+  const clampMinute = (v) => Math.max(0, Math.min(60, parseInt(v) || 0))
 
   // Load attendance items for all employees
   const loadItems = () => employees.reduce((acc, emp) => {
@@ -30,11 +49,13 @@
 
   const handleAdd = (employeeId) => {
     const form = forms[employeeId]
-    if (!form.label || !form.hours) return toasts.error('Label and hours required')
+    if (!form.label) return toasts.error('Label required')
+    
+    const h = parseInt(form.hours) || 0
+    const m = parseInt(form.minutes) || 0
+    if (h === 0 && m === 0) return toasts.error('Duration required')
 
-    const hours = parseFloat(form.hours)
-    if (isNaN(hours)) return toasts.error('Invalid hours')
-
+    const hours = toDecimalHours(clampHour(form.hours), clampMinute(form.minutes), form.isUnder)
     addAttendanceItem(period, employeeId, { label: form.label, hours })
     toasts.success('Attendance item added')
     resetForm(employeeId)
@@ -43,18 +64,21 @@
 
   const handleEdit = (employeeId, item) => {
     editing[employeeId] = item
-    forms[employeeId] = { label: item.label, hours: item.hours.toString() }
+    const { hours, minutes, isUnder } = fromDecimalHours(item.hours)
+    forms[employeeId] = { label: item.label, hours, minutes, isUnder }
   }
 
   const handleUpdate = (employeeId) => {
     const form = forms[employeeId]
     const item = editing[employeeId]
     
-    if (!form.label || !form.hours) return toasts.error('Label and hours required')
+    if (!form.label) return toasts.error('Label required')
 
-    const hours = parseFloat(form.hours)
-    if (isNaN(hours)) return toasts.error('Invalid hours')
+    const h = parseInt(form.hours) || 0
+    const m = parseInt(form.minutes) || 0
+    if (h === 0 && m === 0) return toasts.error('Duration required')
 
+    const hours = toDecimalHours(clampHour(form.hours), clampMinute(form.minutes), form.isUnder)
     updateAttendanceItem(period, employeeId, item.id, { label: form.label, hours })
     toasts.success('Attendance item updated')
     resetForm(employeeId)
@@ -70,7 +94,7 @@
   }
 
   const resetForm = (employeeId) => {
-    forms[employeeId] = { label: '', hours: '' }
+    forms[employeeId] = { label: '', hours: '', minutes: '', isUnder: false }
     delete editing[employeeId]
   }
 
@@ -78,8 +102,11 @@
     (itemsData[employeeId] || []).reduce((sum, item) => sum + item.hours, 0)
 
   const formatHours = (hours) => {
-    const sign = hours > 0 ? '+' : ''
-    return `${sign}${round2(hours)} hrs`
+    const sign = hours > 0 ? '+' : hours < 0 ? '-' : ''
+    const abs = Math.abs(hours)
+    const h = Math.floor(abs)
+    const m = Math.round((abs - h) * 60)
+    return m === 0 ? `${sign}${h}h` : `${sign}${h}h ${m}m`
   }
 </script>
 
@@ -146,22 +173,43 @@
                 value={forms[employee.id]?.label || ''}
                 oninput={(e) => forms[employee.id] = { ...forms[employee.id], label: e.currentTarget.value }}
               />
-              <input
-                type="number"
-                placeholder="Hours (+/-)"
-                step="0.5"
-                value={forms[employee.id]?.hours || ''}
-                oninput={(e) => forms[employee.id] = { ...forms[employee.id], hours: e.currentTarget.value }}
-              />
+              <div class="time-inputs">
+                <input
+                  type="number"
+                  placeholder="Hr"
+                  min="0"
+                  max="99"
+                  step="1"
+                  value={forms[employee.id]?.hours || ''}
+                  oninput={(e) => { const v = Math.max(0, Math.min(99, Math.floor(+e.currentTarget.value) || 0)); e.currentTarget.value = v || ''; forms[employee.id] = { ...forms[employee.id], hours: v || '' } }}
+                />
+                <input
+                  type="number"
+                  placeholder="Min"
+                  min="0"
+                  max="60"
+                  step="1"
+                  value={forms[employee.id]?.minutes || ''}
+                  oninput={(e) => { const v = Math.max(0, Math.min(60, Math.floor(+e.currentTarget.value) || 0)); e.currentTarget.value = v || ''; forms[employee.id] = { ...forms[employee.id], minutes: v || '' } }}
+                />
+                <label class="under-toggle" class:active={forms[employee.id]?.isUnder}>
+                  <input
+                    type="checkbox"
+                    checked={forms[employee.id]?.isUnder || false}
+                    onchange={(e) => forms[employee.id] = { ...forms[employee.id], isUnder: e.currentTarget.checked }}
+                  />
+                  <span>{forms[employee.id]?.isUnder ? 'Under' : 'Over'}</span>
+                </label>
+              </div>
             </div>
             <div class="form-actions">
               {#if editing[employee.id]}
                 <button class="secondary" onclick={() => resetForm(employee.id)}>
                   <Icon icon="tabler:x" width="1rem" height="1rem" />Cancel</button>
-                <button class="primary" onclick={() => handleUpdate(employee.id)} disabled={!forms[employee.id]?.label || !forms[employee.id]?.hours}>
+                <button class="primary" onclick={() => handleUpdate(employee.id)} disabled={!forms[employee.id]?.label || (!(parseInt(forms[employee.id]?.hours) || 0) && !(parseInt(forms[employee.id]?.minutes) || 0))}>
                   <Icon icon="tabler:check" width="1rem" height="1rem" />Update</button>
               {:else}
-                <button class="primary" onclick={() => handleAdd(employee.id)} disabled={!forms[employee.id]?.label || !forms[employee.id]?.hours}>
+                <button class="primary" onclick={() => handleAdd(employee.id)} disabled={!forms[employee.id]?.label || (!(parseInt(forms[employee.id]?.hours) || 0) && !(parseInt(forms[employee.id]?.minutes) || 0))}>
                   <Icon icon="tabler:plus" width="1rem" height="1rem" />Add</button>
               {/if}
             </div>
@@ -340,6 +388,37 @@
       @extend %input-base
       padding: 0.5rem 0.75rem
       font-size: 0.9rem
+
+  .time-inputs
+    display: grid
+    grid-template-columns: 1fr 1fr 50px
+    gap: 0.35rem
+    align-items: center
+
+    input
+      text-align: center
+
+  .under-toggle
+    @extend %flex
+    align-items: center
+    justify-content: center
+    gap: 0.35rem
+    padding: 0.5rem 0.75rem
+    border-radius: var(--radius)
+    background: var(--surface-success)
+    color: var(--success)
+    font-size: 0.8rem
+    font-weight: 600
+    cursor: pointer
+    user-select: none
+    @extend %transition
+
+    &.active
+      background: color-mix(in oklab, var(--error) 12%, transparent)
+      color: var(--error)
+
+    input
+      display: none
 
   .form-actions
     @extend %flex
