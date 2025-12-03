@@ -94,7 +94,6 @@ $light-bg: hsl(0deg 0% 100% / 70%)
   --card-scale: 1
   --icon-btn-size: 3rem
   --icon-size: 2.5rem
-  --card-accent-width: 2px
 
 @mixin generate-bitgrid-colors($dark: false)
   --grid-primary: var(--brand)
@@ -340,16 +339,11 @@ body
 
 @mixin card-accent
   border: 2px solid transparent
-  border-left: var(--card-accent-width) solid var(--emp-color)
-  border-top-left-radius: 0
-  border-bottom-left-radius: 0
+  border-left: 4px solid var(--emp-color)
 
   &:hover
-    border-color: var(--primary)
     border-color: var(--emp-color)
-    border-left-width: 8px
-    border-radius: 2em
-    box-shadow: 0 4px 16px color-mix(in oklab, var(--primary) 20%, transparent)
+    box-shadow: 0 4px 16px color-mix(in oklab, var(--emp-color) 25%, transparent)
     transform: translateY(-2px)
 
 @mixin card-draggable($gap: 1rem)
