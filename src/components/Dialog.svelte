@@ -9,7 +9,7 @@
     title = '', 
     size = 'medium',
     closable = true,
-    closeOnBackdrop = true 
+    closeOnBackdrop = false 
   } = $props()
   
   let dialog = $state(null)

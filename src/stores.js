@@ -70,54 +70,12 @@ wizardStep.subscribe(value => storage.set(KEYS.WIZARD_STEP, value))
 export const rules = writable(storage.get(KEYS.RULES, DEFAULT_RULES))
 rules.subscribe(value => storage.set(KEYS.RULES, value))
 
-// Basic config store (workdayHours, workingDaysPerMonth)
-const loadBasicConfig = () => {
-  const loaded = storage.get(KEYS.BASIC_CONFIG, DEFAULT_BASIC_CONFIG)
-  // Migrate old workdayHours from 6.5 to 8 if needed
-  if (loaded.workdayHours === 6.5) {
-    return { ...DEFAULT_BASIC_CONFIG, ...loaded, workdayHours: 8 }
-  }
-  // Ensure workdayHours exists, default to 8
-  if (!loaded.workdayHours) {
-    return { ...DEFAULT_BASIC_CONFIG, ...loaded, workdayHours: 8 }
-  }
-  // Ensure overtimeRate and undertimeDeductionRate exist with defaults
-  // Migrate old undertimeRate to undertimeDeductionRate
-  return {
-    ...DEFAULT_BASIC_CONFIG,
-    ...loaded,
-    overtimeRate: loaded.overtimeRate ?? DEFAULT_BASIC_CONFIG.overtimeRate,
-    undertimeDeductionRate: loaded.undertimeDeductionRate ?? loaded.undertimeRate ?? DEFAULT_BASIC_CONFIG.undertimeDeductionRate
-  }
-}
-export const basicConfig = writable(loadBasicConfig())
+// Basic config store
+export const basicConfig = writable({ ...DEFAULT_BASIC_CONFIG, ...storage.get(KEYS.BASIC_CONFIG, {}) })
 basicConfig.subscribe(value => storage.set(KEYS.BASIC_CONFIG, value))
 
-// Employees store with migration
-const loadEmployees = () => {
-  const loaded = storage.get(KEYS.EMPLOYEES, [])
-  // Migrate monthlySalary to dailySalary (divide by 30)
-  // Ensure probationary field exists with default false
-  return loaded.map(emp => {
-    const migrated = { ...emp }
-    
-    if (emp.monthlySalary && !emp.dailySalary) {
-      const { monthlySalary, ...rest } = emp
-      migrated.dailySalary = monthlySalary / 30
-      delete migrated.monthlySalary
-      Object.assign(migrated, rest)
-    }
-    
-    // Ensure probationary field exists (default to false if not present)
-    if (migrated.probationary === undefined) {
-      migrated.probationary = false
-    }
-    
-    return migrated
-  })
-}
-
-export const employees = writable(loadEmployees())
+// Employees store
+export const employees = writable(storage.get(KEYS.EMPLOYEES, []))
 employees.subscribe(value => storage.set(KEYS.EMPLOYEES, value))
 
 // Attendance store

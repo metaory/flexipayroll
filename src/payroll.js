@@ -20,19 +20,16 @@ export const calculateEmployeePayroll = (employee, attendanceItems, adjustments,
   const dailyRate = calculateDailyRate(employee.dailySalary)
   const hourlyRate = calculateHourlyRate(employee.dailySalary, basicConfig.workdayHours)
   
-  // Calculate hours from attendance items (new model)
-  // No items = full attendance, items adjust hours (negative = missed, positive = overtime)
-  // Apply OT rate (1.5x) for positive hours, UT rate (0.5x) for negative hours
-  const expectedDays = basicConfig.monthDays || 30
-  const expectedHours = expectedDays * basicConfig.workdayHours
+  // Apply OT/UT rates to hours adjustment
+  const expectedHours = basicConfig.monthDays * basicConfig.workdayHours
   const hoursAdjustment = (attendanceItems || []).reduce((sum, item) => {
     const hours = item.hours || 0
-    if (hours > 0) return sum + (hours * (basicConfig.overtimeRate || 1.5))
-    if (hours < 0) return sum + (hours * (basicConfig.undertimeDeductionRate || 0.5))
+    if (hours > 0) return sum + (hours * basicConfig.overtimeRate)
+    if (hours < 0) return sum + (hours * basicConfig.undertimeDeductionRate)
     return sum
   }, 0)
   const totalHours = expectedHours + hoursAdjustment
-  const actualDays = expectedDays + (hoursAdjustment / basicConfig.workdayHours)
+  const actualDays = basicConfig.monthDays + (hoursAdjustment / basicConfig.workdayHours)
   
   // Apply rules engine (this calculates baseSalary internally)
   const ruleResults = applyRules(employee, attendanceItems, rules, basicConfig)

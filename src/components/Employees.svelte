@@ -201,6 +201,7 @@
             {:else if field.type === 'number' && field.step === 0.1}
               <input
                 {...field}
+                lang="en"
                 value={newEmployee[field.key] || ''}
                 oninput={(e) => {
                   const value = parseFloat(e.currentTarget.value) || 0
@@ -211,6 +212,7 @@
             {:else}
               <input
                 {...field}
+                lang={field.type === 'number' ? 'en' : undefined}
                 value={newEmployee[field.key] || ''}
                 oninput={(e) => {
                   const target = e.currentTarget

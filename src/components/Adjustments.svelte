@@ -179,6 +179,7 @@
               />
               <input
                 type="number"
+                lang="en"
                 placeholder="Amount (positive/negative)"
                 step="0.01"
                 value={adjustmentForms[employee.id]?.amount || ''}

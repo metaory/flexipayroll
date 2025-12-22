@@ -176,21 +176,23 @@
               <div class="time-inputs">
                 <input
                   type="number"
+                  lang="en"
                   placeholder="Hr"
                   min="0"
                   max="99"
                   step="1"
                   value={forms[employee.id]?.hours || ''}
-                  oninput={(e) => { const v = Math.max(0, Math.min(99, Math.floor(+e.currentTarget.value) || 0)); e.currentTarget.value = v || ''; forms[employee.id] = { ...forms[employee.id], hours: v || '' } }}
+                  oninput={(e) => { const v = Math.max(0, Math.min(99, Math.floor(+e.currentTarget.value) || 0)); e.currentTarget.value = String(v); forms[employee.id] = { ...forms[employee.id], hours: String(v) } }}
                 />
                 <input
                   type="number"
+                  lang="en"
                   placeholder="Min"
                   min="0"
                   max="60"
                   step="1"
                   value={forms[employee.id]?.minutes || ''}
-                  oninput={(e) => { const v = Math.max(0, Math.min(60, Math.floor(+e.currentTarget.value) || 0)); e.currentTarget.value = v || ''; forms[employee.id] = { ...forms[employee.id], minutes: v || '' } }}
+                  oninput={(e) => { const v = Math.max(0, Math.min(60, Math.floor(+e.currentTarget.value) || 0)); e.currentTarget.value = String(v); forms[employee.id] = { ...forms[employee.id], minutes: String(v) } }}
                 />
                 <label class="under-toggle" class:active={forms[employee.id]?.isUnder}>
                   <input

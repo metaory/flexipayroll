@@ -138,17 +138,15 @@ export const calculateRuleValue = (rule, employee, attendanceItems, config) => {
   
   const hourlyRate = employee.dailySalary / config.workdayHours
   
-  // New attendance model: items adjust hours from expected full attendance
-  // Apply OT rate for positive hours, UT rate for negative hours
-  const expectedMonthDays = config.monthDays || 30
+  // Apply OT/UT rates to hours adjustment
   const hoursAdjustment = (attendanceItems || []).reduce((sum, item) => {
     const hours = item.hours || 0
-    if (hours > 0) return sum + (hours * (config.overtimeRate || 1.5))
-    if (hours < 0) return sum + (hours * (config.undertimeDeductionRate || 0.5))
+    if (hours > 0) return sum + (hours * config.overtimeRate)
+    if (hours < 0) return sum + (hours * config.undertimeDeductionRate)
     return sum
   }, 0)
-  const actualDaysWorked = expectedMonthDays + (hoursAdjustment / config.workdayHours)
-  const daysWorkedProportion = expectedMonthDays > 0 ? actualDaysWorked / expectedMonthDays : 0
+  const actualDaysWorked = config.monthDays + (hoursAdjustment / config.workdayHours)
+  const daysWorkedProportion = config.monthDays > 0 ? actualDaysWorked / config.monthDays : 0
   
   const calculator = RULE_CALCULATORS[rule.type]
   return calculator ? calculator(rule, employee, attendanceItems, hourlyRate, daysWorkedProportion, config) : 0
@@ -160,19 +158,17 @@ export const calculateRuleValue = (rule, employee, attendanceItems, config) => {
 
 export const applyRules = (employee, attendanceItems, rules, config) => {
   const hourlyRate = employee.dailySalary / config.workdayHours
+  const expectedHours = config.monthDays * config.workdayHours
   
-  // New attendance model: items adjust hours from expected full attendance
-  // Apply OT rate for positive hours, UT rate for negative hours
-  const expectedDays = config.monthDays || 30
-  const expectedHours = expectedDays * config.workdayHours
+  // Apply OT/UT rates to hours adjustment
   const hoursAdjustment = (attendanceItems || []).reduce((sum, item) => {
     const hours = item.hours || 0
-    if (hours > 0) return sum + (hours * (config.overtimeRate || 1.5))
-    if (hours < 0) return sum + (hours * (config.undertimeDeductionRate || 0.5))
+    if (hours > 0) return sum + (hours * config.overtimeRate)
+    if (hours < 0) return sum + (hours * config.undertimeDeductionRate)
     return sum
   }, 0)
   const totalHours = expectedHours + hoursAdjustment
-  const actualDays = expectedDays + (hoursAdjustment / config.workdayHours)
+  const actualDays = config.monthDays + (hoursAdjustment / config.workdayHours)
   const baseSalary = totalHours * hourlyRate
 
   // Probationary employees get base salary only

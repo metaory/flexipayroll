@@ -18,8 +18,8 @@
   const CONFIG_FIELDS = [
     { key: 'organizationName', label: 'Organization', type: 'text', fallback: '' },
     { key: 'workdayHours', label: 'Hours/Day', type: 'number', min: 1, max: 24, step: 0.5, fallback: 8 },
-    { key: 'overtimeRate', label: 'OT Rate', type: 'number', min: 0, max: 10, step: 0.1, fallback: 1.5 },
-    { key: 'undertimeDeductionRate', label: 'UT Deduction', type: 'number', min: 0, max: 1, step: 0.1, fallback: 0.5 },
+    { key: 'overtimeRate', label: 'OT Rate', type: 'number', min: 0, max: 10, step: 'any', fallback: 1.5 },
+    { key: 'undertimeDeductionRate', label: 'UT Deduction', type: 'number', min: 0, max: 1, step: 'any', fallback: 0.5 },
     { key: 'workingDaysPerMonth', label: 'Days/Month', type: 'number', min: 1, max: 31, fallback: 22 },
     { key: 'currencySymbol', label: 'Currency', type: 'text', fallback: '$' },
     { key: 'monthDays', label: 'Month Days', type: 'number', min: 28, max: 31, fallback: 30 },
@@ -133,9 +133,13 @@
               {#each f.options as opt}<option value={opt}>{opt}</option>{/each}
             </select>
           {:else}
-            <input type={f.type} min={f.min} max={f.max} step={f.step}
+            <input type={f.type} lang={f.type === 'number' ? 'en' : undefined} min={f.min} max={f.max} step={f.step}
               value={basicConfigData[f.key] ?? f.fallback}
-              oninput={(e) => updateBasicConfigField(f.key, f.type === 'number' ? +e.target.value || f.fallback : e.target.value || f.fallback)} />
+              oninput={(e) => {
+                const raw = e.target.value
+                const val = f.type === 'number' ? (raw === '' ? f.fallback : +raw) : (raw || f.fallback)
+                updateBasicConfigField(f.key, val)
+              }} />
           {/if}
           <small>{f.key}</small>
         </label>
@@ -210,7 +214,7 @@
       </label>
       <label class="field" class:error={errors.value}>
         <span>Value</span>
-        <input type="number" min="0" step={newRule.type.includes('percentage') ? 0.01 : 1} value={newRule.value}
+        <input type="number" lang="en" min="0" step={newRule.type.includes('percentage') ? 0.01 : 1} value={newRule.value}
           oninput={(e) => { newRule.value = +e.target.value; errors.value = false }} />
       </label>
       <label class="field">
