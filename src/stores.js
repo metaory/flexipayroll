@@ -36,7 +36,7 @@ const DEFAULT_BASIC_CONFIG = {
   monthDays: 30,
   firstDayWeekday: 'Saturday',
   overtimeRate: 1.5,
-  undertimeRate: 0.5
+  undertimeDeductionRate: 0.5
 }
 
 const DEFAULT_THEME = {
@@ -81,12 +81,13 @@ const loadBasicConfig = () => {
   if (!loaded.workdayHours) {
     return { ...DEFAULT_BASIC_CONFIG, ...loaded, workdayHours: 8 }
   }
-  // Ensure overtimeRate and undertimeRate exist with defaults
+  // Ensure overtimeRate and undertimeDeductionRate exist with defaults
+  // Migrate old undertimeRate to undertimeDeductionRate
   return {
     ...DEFAULT_BASIC_CONFIG,
     ...loaded,
     overtimeRate: loaded.overtimeRate ?? DEFAULT_BASIC_CONFIG.overtimeRate,
-    undertimeRate: loaded.undertimeRate ?? DEFAULT_BASIC_CONFIG.undertimeRate
+    undertimeDeductionRate: loaded.undertimeDeductionRate ?? loaded.undertimeRate ?? DEFAULT_BASIC_CONFIG.undertimeDeductionRate
   }
 }
 export const basicConfig = writable(loadBasicConfig())

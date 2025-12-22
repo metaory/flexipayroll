@@ -4,7 +4,7 @@
  */
 
 import { calculateDailyRate, calculateHourlyRate } from './core.js'
-import { applyRules, RULE_TYPES } from './rules.js'
+import { applyRules, RULE_TYPES, normalizePercentage } from './rules.js'
 
 // Step definitions - simplified for rules-based system
 export const STEPS = [
@@ -28,7 +28,7 @@ export const calculateEmployeePayroll = (employee, attendanceItems, adjustments,
   const hoursAdjustment = (attendanceItems || []).reduce((sum, item) => {
     const hours = item.hours || 0
     if (hours > 0) return sum + (hours * (basicConfig.overtimeRate || 1.5))
-    if (hours < 0) return sum + (hours * (basicConfig.undertimeRate || 0.5))
+    if (hours < 0) return sum + (hours * (basicConfig.undertimeDeductionRate || 0.5))
     return sum
   }, 0)
   const totalHours = expectedHours + hoursAdjustment
@@ -53,12 +53,10 @@ export const calculateEmployeePayroll = (employee, attendanceItems, adjustments,
   const totalDeductions = Object.values(ruleResults.deductions || {}).reduce((sum, item) => {
     if (!item?.rule) return sum
     
-    // PERCENTAGE_MONTHLY deductions should be calculated on GROSS salary (base + bonuses + adjustments)
-    // item.value from calculateRuleValue is just the percentage (e.g., 0.07 for 7%), not the calculated amount
+    // PERCENTAGE_MONTHLY deductions: item.value is already normalized percentage, apply to gross
     if (item.rule.type === RULE_TYPES.PERCENTAGE_MONTHLY || item.rule.type === 'percentage_monthly') {
-      const percentage = item.rule.value >= 1 ? item.rule.value / 100 : item.rule.value
-      const deductionValue = grossSalary * percentage
-      item.value = deductionValue
+      const deductionValue = grossSalary * item.value
+      item.finalValue = deductionValue
       return sum + deductionValue
     }
     
@@ -93,7 +91,7 @@ export const calculateEmployeePayroll = (employee, attendanceItems, adjustments,
 const createDaysProportionData = (result) => {
   const monthDays = result.configSnapshot.monthDays || 30
   const actualDays = result.actualDays || 0
-  const daysProportion = monthDays > 0 ? Math.min(actualDays / monthDays, 1.0) : 0
+  const daysProportion = monthDays > 0 ? actualDays / monthDays : 0
   return { monthDays, actualDays, daysProportion }
 }
 
@@ -119,20 +117,20 @@ const createFixedRuleStep = (ruleData, result, type) => {
 }
 
 const createDaysMultiplierStep = (ruleData, result, type) => {
-  const standardDayHours = 8
+  const workdayHours = result.configSnapshot.workdayHours
   const { monthDays, actualDays, daysProportion } = createDaysProportionData(result)
-  const fullHours = ruleData.rule.value * standardDayHours
+  const fullHours = ruleData.rule.value * workdayHours
   const actualHours = ruleData.value / result.hourlyRate
   
   return {
     label: ruleData.rule.label,
-    formula: '(Days Multiplier × 8 hours × Days Worked Proportion) × Hourly Rate',
-    formulaWithValues: `(${ruleData.rule.value} days × ${standardDayHours}h × ${formatPercentage(daysProportion)}) × ${result.hourlyRate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/h = ${actualHours.toFixed(2)}h × ${result.hourlyRate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/h = ${ruleData.value.toLocaleString()}`,
+    formula: `(Days Multiplier × ${workdayHours} hours × Days Worked Proportion) × Hourly Rate`,
+    formulaWithValues: `(${ruleData.rule.value} days × ${workdayHours}h × ${formatPercentage(daysProportion)}) × ${result.hourlyRate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/h = ${actualHours.toFixed(2)}h × ${result.hourlyRate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/h = ${ruleData.value.toLocaleString()}`,
     result: ruleData.value,
-    explanation: `${type.charAt(0).toUpperCase() + type.slice(1)} calculated as ${ruleData.rule.value} days × ${standardDayHours} hours, proportionally adjusted based on actual days worked (${actualDays} out of ${monthDays} days = ${formatPercentage(daysProportion)}).`,
+    explanation: `${type.charAt(0).toUpperCase() + type.slice(1)} calculated as ${ruleData.rule.value} days × ${workdayHours} hours, proportionally adjusted based on actual days worked (${actualDays} out of ${monthDays} days = ${formatPercentage(daysProportion)}).`,
     inputs: { 
       days: ruleData.rule.value,
-      hoursPerDay: standardDayHours,
+      hoursPerDay: workdayHours,
       fullHours,
       actualHours,
       actualDays,
@@ -159,7 +157,7 @@ const createHourlyMultiplierStep = (ruleData, result, type) => {
 
 const createPercentageMonthlyStep = (ruleData, result, type) => {
   const monthlySalary = type === 'bonus' ? result.employee.dailySalary * 30 : result.grossSalary
-  const percentage = ruleData.rule.value >= 1 ? ruleData.rule.value / 100 : ruleData.rule.value
+  const percentage = ruleData.value // Already normalized
   const calc = monthlySalary * percentage
   
   return {
@@ -168,7 +166,7 @@ const createPercentageMonthlyStep = (ruleData, result, type) => {
     formulaWithValues: type === 'bonus' 
       ? `(${result.employee.dailySalary.toLocaleString()} × 30) × ${formatPercentage(percentage)} = ${monthlySalary.toLocaleString()} × ${formatPercentage(percentage)} = ${calc.toLocaleString()}`
       : `${result.grossSalary.toLocaleString()} × ${formatPercentage(percentage)} = ${calc.toLocaleString()}`,
-    result: ruleData.value,
+    result: ruleData.finalValue ?? calc,
     explanation: type === 'bonus'
       ? `Bonus calculated as ${formatPercentage(percentage)} of the employee's monthly salary (daily salary × 30), regardless of hours worked.`
       : `Deduction calculated as ${formatPercentage(percentage)} of gross salary (base salary + bonuses + adjustments).`,
@@ -180,14 +178,15 @@ const createPercentageMonthlyStep = (ruleData, result, type) => {
 }
 
 const createPercentageBaseStep = (ruleData, result, type) => {
-  const calc = result.baseSalary * ruleData.rule.value
+  const percentage = ruleData.value // Already normalized
+  const calc = result.baseSalary * percentage
   return {
     label: ruleData.rule.label,
     formula: 'Base Salary × Percentage',
-    formulaWithValues: `${result.baseSalary.toLocaleString()} × ${formatPercentage(ruleData.rule.value)} = ${calc.toLocaleString()}`,
-    result: ruleData.finalValue,
-    explanation: `${type.charAt(0).toUpperCase() + type.slice(1)} calculated as ${formatPercentage(ruleData.rule.value)} of the base salary (hours worked).`,
-    inputs: { baseSalary: result.baseSalary, percentage: formatPercentage(ruleData.rule.value) },
+    formulaWithValues: `${result.baseSalary.toLocaleString()} × ${formatPercentage(percentage)} = ${calc.toLocaleString()}`,
+    result: ruleData.finalValue ?? calc,
+    explanation: `${type.charAt(0).toUpperCase() + type.slice(1)} calculated as ${formatPercentage(percentage)} of the base salary (hours worked).`,
+    inputs: { baseSalary: result.baseSalary, percentage: formatPercentage(percentage) },
     type
   }
 }

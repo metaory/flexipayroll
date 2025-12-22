@@ -66,6 +66,13 @@ export const DEFAULT_RULES = [
 ]
 
 // ============================================================================
+// PERCENTAGE NORMALIZATION
+// ============================================================================
+
+// Normalize percentage: values >= 1 treated as whole % (7 → 0.07), values < 1 as decimal
+export const normalizePercentage = (value) => value >= 1 ? value / 100 : value
+
+// ============================================================================
 // RULE VALIDATION
 // ============================================================================
 
@@ -114,15 +121,14 @@ const RULE_CALCULATORS = {
   [RULE_TYPES.FIXED]: (rule, _, __, ___, daysWorkedProportion) => 
     rule.value * daysWorkedProportion,
   
-  [RULE_TYPES.DAYS_MULTIPLIER]: (rule, _, __, hourlyRate, daysWorkedProportion) => {
-    const standardDayHours = 8
-    const bonusHours = rule.value * standardDayHours * daysWorkedProportion
+  [RULE_TYPES.DAYS_MULTIPLIER]: (rule, _, __, hourlyRate, daysWorkedProportion, config) => {
+    const bonusHours = rule.value * config.workdayHours * daysWorkedProportion
     return bonusHours * hourlyRate
   },
   
-  [RULE_TYPES.PERCENTAGE_MONTHLY]: (rule) => rule.value,
+  [RULE_TYPES.PERCENTAGE_MONTHLY]: (rule) => normalizePercentage(rule.value),
   
-  [RULE_TYPES.PERCENTAGE_BASE]: (rule) => rule.value,
+  [RULE_TYPES.PERCENTAGE_BASE]: (rule) => normalizePercentage(rule.value),
   
   [RULE_TYPES.HOURLY_MULTIPLIER]: (rule, _, __, hourlyRate) => hourlyRate * rule.value
 }
@@ -138,14 +144,14 @@ export const calculateRuleValue = (rule, employee, attendanceItems, config) => {
   const hoursAdjustment = (attendanceItems || []).reduce((sum, item) => {
     const hours = item.hours || 0
     if (hours > 0) return sum + (hours * (config.overtimeRate || 1.5))
-    if (hours < 0) return sum + (hours * (config.undertimeRate || 0.5))
+    if (hours < 0) return sum + (hours * (config.undertimeDeductionRate || 0.5))
     return sum
   }, 0)
   const actualDaysWorked = expectedMonthDays + (hoursAdjustment / config.workdayHours)
-  const daysWorkedProportion = expectedMonthDays > 0 ? Math.min(actualDaysWorked / expectedMonthDays, 1.0) : 0
+  const daysWorkedProportion = expectedMonthDays > 0 ? actualDaysWorked / expectedMonthDays : 0
   
   const calculator = RULE_CALCULATORS[rule.type]
-  return calculator ? calculator(rule, employee, attendanceItems, hourlyRate, daysWorkedProportion) : 0
+  return calculator ? calculator(rule, employee, attendanceItems, hourlyRate, daysWorkedProportion, config) : 0
 }
 
 // ============================================================================
@@ -162,7 +168,7 @@ export const applyRules = (employee, attendanceItems, rules, config) => {
   const hoursAdjustment = (attendanceItems || []).reduce((sum, item) => {
     const hours = item.hours || 0
     if (hours > 0) return sum + (hours * (config.overtimeRate || 1.5))
-    if (hours < 0) return sum + (hours * (config.undertimeRate || 0.5))
+    if (hours < 0) return sum + (hours * (config.undertimeDeductionRate || 0.5))
     return sum
   }, 0)
   const totalHours = expectedHours + hoursAdjustment
