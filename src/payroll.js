@@ -19,22 +19,7 @@ export const STEPS = [
 export const calculateEmployeePayroll = (employee, attendanceItems, adjustments, rules, basicConfig) => {
   const dailyRate = calculateDailyRate(employee.dailySalary)
   const hourlyRate = calculateHourlyRate(employee.dailySalary, basicConfig.workdayHours)
-  
-  // Apply OT/UT rates to hours adjustment
-  const expectedHours = basicConfig.monthDays * basicConfig.workdayHours
-  const hoursAdjustment = (attendanceItems || []).reduce((sum, item) => {
-    const hours = item.hours || 0
-    if (hours > 0) return sum + (hours * basicConfig.overtimeRate)
-    if (hours < 0) return sum + (hours * basicConfig.undertimeDeductionRate)
-    return sum
-  }, 0)
-  const totalHours = expectedHours + hoursAdjustment
-  const actualDays = basicConfig.monthDays + (hoursAdjustment / basicConfig.workdayHours)
-  
-  // Apply rules engine (this calculates baseSalary internally)
   const ruleResults = applyRules(employee, attendanceItems, rules, basicConfig)
-  
-  // Use baseSalary from ruleResults to ensure consistency
   const baseSalary = ruleResults.baseSalary
   
   // Add manual adjustments
@@ -73,68 +58,42 @@ export const calculateEmployeePayroll = (employee, attendanceItems, adjustments,
     employee,
     dailyRate,
     hourlyRate,
-    totalHours,
-    actualDays,
+    totalHours: ruleResults.totalHours,
+    actualDays: ruleResults.actualDays,
     baseSalary,
+    attendanceAdjustment: ruleResults.attendanceAdjustment ?? 0,
+    hoursAdjustment: ruleResults.hoursAdjustment ?? 0,
     ruleResults,
     adjustmentTotal,
-    grossSalary: grossSalary,
-    finalSalary: finalSalary,
+    grossSalary,
+    finalSalary,
     configSnapshot: { ...basicConfig }
   }
 }
 
-// Helper functions for building calculation steps
-const createDaysProportionData = (result) => {
-  const monthDays = result.configSnapshot.monthDays || 30
-  const actualDays = result.actualDays || 0
-  const daysProportion = monthDays > 0 ? actualDays / monthDays : 0
-  return { monthDays, actualDays, daysProportion }
-}
-
 const formatPercentage = (value) => `${(value * 100).toFixed(1)}%`
 
-const createFixedRuleStep = (ruleData, result, type) => {
-  const { monthDays, actualDays, daysProportion } = createDaysProportionData(result)
-  return {
-    label: ruleData.rule.label,
-    formula: 'Fixed Amount × Days Worked Proportion',
-    formulaWithValues: `${ruleData.rule.value.toLocaleString()} × ${formatPercentage(daysProportion)} = ${ruleData.value.toLocaleString()}`,
-    result: ruleData.value,
-    explanation: `Fixed ${type} amount proportionally adjusted based on actual days worked (${actualDays} out of ${monthDays} days = ${formatPercentage(daysProportion)}).`,
-    inputs: { 
-      fullAmount: ruleData.rule.value,
-      actualDays,
-      expectedDays: monthDays,
-      daysProportion: formatPercentage(daysProportion),
-      actualAmount: ruleData.value
-    },
-    type
-  }
-}
+const createFixedRuleStep = (ruleData, _result, type) => ({
+  label: ruleData.rule.label,
+  formula: 'Fixed Amount',
+  formulaWithValues: `${ruleData.rule.value.toLocaleString()} = ${ruleData.value.toLocaleString()}`,
+  result: ruleData.value,
+  explanation: `Fixed ${type} amount added as-is (no proration by days worked).`,
+  inputs: { amount: ruleData.rule.value },
+  type
+})
 
 const createDaysMultiplierStep = (ruleData, result, type) => {
   const workdayHours = result.configSnapshot.workdayHours
-  const { monthDays, actualDays, daysProportion } = createDaysProportionData(result)
-  const fullHours = ruleData.rule.value * workdayHours
-  const actualHours = ruleData.value / result.hourlyRate
-  
+  const hours = ruleData.rule.value * workdayHours
+  const fmt = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   return {
     label: ruleData.rule.label,
-    formula: `(Days Multiplier × ${workdayHours} hours × Days Worked Proportion) × Hourly Rate`,
-    formulaWithValues: `(${ruleData.rule.value} days × ${workdayHours}h × ${formatPercentage(daysProportion)}) × ${result.hourlyRate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/h = ${actualHours.toFixed(2)}h × ${result.hourlyRate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/h = ${ruleData.value.toLocaleString()}`,
+    formula: `(Days × ${workdayHours} hours) × Hourly Rate`,
+    formulaWithValues: `(${ruleData.rule.value} days × ${workdayHours}h) × ${fmt(result.hourlyRate)}/h = ${ruleData.value.toLocaleString()}`,
     result: ruleData.value,
-    explanation: `${type.charAt(0).toUpperCase() + type.slice(1)} calculated as ${ruleData.rule.value} days × ${workdayHours} hours, proportionally adjusted based on actual days worked (${actualDays} out of ${monthDays} days = ${formatPercentage(daysProportion)}).`,
-    inputs: { 
-      days: ruleData.rule.value,
-      hoursPerDay: workdayHours,
-      fullHours,
-      actualHours,
-      actualDays,
-      expectedDays: monthDays,
-      daysProportion: formatPercentage(daysProportion),
-      hourlyRate: result.hourlyRate
-    },
+    explanation: `${type.charAt(0).toUpperCase() + type.slice(1)}: ${ruleData.rule.value} days × ${workdayHours} hours × hourly rate.`,
+    inputs: { days: ruleData.rule.value, hoursPerDay: workdayHours, hours, hourlyRate: result.hourlyRate },
     type
   }
 }
@@ -217,7 +176,7 @@ export const getStepValue = (step, result, basicConfig) => {
   const values = {
     'daily-rate': () => ({ input: result.employee.dailySalary, output: result.dailyRate }),
     'hourly-rate': () => ({ input: result.employee.dailySalary, divisor: basicConfig.workdayHours, output: result.hourlyRate }),
-    'base-salary': () => ({ hours: result.totalHours, rate: result.hourlyRate, output: result.baseSalary }),
+    'base-salary': () => ({ dailyRate: result.employee.dailySalary, workDays: result.configSnapshot.workingDaysPerMonth ?? 22, output: result.baseSalary }),
     'gross': () => ({ base: result.baseSalary, rules: result.ruleResults, adjustments: result.adjustmentTotal, output: result.grossSalary }),
     'final': () => ({ gross: result.grossSalary, output: result.finalSalary })
   }
@@ -246,20 +205,13 @@ export const buildCalculationSteps = (result) => {
   const steps = []
   
   // Step 0: Summary of Inputs
-  const actualDays = result.actualDays || 0
-  const monthlySalaryDerived = result.employee.dailySalary * actualDays
   steps.push({
     label: 'Input Summary',
-    formula: 'Daily Salary → Monthly Salary (based on actual attendance)',
-    formulaWithValues: `Daily: ${result.employee.dailySalary.toLocaleString()}/day → Monthly: ${monthlySalaryDerived.toLocaleString()}/month (× ${actualDays} days from attendance grid)`,
+    formula: 'Base = Total Hours × Hourly Rate',
+    formulaWithValues: `Total hours (from expected + OT/UT) × hourly rate = base salary. See Base Salary step.`,
     result: result.employee.dailySalary,
-    explanation: `Employee daily salary. Monthly salary is calculated based on actual ${actualDays} days worked from the attendance grid.`,
-    inputs: { 
-      dailySalary: result.employee.dailySalary,
-      actualDays: actualDays,
-      monthlySalaryDerived: monthlySalaryDerived,
-      workdayHours: result.configSnapshot.workdayHours
-    },
+    explanation: 'Employee daily salary and config. Base salary is calculated from total hours (expected working hours plus attendance OT/UT adjustment) × hourly rate.',
+    inputs: { dailySalary: result.employee.dailySalary, workdayHours: result.configSnapshot.workdayHours, workDays: result.configSnapshot.workingDaysPerMonth ?? 22 },
     type: 'base'
   })
   
@@ -292,24 +244,20 @@ export const buildCalculationSteps = (result) => {
   })
   
   // Step 3: Base Salary
-  const baseSalaryCalc = result.totalHours * result.hourlyRate
-  const daysWorked = result.actualDays || 0
-  const avgHoursPerDay = daysWorked > 0 ? (result.totalHours / daysWorked).toFixed(1) : 0
+  const workDays = result.configSnapshot.workingDaysPerMonth ?? 22
+  const workdayHours = result.configSnapshot.workdayHours
+  const expectedHours = workDays * workdayHours
+  const fmtRate = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const adj = result.hoursAdjustment ?? 0
   steps.push({
     label: 'Base Salary',
-    formula: 'Actual Hours Worked × Hourly Rate',
-    formulaWithValues: `${result.totalHours.toFixed(1)}h × ${result.hourlyRate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/h = ${baseSalaryCalc.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+    formula: 'Total Hours × Hourly Rate',
+    formulaWithValues: `${expectedHours.toFixed(1)}h + ${adj >= 0 ? '+' : ''}${adj.toFixed(1)}h = ${result.totalHours.toFixed(1)}h × ${fmtRate(result.hourlyRate)}/h = ${result.baseSalary.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
     result: result.baseSalary,
-    explanation: `Base salary calculated from actual hours worked (${result.totalHours.toFixed(1)}h across ${daysWorked} days, avg ${avgHoursPerDay}h/day) × hourly rate.`,
-    inputs: { 
-      actualDays: daysWorked,
-      totalHours: result.totalHours,
-      avgHoursPerDay,
-      hourlyRate: result.hourlyRate 
-    },
+    explanation: 'Base = total hours (expected working hours + OT/UT adjustment from attendance) × hourly rate. Days off (undertime) reduce total hours and thus base.',
+    inputs: { expectedHours, hoursAdjustment: adj, totalHours: result.totalHours, hourlyRate: result.hourlyRate },
     type: 'base'
   })
-  
   // All Bonuses and Deductions
   steps.push(
     ...Object.values(result.ruleResults.bonuses || {}).map(d => createRuleStep(d, result, 'bonus')),
@@ -335,15 +283,11 @@ export const buildCalculationSteps = (result) => {
   const grossSalaryCalc = result.baseSalary + totalBonuses + result.adjustmentTotal
   steps.push({
     label: 'Gross Salary',
-    formula: 'Base Salary + All Bonuses + Manual Adjustments',
+    formula: 'Base + Bonuses + Manual Adjustments',
     formulaWithValues: `${result.baseSalary.toLocaleString()} + ${totalBonuses.toLocaleString()} + ${result.adjustmentTotal.toLocaleString()} = ${grossSalaryCalc.toLocaleString()}`,
     result: result.grossSalary,
-    explanation: 'The total salary before deductions. This includes base salary, all bonuses, and manual adjustments.',
-    inputs: { 
-      base: result.baseSalary,
-      bonuses: totalBonuses,
-      adjustments: result.adjustmentTotal
-    },
+    explanation: 'The total salary before deductions. This includes base salary (hours-based), all bonuses, and manual adjustments.',
+    inputs: { base: result.baseSalary, bonuses: totalBonuses, adjustments: result.adjustmentTotal },
     type: 'summary'
   })
   

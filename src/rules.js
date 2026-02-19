@@ -118,13 +118,10 @@ export const appliesToEmployee = (rule, employee) => {
 }
 
 const RULE_CALCULATORS = {
-  [RULE_TYPES.FIXED]: (rule, _, __, ___, daysWorkedProportion) => 
-    rule.value * daysWorkedProportion,
+  [RULE_TYPES.FIXED]: (rule) => rule.value,
   
-  [RULE_TYPES.DAYS_MULTIPLIER]: (rule, _, __, hourlyRate, daysWorkedProportion, config) => {
-    const bonusHours = rule.value * config.workdayHours * daysWorkedProportion
-    return bonusHours * hourlyRate
-  },
+  [RULE_TYPES.DAYS_MULTIPLIER]: (rule, _, __, hourlyRate, config) =>
+    rule.value * config.workdayHours * hourlyRate,
   
   [RULE_TYPES.PERCENTAGE_MONTHLY]: (rule) => normalizePercentage(rule.value),
   
@@ -138,18 +135,8 @@ export const calculateRuleValue = (rule, employee, attendanceItems, config) => {
   
   const hourlyRate = employee.dailySalary / config.workdayHours
   
-  // Apply OT/UT rates to hours adjustment
-  const hoursAdjustment = (attendanceItems || []).reduce((sum, item) => {
-    const hours = item.hours || 0
-    if (hours > 0) return sum + (hours * config.overtimeRate)
-    if (hours < 0) return sum + (hours * config.undertimeDeductionRate)
-    return sum
-  }, 0)
-  const actualDaysWorked = config.monthDays + (hoursAdjustment / config.workdayHours)
-  const daysWorkedProportion = config.monthDays > 0 ? actualDaysWorked / config.monthDays : 0
-  
   const calculator = RULE_CALCULATORS[rule.type]
-  return calculator ? calculator(rule, employee, attendanceItems, hourlyRate, daysWorkedProportion, config) : 0
+  return calculator ? calculator(rule, employee, attendanceItems, hourlyRate, config) : 0
 }
 
 // ============================================================================
@@ -158,22 +145,26 @@ export const calculateRuleValue = (rule, employee, attendanceItems, config) => {
 
 export const applyRules = (employee, attendanceItems, rules, config) => {
   const hourlyRate = employee.dailySalary / config.workdayHours
-  const expectedHours = config.monthDays * config.workdayHours
-  
-  // Apply OT/UT rates to hours adjustment
+  const workDays = config.workingDaysPerMonth ?? 22
+  const expectedHours = workDays * config.workdayHours
+  // OT: if rate in (0,1) treat as premium (e.g. 0.5 = 50% extra → 1.5x), else use as multiplier
+  const rawOt = Number.isFinite(Number(config.overtimeRate)) ? Number(config.overtimeRate) : 1.5
+  const otRate = rawOt > 0 && rawOt < 1 ? 1 + rawOt : rawOt
+  const utRate = Number.isFinite(Number(config.undertimeDeductionRate)) ? Number(config.undertimeDeductionRate) : 0.5
   const hoursAdjustment = (attendanceItems || []).reduce((sum, item) => {
-    const hours = item.hours || 0
-    if (hours > 0) return sum + (hours * config.overtimeRate)
-    if (hours < 0) return sum + (hours * config.undertimeDeductionRate)
+    const hours = Number(item.hours) || 0
+    if (hours > 0) return sum + hours * otRate
+    if (hours < 0) return sum + hours * utRate
     return sum
   }, 0)
   const totalHours = expectedHours + hoursAdjustment
-  const actualDays = config.monthDays + (hoursAdjustment / config.workdayHours)
+  const actualDays = workDays + (hoursAdjustment / config.workdayHours)
   const baseSalary = totalHours * hourlyRate
+  const attendanceAdjustment = hoursAdjustment * hourlyRate
 
   // Probationary employees get base salary only
   if (employee.probationary) {
-    return { baseSalary, bonuses: {}, deductions: {}, grossSalary: baseSalary, totalHours, actualDays }
+    return { baseSalary, attendanceAdjustment, hoursAdjustment, bonuses: {}, deductions: {}, grossSalary: baseSalary, totalHours, actualDays }
   }
   
   // Process enabled rules
@@ -213,6 +204,8 @@ export const applyRules = (employee, attendanceItems, rules, config) => {
   return {
     ...categorized,
     baseSalary,
+    attendanceAdjustment,
+    hoursAdjustment,
     grossSalary: baseSalary + fixedBonusTotal + percentBonusTotal,
     totalHours,
     actualDays

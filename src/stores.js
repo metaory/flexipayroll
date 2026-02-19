@@ -70,8 +70,17 @@ wizardStep.subscribe(value => storage.set(KEYS.WIZARD_STEP, value))
 export const rules = writable(storage.get(KEYS.RULES, DEFAULT_RULES))
 rules.subscribe(value => storage.set(KEYS.RULES, value))
 
+const toNum = (v, fallback) => (Number.isFinite(Number(v)) ? Number(v) : fallback)
+// Normalize numeric config so OT/UT decimals from settings are always numbers
+const normalizeBasicConfig = (c) => ({
+  ...DEFAULT_BASIC_CONFIG,
+  ...c,
+  overtimeRate: toNum(c?.overtimeRate, DEFAULT_BASIC_CONFIG.overtimeRate),
+  undertimeDeductionRate: toNum(c?.undertimeDeductionRate, DEFAULT_BASIC_CONFIG.undertimeDeductionRate)
+})
+
 // Basic config store
-export const basicConfig = writable({ ...DEFAULT_BASIC_CONFIG, ...storage.get(KEYS.BASIC_CONFIG, {}) })
+export const basicConfig = writable(normalizeBasicConfig(storage.get(KEYS.BASIC_CONFIG, {})))
 basicConfig.subscribe(value => storage.set(KEYS.BASIC_CONFIG, value))
 
 // Employees store
@@ -347,7 +356,10 @@ export const resetRules = () => {
 
 // Basic config actions
 export const updateBasicConfig = (updates) => {
-  basicConfig.update(current => ({ ...current, ...updates }))
+  const normalized = { ...updates }
+  if (updates.overtimeRate !== undefined) normalized.overtimeRate = toNum(updates.overtimeRate, DEFAULT_BASIC_CONFIG.overtimeRate)
+  if (updates.undertimeDeductionRate !== undefined) normalized.undertimeDeductionRate = toNum(updates.undertimeDeductionRate, DEFAULT_BASIC_CONFIG.undertimeDeductionRate)
+  basicConfig.update(current => ({ ...current, ...normalized }))
 }
 
 export const resetBasicConfig = () => {

@@ -92,6 +92,7 @@
 
     &:hover
       background: var(--surface-medium)
+      border-radius: 20%
 
     :global(svg)
       color: var(--primary)
