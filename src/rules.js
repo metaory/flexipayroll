@@ -117,26 +117,35 @@ export const appliesToEmployee = (rule, employee) => {
   return appliesTo.some(criteria => CRITERIA_CHECKERS[criteria]?.(employee) ?? false)
 }
 
+const rawHoursDelta = (items) =>
+  (items || []).reduce((sum, item) => sum + (Number(item.hours) || 0), 0)
+
 const RULE_CALCULATORS = {
   [RULE_TYPES.FIXED]: (rule) => rule.value,
-  
-  [RULE_TYPES.DAYS_MULTIPLIER]: (rule, _, __, hourlyRate, config) =>
-    rule.value * config.workdayHours * hourlyRate,
-  
+
+  [RULE_TYPES.DAYS_MULTIPLIER]: (rule, employee, _, __, config, totalDaysWorked) => {
+    const workDays = config.workingDaysPerMonth ?? 22
+    const fullMonthValue = rule.value * employee.dailySalary
+    return workDays > 0 ? fullMonthValue * (Math.max(0, totalDaysWorked) / workDays) : 0
+  },
+
   [RULE_TYPES.PERCENTAGE_MONTHLY]: (rule) => normalizePercentage(rule.value),
-  
+
   [RULE_TYPES.PERCENTAGE_BASE]: (rule) => normalizePercentage(rule.value),
-  
+
   [RULE_TYPES.HOURLY_MULTIPLIER]: (rule, _, __, hourlyRate) => hourlyRate * rule.value
 }
 
-export const calculateRuleValue = (rule, employee, attendanceItems, config) => {
+export const calculateRuleValue = (rule, employee, attendanceItems, config, totalDaysWorked) => {
   if (!appliesToEmployee(rule, employee)) return 0
-  
+
   const hourlyRate = employee.dailySalary / config.workdayHours
-  
+  const workDays = config.workingDaysPerMonth ?? 22
+  const attendanceDelta = Math.trunc(rawHoursDelta(attendanceItems) / config.workdayHours)
+  const days = totalDaysWorked ?? Math.max(0, workDays + attendanceDelta)
+
   const calculator = RULE_CALCULATORS[rule.type]
-  return calculator ? calculator(rule, employee, attendanceItems, hourlyRate, config) : 0
+  return calculator ? calculator(rule, employee, attendanceItems, hourlyRate, config, days) : 0
 }
 
 // ============================================================================
@@ -157,6 +166,9 @@ export const applyRules = (employee, attendanceItems, rules, config) => {
     if (hours < 0) return sum + hours * utRate
     return sum
   }, 0)
+  const rawHours = rawHoursDelta(attendanceItems)
+  const attendanceDays = Math.trunc(rawHours / config.workdayHours)
+  const totalDaysWorked = Math.max(0, workDays + attendanceDays)
   const totalHours = expectedHours + hoursAdjustment
   const actualDays = workDays + (hoursAdjustment / config.workdayHours)
   const baseSalary = totalHours * hourlyRate
@@ -164,15 +176,14 @@ export const applyRules = (employee, attendanceItems, rules, config) => {
 
   // Probationary employees get base salary only
   if (employee.probationary) {
-    return { baseSalary, attendanceAdjustment, hoursAdjustment, bonuses: {}, deductions: {}, grossSalary: baseSalary, totalHours, actualDays }
+    return { baseSalary, attendanceAdjustment, hoursAdjustment, attendanceDays, totalDaysWorked, bonuses: {}, deductions: {}, grossSalary: baseSalary, totalHours, actualDays }
   }
-  
-  // Process enabled rules
+
+  // Process enabled rules (include value 0 so days_multiplier etc. appear in detailed steps)
   const processedRules = [...rules]
     .sort((a, b) => a.order - b.order)
     .filter(r => r.enabled)
-    .map(rule => ({ rule, value: calculateRuleValue(rule, employee, attendanceItems, config) }))
-    .filter(({ value }) => value > 0)
+    .map(rule => ({ rule, value: calculateRuleValue(rule, employee, attendanceItems, config, totalDaysWorked) }))
 
   // Categorize rules
   const categorized = processedRules.reduce((acc, { rule, value }) => {
@@ -206,6 +217,8 @@ export const applyRules = (employee, attendanceItems, rules, config) => {
     baseSalary,
     attendanceAdjustment,
     hoursAdjustment,
+    attendanceDays,
+    totalDaysWorked,
     grossSalary: baseSalary + fixedBonusTotal + percentBonusTotal,
     totalHours,
     actualDays

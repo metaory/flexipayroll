@@ -84,16 +84,20 @@ const createFixedRuleStep = (ruleData, _result, type) => ({
 })
 
 const createDaysMultiplierStep = (ruleData, result, type) => {
-  const workdayHours = result.configSnapshot.workdayHours
-  const hours = ruleData.rule.value * workdayHours
+  const workDays = result.configSnapshot?.workingDaysPerMonth ?? 22
+  const attendanceDelta = result.ruleResults?.attendanceDays ?? 0
+  const totalDaysWorked = result.ruleResults?.totalDaysWorked ?? Math.max(0, workDays + attendanceDelta)
+  const dailyRate = result.employee.dailySalary
+  const fullMonthValue = ruleData.rule.value * dailyRate
   const fmt = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const deltaStr = attendanceDelta >= 0 ? `+${attendanceDelta}` : `${attendanceDelta}`
   return {
     label: ruleData.rule.label,
-    formula: `(Days × ${workdayHours} hours) × Hourly Rate`,
-    formulaWithValues: `(${ruleData.rule.value} days × ${workdayHours}h) × ${fmt(result.hourlyRate)}/h = ${ruleData.value.toLocaleString()}`,
+    formula: '(Multiplier × Daily salary) × (Days worked ÷ Working days/month)',
+    formulaWithValues: `(${ruleData.rule.value} × ${fmt(dailyRate)}) × (${totalDaysWorked} ÷ ${workDays}) = ${fmt(fullMonthValue)} × (${totalDaysWorked}/${workDays}) = ${ruleData.value.toLocaleString()}`,
     result: ruleData.value,
-    explanation: `${type.charAt(0).toUpperCase() + type.slice(1)}: ${ruleData.rule.value} days × ${workdayHours} hours × hourly rate.`,
-    inputs: { days: ruleData.rule.value, hoursPerDay: workdayHours, hours, hourlyRate: result.hourlyRate },
+    explanation: `${type.charAt(0).toUpperCase() + type.slice(1)}: full month = ${ruleData.rule.value} × daily salary = ${fmt(fullMonthValue)}; prorated for ${totalDaysWorked} days (${workDays} base ${deltaStr} attendance).`,
+    inputs: { fullMonthValue, totalDaysWorked, workDays, dailyRate, multiplier: ruleData.rule.value },
     type
   }
 }
