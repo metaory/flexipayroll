@@ -438,7 +438,7 @@
     height: 1.5rem
     border-radius: 50%
     background: var(--primary-bg)
-    color: var(--primary)
+    color: var(--on-primary-bg)
     font-size: 0.85rem
     font-weight: 700
     margin-left: auto
@@ -464,7 +464,7 @@
 
   .edit-btn:hover
     background: var(--primary-bg)
-    color: var(--primary)
+    color: var(--on-primary-bg)
 
   .delete-btn:hover
     background: var(--error-bg)
@@ -554,7 +554,7 @@
     display: inline-block
     padding: 0.2rem 0.4rem
     background: var(--primary-bg)
-    color: var(--primary)
+    color: var(--on-primary-bg)
     border-radius: 0.35rem
     font-size: 0.9rem
     font-weight: 600

@@ -57,7 +57,8 @@ $light-bg: hsl(220 12% 96% / 95%)
     --surface-muted: hsl(224 18% 13%)
     --surface-medium: hsl(224 24% 20%)
     --surface-light: hsl(224 20% 14%)
-    --primary-bg: #{color.mix($primary, transparent, 88%)}
+    --primary-bg: #{color.mix($primary, transparent, 30%)}
+    --on-primary-bg: #{adj(220deg, 24%, 92%)}
     --border: hsl(220 18% 28%)
     --border-muted: hsl(220 16% 22%)
     --card-shade: #{color.mix(black, hsl(224 22% 16%), 85%)}
@@ -77,7 +78,8 @@ $light-bg: hsl(220 12% 96% / 95%)
     --surface-muted: hsl(220 12% 90%)
     --surface-medium: hsl(220 14% 86%)
     --surface-light: hsl(220 10% 92%)
-    --primary-bg: #{color.mix($primary, transparent, 90%)}
+    --primary-bg: #{color.mix(hsl(220 14% 94%), $primary, 70%)}
+    --on-primary-bg: #{adj(0deg, 26%, -22%)}
     --border: hsl(220 14% 72%)
     --border-muted: hsl(220 12% 78%)
     --card-shade: #{$base}
