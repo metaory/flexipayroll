@@ -333,25 +333,14 @@
     flex-shrink: 0
 
   .edit-btn, .delete-btn
-    width: 2rem
-    height: 2rem
-    border-radius: 50%
-    background: var(--border-muted)
-    border: none
-    padding: 0
-    display: flex
-    align-items: center
-    justify-content: center
-    color: var(--fg-muted)
-    cursor: pointer
-    transition: all 0.2s ease
+    @include card-action-btn
+    --icon-btn-size: 2.5rem
     flex-shrink: 0
+    color: var(--fg-muted)
 
     :global(svg)
-      display: block
       width: 1.25rem !important
       height: 1.25rem !important
-      color: inherit
 
     &:hover
       background: var(--surface-medium)
