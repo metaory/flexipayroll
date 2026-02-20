@@ -14,10 +14,9 @@ $bg-filter-dark: blur(8em) saturate(0.4) opacity(0.9)
 $mobile: 768px
 $tablet: 1024px
 
-// $base: #6366f1
-$base: #3d3a3a
-$dark-bg: hsl(225deg 70% 6% / 70%)
-$light-bg: hsl(0deg 0% 100% / 70%)
+$base: #2d3748
+$dark-bg: hsl(224 28% 10% / 92%)
+$light-bg: hsl(220 12% 96% / 95%)
 
 @function adj($h: 0deg, $s: 0%, $l: 0%)
   $result: color.adjust($base, $hue: $h, $saturation: $s, $lightness: $l)
@@ -28,56 +27,58 @@ $light-bg: hsl(0deg 0% 100% / 70%)
 
 @function semantic-color($name, $dark: false)
   @if $name == success
-    @return hsl(142, 85%, if($dark, 35%, 40%))
+    @return hsl(152, 64%, if($dark, 42%, 38%))
   @if $name == warning
-    @return hsl(38, 95%, if($dark, 40%, 45%))
+    @return hsl(38, 92%, if($dark, 48%, 45%))
   @if $name == error
-    @return hsl(0, 90%, if($dark, 40%, 45%))
+    @return hsl(0, 72%, if($dark, 52%, 48%))
   @if $name == info
-    @return hsl(217, 90%, if($dark, 40%, 45%))
+    @return hsl(212, 92%, if($dark, 58%, 48%))
   @if $name == neutral
-    @return hsl(220, 25%, if($dark, 40%, 40%))
+    @return hsl(220, 14%, if($dark, 52%, 48%))
   @return hsl(0, 0%, 50%)
 
 @mixin generate-colors($dark: false)
   --base: #{$base}
-  --brand: #{adj(120deg, 30%, 15%)}
+  --brand: #{adj(160deg, 40%, 38%)}
   @if $dark
-    $primary: adj(30deg, 30%, 7%)
-    $secondary: adj(120deg, 40%, 12%)
-    --based: #22232f
+    $primary: adj(220deg, 24%, 72%)
+    $secondary: adj(160deg, 36%, 52%)
+    --based: hsl(224 20% 14%)
     --bg: #{$dark-bg}
-    --bg-muted: #{color.mix($dark-bg, transparent, 80%)}
-    --fg: #{adj(15deg, 60%, 45%)}
-    --fg-muted: #{adj(10deg, 35%, 25%)}
+    --bg-muted: #{color.mix($dark-bg, transparent, 78%)}
+    --fg: hsl(220 12% 88%)
+    --fg-muted: hsl(220 10% 62%)
     --primary: #{$primary}
     --secondary: #{$secondary}
-    --surface: #{color.mix($primary, transparent, 8%)}
-    --surface-secondary: #{color.mix($secondary, transparent, 8%)}
-    --surface-muted: #{color.mix($primary, transparent, 5%)}
-    --surface-medium: #{color.mix($primary, transparent, 15%)}
-    --surface-light: #{color.mix($primary, transparent, 3%)}
-    --primary-bg: #{color.mix($primary, transparent, 15%)}
-    --border: #{color.mix($primary, transparent, 25%)}
-    --border-muted: #{color.mix($primary, transparent, 15%)}
+    --accent: #{$primary}
+    --surface: hsl(224 22% 16%)
+    --surface-secondary: #{color.mix($secondary, transparent, 88%)}
+    --surface-muted: hsl(224 18% 13%)
+    --surface-medium: hsl(224 24% 20%)
+    --surface-light: hsl(224 20% 14%)
+    --primary-bg: #{color.mix($primary, transparent, 88%)}
+    --border: hsl(220 18% 28%)
+    --border-muted: hsl(220 16% 22%)
   @else
-    $primary: adj(0deg, 15%, 18%)
-    $secondary: adj(120deg, 20%, 15%)
-    --based: #eaeaea
+    $primary: adj(0deg, 26%, -14%)
+    $secondary: adj(160deg, 32%, 22%)
+    --based: hsl(220 10% 88%)
     --bg: #{$light-bg}
-    --bg-muted: #{color.mix($light-bg, transparent, 80%)}
-    --fg: #{adj(0deg, -5%, -35%)}
-    --fg-muted: #{adj(0deg, -15%, -15%)}
+    --bg-muted: #{color.mix($light-bg, transparent, 75%)}
+    --fg: hsl(220 24% 12%)
+    --fg-muted: hsl(220 14% 36%)
     --primary: #{$primary}
     --secondary: #{$secondary}
-    --surface: #{color.mix($primary, transparent, 8%)}
-    --surface-secondary: #{color.mix($secondary, transparent, 8%)}
-    --surface-muted: #{color.mix($primary, transparent, 5%)}
-    --surface-medium: #{color.mix($primary, transparent, 15%)}
-    --surface-light: #{color.mix($primary, transparent, 3%)}
-    --primary-bg: #{color.mix($primary, transparent, 15%)}
-    --border: #{color.mix($primary, transparent, 25%)}
-    --border-muted: #{color.mix($primary, transparent, 15%)}
+    --accent: #{$primary}
+    --surface: hsl(220 14% 94%)
+    --surface-secondary: #{color.mix($secondary, transparent, 92%)}
+    --surface-muted: hsl(220 12% 90%)
+    --surface-medium: hsl(220 14% 86%)
+    --surface-light: hsl(220 10% 92%)
+    --primary-bg: #{color.mix($primary, transparent, 90%)}
+    --border: hsl(220 14% 72%)
+    --border-muted: hsl(220 12% 78%)
 
   @each $name in success, warning, error, info, neutral
     $semantic: semantic-color($name, $dark)
@@ -85,7 +86,7 @@ $light-bg: hsl(0deg 0% 100% / 70%)
     --surface-#{$name}: #{color.mix($semantic, transparent, 12%)}
     --#{$name}-bg: #{color.mix($semantic, transparent, 15%)}
     --on-#{$name}: #{if($dark, black, white)}
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1)
+  --shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.15)
   --radius: #{$radius}
 
 
@@ -325,11 +326,11 @@ body
 
 %card-base
   background: var(--surface)
-  padding: 1rem
+  padding: 0.75rem
   border-radius: var(--radius)
   @extend %transition
 
-@mixin card-interactive($gap: 1rem)
+@mixin card-interactive($gap: 0.75rem)
   @extend %card-base
   display: flex
   align-items: flex-start
@@ -338,15 +339,14 @@ body
   min-width: 0
 
 @mixin card-accent
-  border: 2px solid transparent
-  border-left: 4px solid var(--emp-color)
+  border: 2px solid var(--border-muted)
 
   &:hover
-    border-color: var(--emp-color)
-    box-shadow: 0 4px 16px color-mix(in oklab, var(--emp-color) 25%, transparent)
+    border-color: var(--primary)
+    box-shadow: 0 6px 20px color-mix(in oklab, var(--primary) 28%, transparent)
     transform: translateY(-2px)
 
-@mixin card-draggable($gap: 1rem)
+@mixin card-draggable($gap: 0.75rem)
   @include card-interactive($gap)
   cursor: move
 
@@ -366,23 +366,23 @@ body
   place-items: center
 
 @mixin card-title($size: 1.5rem)
-  margin: 0 0 0.5rem 0
+  margin: 0 0 0.25rem 0
   color: var(--primary)
   font-size: calc(#{$size} * var(--card-scale, 1))
   font-weight: 600
   line-height: 1.2
 
 @mixin card-text($size: 1.3rem)
-  margin: 0.3rem 0
-  font-size: calc(#{$size} * var(--card-scale, 1))
-  color: var(--fg-muted)
-  line-height: 1.4
-
-@mixin card-subtext($size: 1.15rem)
-  margin: 0.2rem 0
+  margin: 0.15rem 0
   font-size: calc(#{$size} * var(--card-scale, 1))
   color: var(--fg-muted)
   line-height: 1.3
+
+@mixin card-subtext($size: 1.15rem)
+  margin: 0.1rem 0
+  font-size: calc(#{$size} * var(--card-scale, 1))
+  color: var(--fg-muted)
+  line-height: 1.2
 
 %grid-item-fill-row
   &.fill-row

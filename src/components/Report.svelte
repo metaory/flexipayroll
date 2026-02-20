@@ -1,7 +1,7 @@
 <script>
   import Icon from '@iconify/svelte'
   import Dialog from './Dialog.svelte'
-  import { formatCurrency, formatHours, stringToColor } from '../core.js'
+  import { formatCurrency, formatHours } from '../core.js'
   import { buildCalculationSteps } from '../payroll.js'
   import { basicConfig } from '../stores.js'
   import { printEmployeeReport } from '../lib/print.js'
@@ -59,7 +59,7 @@
     {#each results as result}
       {@const employeeId = result.employee.id}
       {@const isExpanded = expandedCards[employeeId]}
-      <div class="report-card" style="--emp-color: {stringToColor(result.employee.name)}" class:expanded={isExpanded} role="button" tabindex="0" onclick={() => { expandedCards = { ...expandedCards, [employeeId]: !isExpanded } }} onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (expandedCards = { ...expandedCards, [employeeId]: !isExpanded })}>
+      <div class="report-card" class:expanded={isExpanded} role="button" tabindex="0" onclick={() => { expandedCards = { ...expandedCards, [employeeId]: !isExpanded } }} onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (expandedCards = { ...expandedCards, [employeeId]: !isExpanded })}>
         <div class="top">
           <h3>{result.employee.name}</h3>
           <span>{period}</span>
@@ -158,7 +158,7 @@
   
   .report-grid
     @include auto-grid(300px)
-    gap: 1rem
+    gap: 0.75rem
     
   .report-card
     @extend %card-base
@@ -167,12 +167,9 @@
     display: block
     width: 100%
     text-align: left
-    padding: 1rem
+    padding: 0.75rem
     cursor: pointer
 
-    &:hover .top h3
-      color: var(--emp-color)
-      
     &.expanded
       border-color: var(--secondary)
       
@@ -180,7 +177,7 @@
       display: flex
       justify-content: space-between
       align-items: baseline
-      gap: 0.75rem
+      gap: 0.5rem
       h3
         font-weight: 700
         font-size: 1.2rem
@@ -192,8 +189,8 @@
         
     .stats
       display: flex
-      gap: 1.25rem
-      margin: 0.85rem 0
+      gap: 0.75rem
+      margin: 0.5rem 0
       span
         display: flex
         align-items: center
@@ -206,7 +203,7 @@
       display: flex
       justify-content: space-between
       align-items: center
-      padding: 0.75rem 1rem
+      padding: 0.5rem 0.75rem
       background: var(--success-bg)
       border-radius: 0.6rem
       border-left: 4px solid var(--success)
@@ -222,8 +219,8 @@
           
   .quick-print
     position: absolute
-    top: 0.75rem
-    right: 0.75rem
+    top: 0.5rem
+    right: 0.5rem
     opacity: 0
     padding: 0.65rem
     border: none
@@ -240,9 +237,9 @@
         
   .breakdown
     display: grid
-    gap: 0.5rem
-    margin-top: 1rem
-    padding-top: 1rem
+    gap: 0.4rem
+    margin-top: 0.6rem
+    padding-top: 0.6rem
     border-top: 2px solid var(--border-muted)
     
   .row

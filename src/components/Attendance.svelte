@@ -1,7 +1,7 @@
 <script>
   import Icon from '@iconify/svelte'
   import { addAttendanceItem, updateAttendanceItem, removeAttendanceItem, getAttendanceItems } from '../stores.js'
-  import { stringToColor, round2 } from '../core.js'
+  import { round2 } from '../core.js'
   import { toasts } from '../lib/toast.js'
   import { confirmDialog } from '../lib/dialog.js'
 
@@ -128,7 +128,7 @@
 
     <div class="attendance-grid">
       {#each employees as employee}
-        <div class="employee-attendance" style="--emp-color: {stringToColor(employee.name)}">
+        <div class="employee-attendance">
           <div class="employee-header">
             <h4>{employee.name}</h4>
             <div class="employee-meta">
@@ -265,15 +265,12 @@
   .employee-attendance
     @extend %card-base
     @include card-accent
-    padding: 0.75rem
-
-    &:hover h4
-      color: var(--emp-color)
+    padding: 0.6rem
 
   .employee-header
     @extend %flex-between
-    margin-bottom: 0.75rem
-    padding-bottom: 0.5rem
+    margin-bottom: 0.5rem
+    padding-bottom: 0.35rem
 
     h4
       @include card-title(1.15rem)
@@ -301,8 +298,8 @@
 
   .current-items
     @extend %grid
-    gap: 0.35rem
-    margin-bottom: 0.75rem
+    gap: 0.3rem
+    margin-bottom: 0.5rem
 
   .no-items
     @extend %flex
@@ -316,7 +313,7 @@
 
   .item
     @extend %flex-between
-    padding: 0.5rem
+    padding: 0.4rem
     background: var(--surface-secondary)
     border-radius: 0.5rem
     border: 2px solid transparent

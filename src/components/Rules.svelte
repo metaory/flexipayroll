@@ -353,9 +353,9 @@
   .rule-card
     @extend %card-base
     display: grid
-    gap: 0.35rem
+    gap: 0.3rem
     cursor: pointer
-    padding: 0.65rem
+    padding: 0.5rem
     border: 2px solid transparent
 
     &:hover
@@ -392,7 +392,7 @@
   .rule-header
     @extend %flex
     align-items: center
-    gap: 0.35rem
+    gap: 0.3rem
     flex-wrap: wrap
 
     h4
@@ -421,7 +421,7 @@
   .rule-details
     @extend %flex
     align-items: center
-    gap: 0.35rem
+    gap: 0.3rem
     flex-wrap: wrap
 
   .rule-value
@@ -446,10 +446,10 @@
 
   .rule-actions
     @extend %flex
-    gap: 0.35rem
+    gap: 0.3rem
     flex-shrink: 0
     margin-top: auto
-    padding-top: 0.5rem
+    padding-top: 0.35rem
     --icon-btn-size: 1.75rem
 
   .toggle-btn, .edit-btn, .delete-btn

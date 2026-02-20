@@ -2,7 +2,7 @@
   import Icon from '@iconify/svelte'
   import { EMPLOYEE_FIELDS } from '../payroll.js'
   import { addEmployee, updateEmployee, removeEmployee, basicConfig } from '../stores.js'
-  import { generateEmployeeId, formatCurrency, calculateHourlyRate, stringToColor } from '../core.js'
+  import { generateEmployeeId, formatCurrency, calculateHourlyRate } from '../core.js'
   import { toasts } from '../lib/toast.js'
   import { confirmDialog } from '../lib/dialog.js'
   import Dialog from './Dialog.svelte'
@@ -126,7 +126,7 @@
       {#if employees.length > 0}
         <div class="employee-cards">
           {#each employees as employee}
-            <div class="employee-card" style="--emp-color: {stringToColor(employee.name)}" role="button" tabindex="0" onclick={() => startEditEmployee(employee)} onkeydown={(e) => e.key === 'Enter' && startEditEmployee(employee)}>
+            <div class="employee-card" role="button" tabindex="0" onclick={() => startEditEmployee(employee)} onkeydown={(e) => e.key === 'Enter' && startEditEmployee(employee)}>
               <div class="employee-info">
                 <h4>{employee.name}</h4>
                 <p>{employee.gender} • {employee.maritalStatus}{#if employee.probationary} • <span class="probationary-badge">Probationary</span>{/if}</p>
@@ -244,20 +244,20 @@
 
   .employee-section
     @extend %grid
-    gap: 1.5rem
+    gap: 1rem
 
   .employee-management
     @extend %card-base
-    padding: 0.875rem
+    padding: 0.65rem
 
     h3
-      margin-bottom: 1rem
+      margin-bottom: 0.6rem
       font-size: 1.5rem
       color: var(--primary)
 
   .employee-header
     @extend %flex-between
-    margin-bottom: 1rem
+    margin-bottom: 0.6rem
 
   .employee-actions
     @extend %flex
@@ -280,29 +280,26 @@
     gap: 0.5rem
 
   .employee-card
-    @include card-interactive(0.5rem)
+    @include card-interactive(0.4rem)
     @include card-accent
     --card-scale: 1
     cursor: pointer
-    padding: 0.65rem
+    padding: 0.5rem
 
     &:hover
       background: var(--surface-medium)
-
-      h4
-        color: var(--emp-color)
 
   .employee-info
     @include card-content
 
     h4
       @include card-title(1.2rem)
-      margin-bottom: 0.25rem
+      margin-bottom: 0.15rem
       @extend %transition
 
     p
       @include card-text(0.95rem)
-      margin: 0.15rem 0
+      margin: 0.1rem 0
 
       &.salary
         font-weight: 600
