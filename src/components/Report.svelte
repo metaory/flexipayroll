@@ -143,8 +143,10 @@
               <span class="step-result">{fmt(step.result)}</span>
             </div>
             <div class="step-formulas">
-              <span class="formula">{step.formula}</span>
-              <span class="calc">{step.formulaWithValues}</span>
+              <span class="formula-label">Formula:</span>
+              <span class="formula">{step.formula ?? '—'}</span>
+              <span class="calc-label">Calculation:</span>
+              <span class="calc">{step.formulaWithValues ?? '—'}</span>
             </div>
           </div>
         </div>
@@ -518,19 +520,28 @@
 
   .step-formulas
     display: grid
-    gap: 0.3rem
+    grid-template-columns: auto 1fr
+    gap: 0.25rem 0.75rem
+    align-items: baseline
+
+  .formula-label, .calc-label
+    font-size: 0.7rem
+    font-weight: 600
+    color: var(--fg-muted)
+    text-transform: uppercase
+    letter-spacing: 0.03em
 
   .formula, .calc
     font-family: 'JetBrains Mono', monospace
-    font-size: 0.75rem
-    padding: 0.3rem 0.5rem
+    font-size: 0.8rem
+    padding: 0.25rem 0.5rem
     border-radius: 0.3rem
     line-height: 1.45
 
   .formula
     color: var(--fg-muted)
     background: var(--bg-muted)
-    
+
   .calc
     color: var(--primary)
     background: var(--primary-bg)

@@ -217,10 +217,10 @@ export const buildCalculationSteps = (result) => {
   // Step 0: Summary of Inputs
   steps.push({
     label: 'Input Summary',
-    formula: 'Base = Total Hours × Hourly Rate',
-    formulaWithValues: `Total hours (from expected + OT/UT) × hourly rate = base salary. See Base Salary step.`,
+    formula: 'Base = Days worked × Daily rate',
+    formulaWithValues: `Days worked = working days in month − days not worked (from attendance). Base = days worked × daily salary. See Base Salary step.`,
     result: result.employee.dailySalary,
-    explanation: 'Employee daily salary and config. Base salary is calculated from total hours (expected working hours plus attendance OT/UT adjustment) × hourly rate.',
+    explanation: 'Employee daily salary and config. Base = days worked × daily rate; days not worked = full days of undertime (undertime hours ÷ hours per day).',
     inputs: { dailySalary: result.employee.dailySalary, workdayHours: result.configSnapshot.workdayHours, workDays: result.configSnapshot.workingDaysPerMonth ?? 22 },
     type: 'base'
   })
@@ -252,20 +252,46 @@ export const buildCalculationSteps = (result) => {
     },
     type: 'base'
   })
-  
-  // Step 3: Base Salary
   const workDays = result.configSnapshot.workingDaysPerMonth ?? 22
   const workdayHours = result.configSnapshot.workdayHours
   const expectedHours = workDays * workdayHours
   const fmtRate = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   const adj = result.hoursAdjustment ?? 0
+  const attendanceEffect = result.attendanceAdjustment ?? 0
+  steps.push(adj !== 0
+    ? {
+        label: 'Overtime / Undertime',
+        formula: 'Hours adjustment × Hourly rate = effect on base',
+        formulaWithValues: `Expected ${expectedHours.toFixed(1)}h; adjustment ${adj >= 0 ? '+' : ''}${adj.toFixed(1)}h × ${fmtRate(result.hourlyRate)}/h = ${attendanceEffect >= 0 ? '+' : ''}${attendanceEffect.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+        result: attendanceEffect,
+        explanation: 'Overtime adds to and undertime subtracts from base; applied using configured OT/UT rates.',
+        inputs: { expectedHours, hoursAdjustment: adj, hourlyRate: result.hourlyRate },
+        type: 'attendance'
+      }
+    : {
+        label: 'Overtime / Undertime',
+        formula: 'No adjustment',
+        formulaWithValues: 'Expected hours only; no overtime or undertime.',
+        result: 0,
+        explanation: 'No attendance-based hours adjustment this period.',
+        inputs: { expectedHours },
+        type: 'attendance'
+      })
+  const daysNotWorked = result.ruleResults.daysNotWorked ?? Math.max(0, workDays - (result.ruleResults.totalDaysWorked ?? workDays))
+  const totalDaysWorked = result.ruleResults.totalDaysWorked ?? workDays
+  const baseFromDays = result.ruleResults.baseFromDays ?? (result.employee.dailySalary * totalDaysWorked)
+  const overtimePay = result.ruleResults.overtimePay ?? 0
+  const dailyRate = result.employee.dailySalary
+  const baseFormulaValues = overtimePay > 0
+    ? `${workDays} − ${daysNotWorked} days not worked = ${totalDaysWorked} days × ${dailyRate.toLocaleString()}/day = ${baseFromDays.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}; + Overtime ${overtimePay.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} = ${result.baseSalary.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+    : `${workDays} − ${daysNotWorked} days not worked = ${totalDaysWorked} days × ${dailyRate.toLocaleString()}/day = ${result.baseSalary.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
   steps.push({
     label: 'Base Salary',
-    formula: 'Total Hours × Hourly Rate',
-    formulaWithValues: `${expectedHours.toFixed(1)}h + ${adj >= 0 ? '+' : ''}${adj.toFixed(1)}h = ${result.totalHours.toFixed(1)}h × ${fmtRate(result.hourlyRate)}/h = ${result.baseSalary.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+    formula: overtimePay > 0 ? 'Days worked × Daily rate + Overtime pay' : 'Days worked × Daily rate',
+    formulaWithValues: baseFormulaValues,
     result: result.baseSalary,
-    explanation: 'Base = total hours (expected working hours + OT/UT adjustment from attendance) × hourly rate. Days off (undertime) reduce total hours and thus base.',
-    inputs: { expectedHours, hoursAdjustment: adj, totalHours: result.totalHours, hourlyRate: result.hourlyRate },
+    explanation: 'Days worked = working days in month − days not worked (each full day of undertime counts as 1). Base = days worked × daily rate; overtime added if any.',
+    inputs: { workDays, daysNotWorked, totalDaysWorked, dailyRate, baseFromDays, overtimePay },
     type: 'base'
   })
   // All Bonuses and Deductions

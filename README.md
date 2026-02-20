@@ -80,3 +80,6 @@ The project follows functional programming principles:
 ## License
 
 [AGPL-3.0](LICENSE)
+
+1.22754
+1.22756

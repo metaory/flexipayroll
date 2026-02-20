@@ -161,8 +161,8 @@ export const calculateRuleValue = (rule, employee, attendanceItems, config, tota
 export const applyRules = (employee, attendanceItems, rules, config) => {
   const hourlyRate = employee.dailySalary / config.workdayHours
   const workDays = config.workingDaysPerMonth ?? 22
-  const expectedHours = workDays * config.workdayHours
-  // OT: if rate in (0,1) treat as premium (e.g. 0.5 = 50% extra → 1.5x), else use as multiplier
+  const workdayHours = config.workdayHours
+  const expectedHours = workDays * workdayHours
   const rawOt = Number.isFinite(Number(config.overtimeRate)) ? Number(config.overtimeRate) : 1.5
   const otRate = rawOt > 0 && rawOt < 1 ? 1 + rawOt : rawOt
   const utRate = Number.isFinite(Number(config.undertimeDeductionRate)) ? Number(config.undertimeDeductionRate) : 0.5
@@ -173,16 +173,24 @@ export const applyRules = (employee, attendanceItems, rules, config) => {
     return sum
   }, 0)
   const rawHours = rawHoursDelta(attendanceItems)
-  const attendanceDays = hoursDeltaToDays(rawHours, config.workdayHours)
-  const totalDaysWorked = Math.max(0, workDays + attendanceDays)
+  const rawUndertimeHours = (attendanceItems || []).reduce((s, i) => {
+    const h = Number(i.hours) || 0
+    return h < 0 ? s + Math.abs(h) : s
+  }, 0)
+  const rawOvertimeHours = (attendanceItems || []).reduce((s, i) => s + Math.max(0, Number(i.hours) || 0), 0)
+  const daysNotWorked = Math.floor(rawUndertimeHours / workdayHours)
+  const totalDaysWorked = Math.max(0, workDays - daysNotWorked)
+  const attendanceDays = hoursDeltaToDays(rawHours, workdayHours)
+  const baseFromDays = employee.dailySalary * totalDaysWorked
+  const overtimePay = rawOvertimeHours * otRate * hourlyRate
+  const baseSalary = baseFromDays + overtimePay
   const totalHours = expectedHours + hoursAdjustment
-  const actualDays = workDays + (hoursAdjustment / config.workdayHours)
-  const baseSalary = totalHours * hourlyRate
-  const attendanceAdjustment = hoursAdjustment * hourlyRate
+  const actualDays = totalDaysWorked
+  const expectedBase = employee.dailySalary * workDays
+  const attendanceAdjustment = baseSalary - expectedBase
 
-  // Probationary employees get base salary only
   if (employee.probationary) {
-    return { baseSalary, attendanceAdjustment, hoursAdjustment, attendanceDays, totalDaysWorked, bonuses: {}, deductions: {}, grossSalary: baseSalary, totalHours, actualDays }
+    return { baseSalary, attendanceAdjustment, hoursAdjustment, attendanceDays, totalDaysWorked, daysNotWorked, baseFromDays, overtimePay, bonuses: {}, deductions: {}, grossSalary: baseSalary, totalHours, actualDays }
   }
 
   // Process enabled rules (include value 0 so days_multiplier etc. appear in detailed steps)
@@ -225,6 +233,9 @@ export const applyRules = (employee, attendanceItems, rules, config) => {
     hoursAdjustment,
     attendanceDays,
     totalDaysWorked,
+    daysNotWorked,
+    baseFromDays,
+    overtimePay,
     grossSalary: baseSalary + fixedBonusTotal + percentBonusTotal,
     totalHours,
     actualDays
