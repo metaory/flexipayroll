@@ -60,6 +60,7 @@ $light-bg: hsl(220 12% 96% / 95%)
     --primary-bg: #{color.mix($primary, transparent, 88%)}
     --border: hsl(220 18% 28%)
     --border-muted: hsl(220 16% 22%)
+    --card-shade: #{color.mix(black, hsl(224 22% 16%), 85%)}
   @else
     $primary: adj(0deg, 26%, -14%)
     $secondary: adj(160deg, 32%, 22%)
@@ -79,6 +80,7 @@ $light-bg: hsl(220 12% 96% / 95%)
     --primary-bg: #{color.mix($primary, transparent, 90%)}
     --border: hsl(220 14% 72%)
     --border-muted: hsl(220 12% 78%)
+    --card-shade: #{$base}
 
   @each $name in success, warning, error, info, neutral
     $semantic: semantic-color($name, $dark)
@@ -325,10 +327,13 @@ body
     opacity: 0.7
 
 %card-base
-  background: var(--surface)
+  background: var(--card-bg, var(--surface))
   padding: 0.75rem
   border-radius: var(--radius)
   @extend %transition
+
+.card
+  --card-bg: color-mix(in oklab, var(--surface) 97%, var(--card-shade))
 
 @mixin card-interactive($gap: 0.75rem)
   @extend %card-base

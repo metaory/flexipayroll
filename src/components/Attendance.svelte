@@ -128,7 +128,7 @@
 
     <div class="attendance-grid">
       {#each employees as employee}
-        <div class="employee-attendance">
+        <div class="card employee-attendance">
           <div class="employee-header">
             <h4>{employee.name}</h4>
             <div class="employee-meta">

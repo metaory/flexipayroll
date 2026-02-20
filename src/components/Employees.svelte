@@ -126,7 +126,7 @@
       {#if employees.length > 0}
         <div class="employee-cards">
           {#each employees as employee}
-            <div class="employee-card" role="button" tabindex="0" onclick={() => startEditEmployee(employee)} onkeydown={(e) => e.key === 'Enter' && startEditEmployee(employee)}>
+            <div class="card employee-card" role="button" tabindex="0" onclick={() => startEditEmployee(employee)} onkeydown={(e) => e.key === 'Enter' && startEditEmployee(employee)}>
               <div class="employee-info">
                 <h4>{employee.name}</h4>
                 <p>{employee.gender} • {employee.maritalStatus}{#if employee.probationary} • <span class="probationary-badge">Probationary</span>{/if}</p>

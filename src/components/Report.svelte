@@ -59,7 +59,7 @@
     {#each results as result}
       {@const employeeId = result.employee.id}
       {@const isExpanded = expandedCards[employeeId]}
-      <div class="report-card" class:expanded={isExpanded} role="button" tabindex="0" onclick={() => { expandedCards = { ...expandedCards, [employeeId]: !isExpanded } }} onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (expandedCards = { ...expandedCards, [employeeId]: !isExpanded })}>
+      <div class="card report-card" class:expanded={isExpanded} role="button" tabindex="0" onclick={() => { expandedCards = { ...expandedCards, [employeeId]: !isExpanded } }} onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (expandedCards = { ...expandedCards, [employeeId]: !isExpanded })}>
         <div class="top">
           <h3>{result.employee.name}</h3>
           <span>{period}</span>

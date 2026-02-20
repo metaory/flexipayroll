@@ -130,7 +130,7 @@
 
     <div class="adjustments-grid">
       {#each employees as employee}
-        <div class="employee-adjustments">
+        <div class="card employee-adjustments">
           <div class="employee-header">
             <h4>{employee.name}</h4>
             <div class="employee-meta">
