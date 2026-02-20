@@ -91,12 +91,18 @@ const createDaysMultiplierStep = (ruleData, result, type) => {
   const fullMonthValue = ruleData.rule.value * dailyRate
   const fmt = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   const deltaStr = attendanceDelta >= 0 ? `+${attendanceDelta}` : `${attendanceDelta}`
+  const capped = totalDaysWorked >= workDays
+  const formulaWithValues = capped
+    ? `(${ruleData.rule.value} × ${fmt(dailyRate)}) = ${fmt(fullMonthValue)} (full month, ${totalDaysWorked} days ≥ ${workDays})`
+    : `(${ruleData.rule.value} × ${fmt(dailyRate)}) × (${totalDaysWorked} ÷ ${workDays}) = ${fmt(fullMonthValue)} × (${totalDaysWorked}/${workDays}) = ${ruleData.value.toLocaleString()}`
   return {
     label: ruleData.rule.label,
-    formula: '(Multiplier × Daily salary) × (Days worked ÷ Working days/month)',
-    formulaWithValues: `(${ruleData.rule.value} × ${fmt(dailyRate)}) × (${totalDaysWorked} ÷ ${workDays}) = ${fmt(fullMonthValue)} × (${totalDaysWorked}/${workDays}) = ${ruleData.value.toLocaleString()}`,
+    formula: capped ? 'Multiplier × Daily salary (capped at full month)' : '(Multiplier × Daily salary) × (Days worked ÷ Working days/month)',
+    formulaWithValues,
     result: ruleData.value,
-    explanation: `${type.charAt(0).toUpperCase() + type.slice(1)}: full month = ${ruleData.rule.value} × daily salary = ${fmt(fullMonthValue)}; prorated for ${totalDaysWorked} days (${workDays} base ${deltaStr} attendance).`,
+    explanation: capped
+      ? `${type.charAt(0).toUpperCase() + type.slice(1)}: full month = ${ruleData.rule.value} × daily salary = ${fmt(fullMonthValue)} (days worked ${totalDaysWorked} ≥ ${workDays}).`
+      : `${type.charAt(0).toUpperCase() + type.slice(1)}: full month = ${ruleData.rule.value} × daily salary = ${fmt(fullMonthValue)}; prorated for ${totalDaysWorked} days (${workDays} base ${deltaStr} attendance).`,
     inputs: { fullMonthValue, totalDaysWorked, workDays, dailyRate, multiplier: ruleData.rule.value },
     type
   }

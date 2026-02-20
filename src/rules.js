@@ -120,13 +120,19 @@ export const appliesToEmployee = (rule, employee) => {
 const rawHoursDelta = (items) =>
   (items || []).reduce((sum, item) => sum + (Number(item.hours) || 0), 0)
 
+/** Full days from attendance hours delta; uses floor so only complete days count. */
+const hoursDeltaToDays = (rawHours, workdayHours) =>
+  rawHours >= 0 ? Math.floor(rawHours / workdayHours) : -Math.floor(Math.abs(rawHours) / workdayHours)
+
 const RULE_CALCULATORS = {
   [RULE_TYPES.FIXED]: (rule) => rule.value,
 
   [RULE_TYPES.DAYS_MULTIPLIER]: (rule, employee, _, __, config, totalDaysWorked) => {
     const workDays = config.workingDaysPerMonth ?? 22
     const fullMonthValue = rule.value * employee.dailySalary
-    return workDays > 0 ? fullMonthValue * (Math.max(0, totalDaysWorked) / workDays) : 0
+    if (workDays <= 0) return 0
+    const ratio = Math.min(1, Math.max(0, totalDaysWorked) / workDays)
+    return fullMonthValue * ratio
   },
 
   [RULE_TYPES.PERCENTAGE_MONTHLY]: (rule) => normalizePercentage(rule.value),
@@ -141,7 +147,7 @@ export const calculateRuleValue = (rule, employee, attendanceItems, config, tota
 
   const hourlyRate = employee.dailySalary / config.workdayHours
   const workDays = config.workingDaysPerMonth ?? 22
-  const attendanceDelta = Math.trunc(rawHoursDelta(attendanceItems) / config.workdayHours)
+  const attendanceDelta = hoursDeltaToDays(rawHoursDelta(attendanceItems), config.workdayHours)
   const days = totalDaysWorked ?? Math.max(0, workDays + attendanceDelta)
 
   const calculator = RULE_CALCULATORS[rule.type]
@@ -167,7 +173,7 @@ export const applyRules = (employee, attendanceItems, rules, config) => {
     return sum
   }, 0)
   const rawHours = rawHoursDelta(attendanceItems)
-  const attendanceDays = Math.trunc(rawHours / config.workdayHours)
+  const attendanceDays = hoursDeltaToDays(rawHours, config.workdayHours)
   const totalDaysWorked = Math.max(0, workDays + attendanceDays)
   const totalHours = expectedHours + hoursAdjustment
   const actualDays = workDays + (hoursAdjustment / config.workdayHours)
