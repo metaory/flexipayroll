@@ -83,6 +83,27 @@ const createFixedRuleStep = (ruleData, _result, type) => ({
   type
 })
 
+const createProratedStep = (ruleData, result, type) => {
+  const workDays = result.configSnapshot?.workingDaysPerMonth ?? 22
+  const totalDaysWorked = result.ruleResults?.totalDaysWorked ?? workDays
+  const capped = totalDaysWorked >= workDays
+  const fullValue = ruleData.rule.value
+  const formulaWithValues = capped
+    ? `${fullValue.toLocaleString()} = ${ruleData.value.toLocaleString()} (full month, ${totalDaysWorked} days ≥ ${workDays})`
+    : `${fullValue.toLocaleString()} × (${totalDaysWorked} ÷ ${workDays}) = ${ruleData.value.toLocaleString()}`
+  return {
+    label: ruleData.rule.label,
+    formula: capped ? 'Fixed amount (full month)' : 'Value × (Days worked ÷ Working days/month)',
+    formulaWithValues,
+    result: ruleData.value,
+    explanation: capped
+      ? `Full ${type} amount (worked all ${workDays} days).`
+      : `${type.charAt(0).toUpperCase() + type.slice(1)} prorated: ${fullValue.toLocaleString()} × (${totalDaysWorked}/${workDays}) = ${ruleData.value.toLocaleString()}.`,
+    inputs: { fullValue, totalDaysWorked, workDays },
+    type
+  }
+}
+
 const createDaysMultiplierStep = (ruleData, result, type) => {
   const workDays = result.configSnapshot?.workingDaysPerMonth ?? 22
   const attendanceDelta = result.ruleResults?.attendanceDays ?? 0
@@ -159,6 +180,7 @@ const createPercentageBaseStep = (ruleData, result, type) => {
 
 const RULE_STEP_BUILDERS = {
   fixed: createFixedRuleStep,
+  prorated: createProratedStep,
   days_multiplier: createDaysMultiplierStep,
   hourly_multiplier: createHourlyMultiplierStep,
   percentage_monthly: createPercentageMonthlyStep,

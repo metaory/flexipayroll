@@ -9,7 +9,8 @@
 
 export const RULE_TYPES = {
   FIXED: 'fixed',
-  DAYS_MULTIPLIER: 'days_multiplier', 
+  PRORATED: 'prorated',
+  DAYS_MULTIPLIER: 'days_multiplier',
   PERCENTAGE_MONTHLY: 'percentage_monthly',
   PERCENTAGE_BASE: 'percentage_base',
   HOURLY_MULTIPLIER: 'hourly_multiplier'
@@ -130,6 +131,13 @@ const hoursDeltaToDays = (rawHours, workdayHours) =>
 
 const RULE_CALCULATORS = {
   [RULE_TYPES.FIXED]: (rule) => rule.value,
+
+  [RULE_TYPES.PRORATED]: (rule, _, __, ___, config, totalDaysWorked) => {
+    const workDays = config.workingDaysPerMonth ?? 22
+    if (workDays <= 0) return 0
+    const ratio = Math.min(1, Math.max(0, totalDaysWorked) / workDays)
+    return rule.value * ratio
+  },
 
   [RULE_TYPES.DAYS_MULTIPLIER]: (rule, employee, _, __, config, totalDaysWorked) => {
     const workDays = config.workingDaysPerMonth ?? 22

@@ -28,6 +28,7 @@
   ]
   const RULE_TYPE_OPTIONS = [
     { value: RULE_TYPES.FIXED, label: 'Fixed' },
+    { value: RULE_TYPES.PRORATED, label: 'Prorated' },
     { value: RULE_TYPES.DAYS_MULTIPLIER, label: 'Days ×' },
     { value: RULE_TYPES.PERCENTAGE_MONTHLY, label: '% Monthly' },
     { value: RULE_TYPES.PERCENTAGE_BASE, label: '% Base' },
@@ -428,7 +429,7 @@
       background: var(--error-bg)
       color: var(--error)
 
-    &.type-fixed, &.type-days_multiplier, &.type-percentage_monthly, &.type-percentage_base, &.type-hourly_multiplier
+    &.type-fixed, &.type-prorated, &.type-days_multiplier, &.type-percentage_monthly, &.type-percentage_base, &.type-hourly_multiplier
       background: var(--primary-bg)
       color: var(--primary)
 
