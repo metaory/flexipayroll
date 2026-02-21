@@ -118,7 +118,7 @@
       <h3>Employees ({employees.length})</h3>
       <div class="employee-actions">
         <button class="primary" onclick={startAddEmployee}>
-          <Icon icon="tabler:plus" width="1rem" height="1rem" />
+          <Icon icon="typcn:plus" width="1rem" height="1rem" />
           Add
         </button>
       </div>

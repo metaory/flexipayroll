@@ -194,7 +194,7 @@
                   <Icon icon="tabler:check" width="1rem" height="1rem" />Update</button>
               {:else}
                 <button class="primary" onclick={() => handleAddAdjustment(employee.id)} disabled={!adjustmentForms[employee.id]?.label || !adjustmentForms[employee.id]?.amount}>
-                  <Icon icon="tabler:plus" width="1rem" height="1rem" />Add</button>
+                  <Icon icon="typcn:plus" width="1rem" height="1rem" />Add</button>
               {/if}
             </div>
           </div>
@@ -238,6 +238,7 @@
       &:nth-child(2)
         background: var(--info-bg)
         color: var(--info)
+        border-radius: var(--radius)
 
   .adjustments-grid
     @include auto-grid(280px)

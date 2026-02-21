@@ -17,10 +17,10 @@
 
 <div class="toolbar">
   <button class="toolbar-btn" onclick={() => storage.downloadSession()} aria-label="Save session">
-    <Icon icon="tabler:device-floppy" width="1.5rem" height="1.5rem" />
+    <Icon icon="ic:round-save" width="1.5rem" height="1.5rem" />
   </button>
   <button class="toolbar-btn" onclick={() => fileInput.click()} aria-label="Load session">
-    <Icon icon="tabler:folder-open" width="1.5rem" height="1.5rem" />
+    <Icon icon="tabler:folder-open-filled" width="1.5rem" height="1.5rem" />
   </button>
   <button class="toolbar-btn" onclick={toggleTheme} aria-label="Toggle color scheme">
     <Icon icon={$theme.mode === 'dark' ? 'line-md:moon-filled-to-sunny-filled-transition' : 'line-md:sunny-outline-to-moon-alt-loop-transition'} width="1.5rem" height="1.5rem" />

@@ -25,12 +25,12 @@
     </div>
     <div class="wizard-nav">
       <button type="button" class="secondary" onclick={onPrev} disabled={currentStep === 0}>
-        <Icon icon="tabler:arrow-left" width="1.25rem" height="1.25rem" />
+        <Icon icon="mingcute:arrow-left-fill" width="1.25rem" height="1.25rem" />
         Previous
       </button>
       <button type="button" class="primary" onclick={onNext} disabled={currentStep >= STEPS.length - 1}>
         Next
-        <Icon icon="tabler:arrow-right" width="1.25rem" height="1.25rem" />
+        <Icon icon="mingcute:arrow-right-fill" width="1.25rem" height="1.25rem" />
       </button>
     </div>
   </div>

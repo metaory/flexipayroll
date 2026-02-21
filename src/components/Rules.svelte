@@ -150,7 +150,7 @@
     </div>
     <div class="config-actions">
       <button class="danger" onclick={resetAllStorage}>
-        <Icon icon="tabler:alert-triangle" width="1rem" height="1rem" />
+        <Icon icon="clarity:warning-solid" width="1.4rem" height="1.4rem" />
         Reset
       </button>
     </div>
@@ -166,7 +166,7 @@
           Reset
         </button>
         <button class="primary" onclick={startAddRule}>
-          <Icon icon="tabler:plus" width="1rem" height="1rem" />
+          <Icon icon="typcn:plus" width="1rem" height="1rem" />
           Add
         </button>
       </div>

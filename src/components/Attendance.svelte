@@ -212,7 +212,7 @@
                   <Icon icon="tabler:check" width="1rem" height="1rem" />Update</button>
               {:else}
                 <button class="primary" onclick={() => handleAdd(employee.id)} disabled={!forms[employee.id]?.label || (!(parseInt(forms[employee.id]?.hours) || 0) && !(parseInt(forms[employee.id]?.minutes) || 0))}>
-                  <Icon icon="tabler:plus" width="1rem" height="1rem" />Add</button>
+                  <Icon icon="typcn:plus" width="1rem" height="1rem" />Add</button>
               {/if}
             </div>
           </div>
@@ -256,6 +256,7 @@
       &:nth-child(2)
         background: var(--info-bg)
         color: var(--info)
+        border-radius: var(--radius)
 
   .attendance-grid
     @include auto-grid(280px)
