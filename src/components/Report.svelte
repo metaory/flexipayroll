@@ -18,20 +18,44 @@
   }
   
   const fmt = (v) => formatCurrency(v, 'id-ID', 'IDR', $basicConfig.currencySymbol)
-  
+  const SECTION_LABELS = {
+    inputs: 'Rates & inputs',
+    attendance: 'Overtime / Undertime',
+    base: 'Base salary',
+    bonuses: 'Bonuses',
+    deductions: 'Deductions',
+    adjustment: 'Adjustments',
+    summary: 'Gross salary',
+    final: 'Take-home'
+  }
+  const groupStepsBySection = (steps) => {
+    const groups = []
+    let current = null
+    for (const step of steps) {
+      const sec = step.section ?? step.type
+      if (current !== sec) {
+        current = sec
+        groups.push({ section: sec, label: SECTION_LABELS[sec] ?? sec, steps: [] })
+      }
+      groups[groups.length - 1].steps.push(step)
+    }
+    return groups
+  }
   const getAppliedRules = (result) => {
     const applied = { bonuses: [], deductions: [] }
     Object.entries(result.ruleResults).map(([category, rules]) => {
-      if (category !== 'bonuses' && category !== 'deductions') return
+      if (category !== 'bonuses' && category !== 'deductions') return null
       Object.entries(rules).map(([ruleId, ruleData]) => {
         const value = ruleData.finalValue !== undefined ? ruleData.finalValue : ruleData.value
         if (value > 0) {
           const rule = ruleData.rule
-          const pct = rule.type === 'percentage_monthly' || rule.type === 'percentage_base' 
+          const pct = rule.type === 'percentage_monthly' || rule.type === 'percentage_base'
             ? ` (${(rule.value * 100).toFixed(1)}%)` : ''
           applied[category].push({ id: ruleId, label: rule.label + pct, value, type: rule.type })
         }
+        return null
       })
+      return null
     })
     return applied
   }
@@ -134,20 +158,30 @@
     
     <h4 class="steps-title">Calculation Steps</h4>
     <div class="steps">
-      {#each buildCalculationSteps(selectedResult) as step, i}
-        <div class="step {step.type}">
-          <span class="num">{i + 1}</span>
-          <div class="step-content">
-            <div class="step-head">
-              <span class="step-label">{step.label}</span>
-              <span class="step-result">{fmt(step.result)}</span>
-            </div>
-            <div class="step-formulas">
-              <span class="formula-label">Formula:</span>
-              <span class="formula">{step.formula ?? '—'}</span>
-              <span class="calc-label">Calculation:</span>
-              <span class="calc">{step.formulaWithValues ?? '—'}</span>
-            </div>
+      {#each groupStepsBySection(buildCalculationSteps(selectedResult)) as group}
+        <div class="step-group">
+          <h5 class="section-head">{group.label}</h5>
+          <div class="section-steps">
+            {#each group.steps as step, i}
+              <div class="step {step.type}">
+                <span class="num">{i + 1}</span>
+                <div class="step-content">
+                  <div class="step-head">
+                    <span class="step-label">{step.label}</span>
+                    <span class="step-result">{fmt(step.result)}</span>
+                  </div>
+                  <div class="step-formulas">
+                    <span class="formula-label">Formula</span>
+                    <span class="formula">{step.formula ?? '—'}</span>
+                    <span class="calc-label">Calculation</span>
+                    <span class="calc">{step.formulaWithValues ?? '—'}</span>
+                  </div>
+                  {#if step.explanation}
+                    <p class="step-explanation">{step.explanation}</p>
+                  {/if}
+                </div>
+              </div>
+            {/each}
           </div>
         </div>
       {/each}
@@ -365,15 +399,15 @@
       
   .dialog-summary
     margin-bottom: 1.25rem
-    
     .summary-header
       display: flex
       gap: 2rem
       padding: 1rem 1.25rem
-      background: var(--surface-secondary)
+      background: var(--surface-medium)
+      color: var(--fg)
       border-radius: 0.6rem
       margin-bottom: 1rem
-      
+      border: 1px solid var(--border-muted)
       .summary-stat
         display: flex
         align-items: center
@@ -447,45 +481,63 @@
     color: var(--fg)
     margin: 0 0 0.75rem 0
     font-weight: 700
-
   .steps
+    display: flex
+    flex-direction: column
+    gap: 1rem
+  .step-group
+    display: flex
+    flex-direction: column
+    gap: 0.5rem
+  .section-head
+    font-size: 0.85rem
+    font-weight: 700
+    color: var(--fg)
+    margin: 0
+    padding: 0.35rem 0
+    border-bottom: 2px solid var(--border-muted)
+    text-transform: uppercase
+    letter-spacing: 0.04em
+  .section-steps
     display: grid
     gap: 0.5rem
-
   .step
     display: grid
     grid-template-columns: 1.5rem 1fr
     gap: 0.65rem
-    padding: 0.65rem 0.85rem
+    padding: 0.75rem 1rem
     background: var(--surface-secondary)
+    color: var(--fg)
     border-radius: 0.5rem
-    border-left: 4px solid var(--border-muted)
-    
+    border-left: 4px solid var(--primary)
+    border: 1px solid var(--border-muted)
+    border-left-width: 4px
     &.base
       border-left-color: var(--info)
-      
     &.bonus
       border-left-color: var(--success)
       background: var(--success-bg)
-      
+      color: var(--fg)
     &.deduction
       border-left-color: var(--error)
       background: var(--error-bg)
-      
+      color: var(--fg)
     &.adjustment
       border-left-color: var(--warning)
       background: var(--warning-bg)
-      
+      color: var(--fg)
+    &.attendance
+      border-left-color: var(--info)
     &.summary
       border-left-color: var(--primary)
-      background: var(--surface-muted)
-      
+      background: var(--surface-medium)
+      color: var(--fg)
     &.final
       border-left-color: var(--success)
       background: var(--success-bg)
+      color: var(--fg)
       border: 2px solid var(--success)
       border-left-width: 4px
-
   .num
     display: grid
     place-items: center
@@ -496,53 +548,49 @@
     border-radius: 50%
     font-weight: 700
     font-size: 0.75rem
-
   .step-content
     display: grid
-    gap: 0.45rem
-    
+    gap: 0.5rem
   .step-head
     display: flex
     justify-content: space-between
     align-items: center
     gap: 0.65rem
-    
     .step-label
       font-weight: 600
       color: var(--fg)
       font-size: 0.9rem
-      
     .step-result
       font-family: 'JetBrains Mono', monospace
       font-weight: 700
       color: var(--primary)
       font-size: 0.95rem
-
   .step-formulas
     display: grid
     grid-template-columns: auto 1fr
-    gap: 0.25rem 0.75rem
+    gap: 0.3rem 0.75rem
     align-items: baseline
-
   .formula-label, .calc-label
     font-size: 0.7rem
     font-weight: 600
     color: var(--fg-muted)
     text-transform: uppercase
     letter-spacing: 0.03em
-
   .formula, .calc
     font-family: 'JetBrains Mono', monospace
     font-size: 0.8rem
-    padding: 0.25rem 0.5rem
+    padding: 0.3rem 0.5rem
     border-radius: 0.3rem
     line-height: 1.45
-
   .formula
-    color: var(--fg-muted)
+    color: var(--fg)
     background: var(--bg-muted)
-
   .calc
     color: var(--primary)
     background: var(--primary-bg)
+  .step-explanation
+    margin: 0
+    font-size: 0.8rem
+    color: var(--fg-muted)
+    line-height: 1.4
 </style>
