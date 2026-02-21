@@ -42,8 +42,8 @@ $light-bg: hsl(220 12% 96% / 95%)
   --base: #{$base}
   --brand: #{adj(160deg, 40%, 38%)}
   @if $dark
-    $primary: adj(220deg, 24%, 72%)
-    $secondary: adj(280deg, 36%, 52%)
+    $primary: adj(220deg, 24%, 10%)
+    $secondary: adj(280deg, 36%, 50%)
     --based: hsl(224 20% 14%)
     --bg: #{$dark-bg}
     --bg-muted: #{color.mix($dark-bg, transparent, 78%)}
@@ -53,7 +53,7 @@ $light-bg: hsl(220 12% 96% / 95%)
     --secondary: #{$secondary}
     --accent: #{$primary}
     --surface: hsl(224 22% 16%)
-    --surface-secondary: #{color.mix($secondary, transparent, 88%)}
+    --surface-secondary: #{color.mix($secondary, transparent, 20%)}
     --surface-muted: hsl(224 18% 13%)
     --surface-medium: hsl(224 24% 20%)
     --surface-light: hsl(224 20% 14%)
@@ -63,8 +63,8 @@ $light-bg: hsl(220 12% 96% / 95%)
     --border-muted: hsl(220 16% 22%)
     --card-shade: #{color.mix(black, hsl(224 22% 16%), 85%)}
   @else
-    $primary: adj(0deg, 26%, -14%)
-    $secondary: adj(10deg, 32%, 22%)
+    $primary: adj(0deg, 26%, -20%)
+    $secondary: adj(10deg, 32%, 20%)
     --based: hsl(220 10% 88%)
     --bg: #{$light-bg}
     --bg-muted: #{color.mix($light-bg, transparent, 75%)}
