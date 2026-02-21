@@ -223,6 +223,10 @@ export const getWeekdays = (period) => {
     .map(day => `${period}-${String(day).padStart(2, '0')}`)
 }
 
+/** Only monthDays from period (28/29/30/31). workingDaysPerMonth stays from config. */
+export const getPeriodMonthDays = (period) =>
+  (period && period.match(/^\d{4}-\d{2}$/)) ? getDaysInMonth(period) : null
+
 // ============================================================================
 // DATA UTILITIES
 // ============================================================================

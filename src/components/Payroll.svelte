@@ -9,16 +9,19 @@
   
   import { employees, rules, basicConfig, currentPeriod, attendanceItems, adjustments, wizardStep } from '../stores.js'
   import { STEPS, calculateEmployeePayroll } from '../payroll.js'
+  import { getPeriodMonthDays } from '../core.js'
   
-  // Reactive calculations
+  // Reactive: only monthDays from period (28/29/30/31); workingDaysPerMonth always from config
   const currentStepData = $derived(STEPS[$wizardStep])
+  const periodMonthDays = $derived(getPeriodMonthDays($currentPeriod))
+  const payrollConfig = $derived(periodMonthDays != null ? { ...$basicConfig, monthDays: periodMonthDays } : $basicConfig)
   
   const results = $derived($employees.map(emp => calculateEmployeePayroll(
-    emp, 
+    emp,
     $attendanceItems[$currentPeriod]?.[emp.id] || [],
     $adjustments[$currentPeriod]?.[emp.id] || [],
     $rules,
-    $basicConfig
+    payrollConfig
   )))
   
   // Wizard navigation
