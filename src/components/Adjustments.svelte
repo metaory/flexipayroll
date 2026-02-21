@@ -134,7 +134,7 @@
           <div class="employee-header">
             <h4>{employee.name}</h4>
             <div class="employee-meta">
-              <span>{employee.gender} • {employee.maritalStatus}</span>
+              <span>{employee.gender} • {employee.maritalStatus} • {employee.childrenStatus === 'has_children' ? 'Has children' : 'No children'}</span>
               <span class="total-adjustments">
                 Total: {formatCurrency(getTotalAdjustments(employee.id), 'id-ID', 'IDR', $basicConfig.currencySymbol)}
               </span>

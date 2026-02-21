@@ -13,7 +13,8 @@
   const EMPTY_ERRORS = { label: false, value: false }
   const CRITERIA_OPTIONS = {
     gender: [{ value: CRITERIA_TYPES.MALE, label: 'Male' }, { value: CRITERIA_TYPES.FEMALE, label: 'Female' }],
-    marital: [{ value: CRITERIA_TYPES.SINGLE, label: 'Single' }, { value: CRITERIA_TYPES.MARRIED, label: 'Married' }]
+    marital: [{ value: CRITERIA_TYPES.SINGLE, label: 'Single' }, { value: CRITERIA_TYPES.MARRIED, label: 'Married' }],
+    children: [{ value: CRITERIA_TYPES.HAS_CHILDREN, label: 'Has children' }, { value: CRITERIA_TYPES.HAS_NO_CHILDREN, label: 'No children' }]
   }
   const CONFIG_FIELDS = [
     { key: 'organizationName', label: 'Organization', type: 'text', fallback: '' },
@@ -44,6 +45,7 @@
   const getCriteriaSelection = (types) => newRule.criteria.appliesTo.find(c => types.includes(c)) || ''
   const getGenderSelection = () => getCriteriaSelection([CRITERIA_TYPES.MALE, CRITERIA_TYPES.FEMALE])
   const getMaritalSelection = () => getCriteriaSelection([CRITERIA_TYPES.SINGLE, CRITERIA_TYPES.MARRIED])
+  const getChildrenSelection = () => getCriteriaSelection([CRITERIA_TYPES.HAS_CHILDREN, CRITERIA_TYPES.HAS_NO_CHILDREN])
 
   // Form reset
   const resetForm = () => {
@@ -182,7 +184,7 @@
           <div class="rule-details">
             <span class="rule-value">{rule.value}</span>
             {#each rule.criteria.appliesTo as c}
-              <span class="criteria-badge">{[...CRITERIA_OPTIONS.gender, ...CRITERIA_OPTIONS.marital].find(o => o.value === c)?.label || c}</span>
+              <span class="criteria-badge">{[...CRITERIA_OPTIONS.gender, ...CRITERIA_OPTIONS.marital, ...CRITERIA_OPTIONS.children].find(o => o.value === c)?.label || c}</span>
             {/each}
             <span class="rule-order">{rule.order}</span>
           </div>
@@ -246,6 +248,18 @@
                 <label class="radio-label">
                   <input type="radio" name="marital" value={o.value} checked={getMaritalSelection() === o.value}
                     onchange={() => newRule.criteria.appliesTo = [...newRule.criteria.appliesTo.filter(c => c !== CRITERIA_TYPES.SINGLE && c !== CRITERIA_TYPES.MARRIED), o.value]} />
+                  <span>{o.label}</span>
+                </label>
+              {/each}
+            </div>
+          </div>
+          <div class="radio-group">
+            <span class="group-label">Children</span>
+            <div class="radio-options">
+              {#each CRITERIA_OPTIONS.children as o}
+                <label class="radio-label">
+                  <input type="radio" name="children" value={o.value} checked={getChildrenSelection() === o.value}
+                    onchange={() => newRule.criteria.appliesTo = [...newRule.criteria.appliesTo.filter(c => c !== CRITERIA_TYPES.HAS_CHILDREN && c !== CRITERIA_TYPES.HAS_NO_CHILDREN), o.value]} />
                   <span>{o.label}</span>
                 </label>
               {/each}

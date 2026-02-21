@@ -132,7 +132,7 @@
           <div class="employee-header">
             <h4>{employee.name}</h4>
             <div class="employee-meta">
-              <span>{employee.gender} • {employee.maritalStatus}</span>
+              <span>{employee.gender} • {employee.maritalStatus} • {employee.childrenStatus === 'has_children' ? 'Has children' : 'No children'}</span>
               <span class="total-hours" class:positive={getTotal(employee.id) > 0} class:negative={getTotal(employee.id) < 0}>
                 Total: {formatHours(getTotal(employee.id))}
               </span>

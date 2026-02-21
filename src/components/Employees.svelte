@@ -14,6 +14,7 @@
     name: '',
     gender: 'male',
     maritalStatus: 'single',
+    childrenStatus: 'no_children',
     dailySalary: '',
     yearsOfExperience: '',
     probationary: false
@@ -23,6 +24,7 @@
     name: false,
     gender: false,
     maritalStatus: false,
+    childrenStatus: false,
     dailySalary: false,
     yearsOfExperience: false
   }
@@ -49,7 +51,7 @@
 
   const startEditEmployee = (employee) => {
     editingEmployee = employee
-    newEmployee = { ...employee, probationary: Boolean(employee.probationary) }
+    newEmployee = { ...employee, probationary: Boolean(employee.probationary), childrenStatus: employee.childrenStatus || 'no_children' }
     showEmployeeDialog = true
   }
 
@@ -58,6 +60,7 @@
       [!newEmployee.name || newEmployee.name.trim() === '', 'name'],
       [!newEmployee.gender, 'gender'],
       [!newEmployee.maritalStatus, 'maritalStatus'],
+      [!newEmployee.childrenStatus, 'childrenStatus'],
       [!newEmployee.dailySalary || newEmployee.dailySalary === '' || Number(newEmployee.dailySalary) <= 0, 'dailySalary'],
       [!newEmployee.yearsOfExperience || newEmployee.yearsOfExperience === '' || Number(newEmployee.yearsOfExperience) < 0, 'yearsOfExperience']
     ]
@@ -129,7 +132,10 @@
             <div class="card employee-card" role="button" tabindex="0" onclick={() => startEditEmployee(employee)} onkeydown={(e) => e.key === 'Enter' && startEditEmployee(employee)}>
               <div class="employee-info">
                 <h4>{employee.name}</h4>
-                <p>{employee.gender} • {employee.maritalStatus}{#if employee.probationary} • <span class="probationary-badge">Probationary</span>{/if}</p>
+                <p>{employee.gender} • {employee.maritalStatus} • <label class="children-check" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()}>
+                  <input type="checkbox" checked={employee.childrenStatus === 'has_children'} onchange={() => updateEmployee(employee.id, { childrenStatus: employee.childrenStatus === 'has_children' ? 'no_children' : 'has_children' })} />
+                  <span>Has children</span>
+                </label>{#if employee.probationary} • <span class="probationary-badge">Probationary</span>{/if}</p>
                 <p class="salary">{formatCurrency(employee.dailySalary || 0, 'id-ID', 'IDR', $basicConfig.currencySymbol)}/day</p>
                 {#if employee.dailySalary}
                   <p class="monthly-ref">({formatCurrency((employee.dailySalary || 0) * 30, 'id-ID', 'IDR', $basicConfig.currencySymbol)}/month)</p>
@@ -175,9 +181,12 @@
           <label class="field checkbox-field" class:error={errors[field.key]}>
             <input
               type="checkbox"
-              checked={Boolean(newEmployee[field.key])}
+              checked={field.key === 'childrenStatus' ? newEmployee.childrenStatus === 'has_children' : Boolean(newEmployee[field.key])}
               onchange={(e) => {
-                newEmployee = { ...newEmployee, [field.key]: e.currentTarget.checked }
+                const checked = e.currentTarget.checked
+                newEmployee = field.key === 'childrenStatus'
+                  ? { ...newEmployee, childrenStatus: checked ? 'has_children' : 'no_children' }
+                  : { ...newEmployee, [field.key]: checked }
                 if (errors[field.key]) errors[field.key] = false
               }}
             />
@@ -313,6 +322,13 @@
         
       &.monthly-ref
         font-size: 0.8rem
+
+    .children-check
+      display: inline-flex
+      align-items: center
+      gap: 0.35rem
+      cursor: pointer
+      user-select: none
 
     .probationary-badge
       display: inline-block

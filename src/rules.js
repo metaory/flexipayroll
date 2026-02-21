@@ -25,6 +25,8 @@ export const CRITERIA_TYPES = {
   SINGLE: 'single',
   MALE: 'male',
   FEMALE: 'female',
+  HAS_CHILDREN: 'has_children',
+  HAS_NO_CHILDREN: 'no_children',
   CUSTOM: 'custom'
 }
 
@@ -104,6 +106,8 @@ const CRITERIA_CHECKERS = {
   [CRITERIA_TYPES.SINGLE]: (emp) => emp.maritalStatus === 'single',
   [CRITERIA_TYPES.MALE]: (emp) => emp.gender === 'male',
   [CRITERIA_TYPES.FEMALE]: (emp) => emp.gender === 'female',
+  [CRITERIA_TYPES.HAS_CHILDREN]: (emp) => (emp.childrenStatus || 'no_children') === 'has_children',
+  [CRITERIA_TYPES.HAS_NO_CHILDREN]: (emp) => (emp.childrenStatus || 'no_children') === 'no_children',
   [CRITERIA_TYPES.CUSTOM]: () => false // Custom conditions not implemented yet
 }
 

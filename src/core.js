@@ -9,7 +9,8 @@
 
 export const EMPLOYEE_ATTRIBUTES = {
   GENDER: ['male', 'female'],
-  MARITAL_STATUS: ['single', 'married']
+  MARITAL_STATUS: ['single', 'married'],
+  CHILDREN_STATUS: ['no_children', 'has_children']
 }
 
 export const DAY_TYPES = {
@@ -40,7 +41,8 @@ export const validateEmployee = (data) => {
     [!data.name || data.name.length < 2, 'name', 'Name must be at least 2 characters'],
     [!data.dailySalary || data.dailySalary <= 0, 'dailySalary', 'Daily salary must be greater than 0'],
     [!['male', 'female'].includes(data.gender), 'gender', 'Invalid gender'],
-    [!['single', 'married'].includes(data.maritalStatus), 'maritalStatus', 'Invalid marital status']
+    [!['single', 'married'].includes(data.maritalStatus), 'maritalStatus', 'Invalid marital status'],
+    [!['no_children', 'has_children'].includes(data.childrenStatus), 'childrenStatus', 'Invalid children status']
   ]
   
   const errors = validations
@@ -248,10 +250,11 @@ export const filterEmployees = (employees, query) => {
   if (!query) return employees
   
   const searchTerm = query.toLowerCase()
-  return employees.filter(emp => 
+  return employees.filter(emp =>
     emp.name.toLowerCase().includes(searchTerm) ||
     emp.gender.toLowerCase().includes(searchTerm) ||
-    emp.maritalStatus.toLowerCase().includes(searchTerm)
+    emp.maritalStatus.toLowerCase().includes(searchTerm) ||
+    (emp.childrenStatus || 'no_children').toLowerCase().includes(searchTerm)
   )
 }
 

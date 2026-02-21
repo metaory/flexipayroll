@@ -116,7 +116,8 @@ export const ICONS = {
   female: 'solar:female-bold',
   married: 'solar:heart-bold',
   single: 'solar:user-bold',
-  
+  has_children: 'solar:users-group-rounded-bold',
+  no_children: 'solar:user-bold',
   // Day Types
   regular: 'solar:clock-bold',
   holiday: 'solar:star-bold',
@@ -198,7 +199,7 @@ export const ICON_CATEGORIES = {
   health: ['heart', 'medical', 'insurance', 'health'],
   timeOff: ['vacation', 'sick', 'holiday', 'weekend'],
   payroll: ['salary', 'bonus', 'deduction', 'tax', 'overtime', 'attendance', 'payroll'],
-  demographics: ['male', 'female', 'married', 'single'],
+  demographics: ['male', 'female', 'married', 'single', 'has_children', 'no_children'],
   dayTypes: ['regular', 'holiday', 'paidLeave', 'unpaidLeave', 'overtime'],
   ui: ['themeLight', 'themeDark', 'themeToggle', 'menuToggle']
 } 
