@@ -117,10 +117,22 @@ export const printEmployeeReport = (result, period, currencySymbol = '$', organi
 </body>
 </html>`
 
-  const win = window.open('', '_blank', 'width=800,height=600')
-  win.document.write(html)
-  win.document.close()
-  win.onafterprint = () => win.close()
-  win.focus()
-  win.print()
+  const printUrl = `${window.location.origin}${window.location.pathname}#print`
+  const win = window.open(printUrl, '_blank', 'width=800,height=600')
+  if (!win) return
+
+  const renderAndPrint = () => {
+    win.document.open()
+    win.document.write(html)
+    win.document.close()
+    win.onafterprint = () => win.close()
+    win.focus()
+    win.print()
+  }
+
+  if (win.document.readyState === 'complete') {
+    setTimeout(renderAndPrint, 0)
+    return
+  }
+  win.addEventListener('load', renderAndPrint, { once: true })
 }
