@@ -152,6 +152,8 @@ export const printEmployeeReport = (result, period, currencySymbol = '$', organi
   ${section('Summary', row('Net', fmt(result.finalSalary), 'total'))}
   
   ${renderDetailsSection(result, fmt)}
+  <!-- 
+  -->
   
   <div class="footer">Generated ${new Date().toLocaleDateString()} · XPayroll</div>
 </body>
