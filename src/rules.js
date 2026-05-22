@@ -9,11 +9,16 @@
 
 export const RULE_TYPES = {
   FIXED: 'fixed',
-  PRORATED: 'prorated',
+  HOURLY_PRORATED: 'hourly_prorated',
+  FIXED_DAILY_PRORATED: 'fixed_daily_prorated',
   DAYS_MULTIPLIER: 'days_multiplier',
   PERCENTAGE_MONTHLY: 'percentage_monthly',
   PERCENTAGE_BASE: 'percentage_base',
   HOURLY_MULTIPLIER: 'hourly_multiplier'
+}
+
+const LEGACY_RULE_TYPES = {
+  PRORATED: 'prorated'
 }
 
 export const RULE_CATEGORIES = {
@@ -80,10 +85,11 @@ export const normalizePercentage = (value) => value >= 1 ? value / 100 : value
 // ============================================================================
 
 export const validateRule = (rule) => {
+  const validTypes = [...Object.values(RULE_TYPES), ...Object.values(LEGACY_RULE_TYPES)]
   const validations = [
     [!rule.id || rule.id.length < 2, 'id', 'Rule ID must be at least 2 characters'],
     [!rule.label || rule.label.length < 2, 'label', 'Rule label must be at least 2 characters'],
-    [!Object.values(RULE_TYPES).includes(rule.type), 'type', 'Invalid rule type'],
+    [!validTypes.includes(rule.type), 'type', 'Invalid rule type'],
     [typeof rule.value !== 'number' || rule.value < 0, 'value', 'Value must be a positive number'],
     [!rule.criteria || !rule.criteria.appliesTo || !Array.isArray(rule.criteria.appliesTo), 'criteria', 'Criteria must specify appliesTo as an array'],
     [rule.criteria?.appliesTo && !rule.criteria.appliesTo.every(criteria => Object.values(CRITERIA_TYPES).includes(criteria)), 'criteria', 'Invalid criteria type in array'],
@@ -93,7 +99,10 @@ export const validateRule = (rule) => {
   
   const errors = validations
     .filter(([condition]) => condition)
-    .reduce((acc, [, field, message]) => ({ ...acc, [field]: message }), {})
+    .reduce((acc, [, field, message]) => {
+      acc[String(field)] = message
+      return acc
+    }, {})
   
   return Object.keys(errors).length === 0 ? null : errors
 }
@@ -129,21 +138,72 @@ const rawHoursDelta = (items) =>
 const hoursDeltaToDays = (rawHours, workdayHours) =>
   rawHours >= 0 ? Math.floor(rawHours / workdayHours) : -Math.floor(Math.abs(rawHours) / workdayHours)
 
+const resolveWorkdayHours = (config) => (config.workdayHours > 0 ? config.workdayHours : 8)
+
+const resolveWorkingDays = (config) => (config.workingDaysPerMonth ?? 22)
+
+const resolveMonthDays = (config) => (config.monthDays ?? 30)
+
+const normalizeRuleType = (type) =>
+  type === LEGACY_RULE_TYPES.PRORATED ? RULE_TYPES.HOURLY_PRORATED : type
+
+const buildAttendanceMetrics = (attendanceItems, config) => {
+  const workdayHours = resolveWorkdayHours(config)
+  const workDays = resolveWorkingDays(config)
+  const monthDays = resolveMonthDays(config)
+  const rawHours = rawHoursDelta(attendanceItems)
+  const rawUndertimeHours = (attendanceItems || []).reduce((sum, item) => {
+    const hours = Number(item.hours) || 0
+    return hours < 0 ? sum + Math.abs(hours) : sum
+  }, 0)
+  const rawOvertimeHours = (attendanceItems || []).reduce((sum, item) =>
+    sum + Math.max(0, Number(item.hours) || 0), 0)
+  const overtimeDayBlocks = Math.floor(rawOvertimeHours / workdayHours)
+  const undertimeDayBlocks = Math.floor(rawUndertimeHours / workdayHours)
+  const hourEquivalentDays = rawHours / workdayHours
+  const monthHourEquivalentDays = Math.max(0, workDays + hourEquivalentDays)
+  const dayEquivalent = Math.max(0, workDays + hourEquivalentDays)
+  const effectiveDays = Math.min(monthDays, Math.max(0, workDays + overtimeDayBlocks - undertimeDayBlocks))
+
+  return {
+    workDays,
+    monthDays,
+    rawHours,
+    rawUndertimeHours,
+    rawOvertimeHours,
+    overtimeDayBlocks,
+    undertimeDayBlocks,
+    monthHourEquivalentDays,
+    dayEquivalent,
+    effectiveDays
+  }
+}
+
 const RULE_CALCULATORS = {
   [RULE_TYPES.FIXED]: (rule) => rule.value,
 
-  [RULE_TYPES.PRORATED]: (rule, _, __, ___, config, totalDaysWorked) => {
-    const workDays = config.workingDaysPerMonth ?? 22
-    if (workDays <= 0) return 0
-    const ratio = Math.min(1, Math.max(0, totalDaysWorked) / workDays)
+  [RULE_TYPES.HOURLY_PRORATED]: (rule, _, __, ___, config, ____, metrics) => {
+    const monthDays = resolveMonthDays(config)
+    if (monthDays <= 0) return 0
+    const ratio = Math.max(0, metrics.monthHourEquivalentDays / monthDays)
     return rule.value * ratio
   },
 
-  [RULE_TYPES.DAYS_MULTIPLIER]: (rule, employee, _, __, config, totalDaysWorked) => {
-    const workDays = config.workingDaysPerMonth ?? 22
+  [LEGACY_RULE_TYPES.PRORATED]: (rule, employee, attendanceItems, hourlyRate, config, totalDaysWorked, metrics) =>
+    RULE_CALCULATORS[RULE_TYPES.HOURLY_PRORATED](rule, employee, attendanceItems, hourlyRate, config, totalDaysWorked, metrics),
+
+  [RULE_TYPES.FIXED_DAILY_PRORATED]: (rule, _, __, ___, config, ____, metrics) => {
+    const monthDays = resolveMonthDays(config)
+    if (monthDays <= 0) return 0
+    const cappedEffectiveDays = Math.min(metrics.effectiveDays, monthDays)
+    return (rule.value * cappedEffectiveDays) / monthDays
+  },
+
+  [RULE_TYPES.DAYS_MULTIPLIER]: (rule, employee, _, __, config, ___, metrics) => {
+    const monthDays = resolveMonthDays(config)
     const fullMonthValue = rule.value * employee.dailySalary
-    if (workDays <= 0) return 0
-    const ratio = Math.min(1, Math.max(0, totalDaysWorked) / workDays)
+    if (monthDays <= 0) return 0
+    const ratio = Math.max(0, metrics.effectiveDays / monthDays)
     return fullMonthValue * ratio
   },
 
@@ -157,13 +217,16 @@ const RULE_CALCULATORS = {
 export const calculateRuleValue = (rule, employee, attendanceItems, config, totalDaysWorked) => {
   if (!appliesToEmployee(rule, employee)) return 0
 
-  const hourlyRate = employee.dailySalary / config.workdayHours
-  const workDays = config.workingDaysPerMonth ?? 22
-  const attendanceDelta = hoursDeltaToDays(rawHoursDelta(attendanceItems), config.workdayHours)
+  const normalizedType = normalizeRuleType(rule.type)
+  const workdayHours = resolveWorkdayHours(config)
+  const hourlyRate = employee.dailySalary / workdayHours
+  const workDays = resolveWorkingDays(config)
+  const attendanceDelta = hoursDeltaToDays(rawHoursDelta(attendanceItems), workdayHours)
   const days = totalDaysWorked ?? Math.max(0, workDays + attendanceDelta)
+  const metrics = buildAttendanceMetrics(attendanceItems, config)
 
-  const calculator = RULE_CALCULATORS[rule.type]
-  return calculator ? calculator(rule, employee, attendanceItems, hourlyRate, config, days) : 0
+  const calculator = RULE_CALCULATORS[normalizedType]
+  return calculator ? calculator(rule, employee, attendanceItems, hourlyRate, config, days, metrics) : 0
 }
 
 // ============================================================================
@@ -171,9 +234,10 @@ export const calculateRuleValue = (rule, employee, attendanceItems, config, tota
 // ============================================================================
 
 export const applyRules = (employee, attendanceItems, rules, config) => {
-  const hourlyRate = employee.dailySalary / config.workdayHours
-  const workDays = config.workingDaysPerMonth ?? 22
-  const workdayHours = config.workdayHours
+  const workdayHours = resolveWorkdayHours(config)
+  const hourlyRate = employee.dailySalary / workdayHours
+  const attendanceMetrics = buildAttendanceMetrics(attendanceItems, config)
+  const workDays = attendanceMetrics.workDays
   const expectedHours = workDays * workdayHours
   const rawOt = Number.isFinite(Number(config.overtimeRate)) ? Number(config.overtimeRate) : 1.5
   const otRate = rawOt > 0 && rawOt < 1 ? 1 + rawOt : rawOt
@@ -184,25 +248,46 @@ export const applyRules = (employee, attendanceItems, rules, config) => {
     if (hours < 0) return sum + hours * utRate
     return sum
   }, 0)
-  const rawHours = rawHoursDelta(attendanceItems)
-  const rawUndertimeHours = (attendanceItems || []).reduce((s, i) => {
-    const h = Number(i.hours) || 0
-    return h < 0 ? s + Math.abs(h) : s
-  }, 0)
-  const rawOvertimeHours = (attendanceItems || []).reduce((s, i) => s + Math.max(0, Number(i.hours) || 0), 0)
+  const rawHours = attendanceMetrics.rawHours
+  const rawUndertimeHours = attendanceMetrics.rawUndertimeHours
+  const rawOvertimeHours = attendanceMetrics.rawOvertimeHours
   const daysNotWorked = Math.floor(rawUndertimeHours / workdayHours)
   const totalDaysWorked = Math.max(0, workDays - daysNotWorked)
   const attendanceDays = hoursDeltaToDays(rawHours, workdayHours)
-  const baseFromDays = employee.dailySalary * totalDaysWorked
   const overtimePay = rawOvertimeHours * otRate * hourlyRate
-  const baseSalary = baseFromDays + overtimePay
-  const totalHours = expectedHours + hoursAdjustment
-  const actualDays = totalDaysWorked
+  const undertimePay = rawUndertimeHours * utRate * hourlyRate
   const expectedBase = employee.dailySalary * workDays
+  const attendancePayAdjustment = overtimePay - undertimePay
+  const baseSalary = expectedBase + attendancePayAdjustment
+  const baseFromDays = expectedBase
+  const totalHours = expectedHours + hoursAdjustment
+  const actualDays = attendanceMetrics.effectiveDays
   const attendanceAdjustment = baseSalary - expectedBase
 
   if (employee.probationary) {
-    return { baseSalary, attendanceAdjustment, hoursAdjustment, attendanceDays, totalDaysWorked, daysNotWorked, baseFromDays, overtimePay, bonuses: {}, deductions: {}, grossSalary: baseSalary, totalHours, actualDays }
+    return {
+      baseSalary,
+      attendanceAdjustment,
+      hoursAdjustment,
+      attendanceDays,
+      totalDaysWorked,
+      workedDayEquivalent: attendanceMetrics.dayEquivalent,
+      effectiveDays: attendanceMetrics.effectiveDays,
+      monthHourEquivalentDays: attendanceMetrics.monthHourEquivalentDays,
+      proratedWorkDays: workDays,
+      daysNotWorked,
+      rawOvertimeHours,
+      rawUndertimeHours,
+      baseFromDays,
+      overtimePay,
+      undertimePay,
+      attendancePayAdjustment,
+      bonuses: {},
+      deductions: {},
+      grossSalary: baseSalary,
+      totalHours,
+      actualDays
+    }
   }
 
   // Process enabled rules (include value 0 so days_multiplier etc. appear in detailed steps)
@@ -213,8 +298,15 @@ export const applyRules = (employee, attendanceItems, rules, config) => {
 
   // Categorize rules
   const categorized = processedRules.reduce((acc, { rule, value }) => {
-    const isPercentBase = rule.type === RULE_TYPES.PERCENTAGE_BASE
-    const entry = { rule, value, percentage: isPercentBase, percentageType: isPercentBase ? 'base' : null }
+    const normalizedType = normalizeRuleType(rule.type)
+    const isPercentBase = normalizedType === RULE_TYPES.PERCENTAGE_BASE
+    const isPercentMonthly = normalizedType === RULE_TYPES.PERCENTAGE_MONTHLY
+    const entry = {
+      rule: { ...rule, type: normalizedType },
+      value,
+      percentage: isPercentBase || isPercentMonthly,
+      percentageType: isPercentBase ? 'base' : (isPercentMonthly ? 'monthly' : null)
+    }
     acc[rule.category === RULE_CATEGORIES.BONUS ? 'bonuses' : 'deductions'][rule.id] = entry
     return acc
   }, { bonuses: {}, deductions: {} })
@@ -245,9 +337,17 @@ export const applyRules = (employee, attendanceItems, rules, config) => {
     hoursAdjustment,
     attendanceDays,
     totalDaysWorked,
+    workedDayEquivalent: attendanceMetrics.dayEquivalent,
+    effectiveDays: attendanceMetrics.effectiveDays,
+    monthHourEquivalentDays: attendanceMetrics.monthHourEquivalentDays,
+    proratedWorkDays: workDays,
     daysNotWorked,
+    rawOvertimeHours,
+    rawUndertimeHours,
     baseFromDays,
     overtimePay,
+    undertimePay,
+    attendancePayAdjustment,
     grossSalary: baseSalary + fixedBonusTotal + percentBonusTotal,
     totalHours,
     actualDays
@@ -269,7 +369,7 @@ export const createRule = (data) => {
   const rule = {
     id: data.id || generateRuleId(data.label),
     label: data.label,
-    type: data.type,
+    type: normalizeRuleType(data.type),
     value: data.value,
     criteria: data.criteria,
     category: data.category,

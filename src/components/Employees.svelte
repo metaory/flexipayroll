@@ -138,7 +138,7 @@
                 </label>{#if employee.probationary} • <span class="probationary-badge">Probationary</span>{/if}</p>
                 <p class="salary">{formatCurrency(employee.dailySalary || 0, 'id-ID', 'IDR', $basicConfig.currencySymbol)}/day</p>
                 {#if employee.dailySalary}
-                  <p class="monthly-ref">({formatCurrency((employee.dailySalary || 0) * 30, 'id-ID', 'IDR', $basicConfig.currencySymbol)}/month)</p>
+                  <p class="monthly-ref">({formatCurrency((employee.dailySalary || 0) * ($basicConfig.workingDaysPerMonth || 22), 'id-ID', 'IDR', $basicConfig.currencySymbol)} expected/month base)</p>
                 {/if}
                 {#if employee.dailySalary}
                   {@const hourlyRate = calculateHourlyRate(employee.dailySalary, $basicConfig.workdayHours || 8)}

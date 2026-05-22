@@ -9,12 +9,10 @@
   
   import { employees, rules, basicConfig, currentPeriod, attendanceItems, adjustments, wizardStep } from '../stores.js'
   import { STEPS, calculateEmployeePayroll } from '../payroll.js'
-  import { getPeriodMonthDays } from '../core.js'
   
-  // Reactive: only monthDays from period (28/29/30/31); workingDaysPerMonth always from config
+  // Keep config values as-is: workingDaysPerMonth and monthDays are independent user settings.
   const currentStepData = $derived(STEPS[$wizardStep])
-  const periodMonthDays = $derived(getPeriodMonthDays($currentPeriod))
-  const payrollConfig = $derived(periodMonthDays != null ? { ...$basicConfig, monthDays: periodMonthDays } : $basicConfig)
+  const payrollConfig = $derived($basicConfig)
   
   const results = $derived($employees.map(emp => calculateEmployeePayroll(
     emp,
