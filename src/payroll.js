@@ -65,6 +65,8 @@ export const calculateEmployeePayroll = (employee, attendanceItems, adjustments,
   
   return {
     employee,
+    attendanceItems: attendanceItems || [],
+    adjustments: adjustments || [],
     dailyRate,
     hourlyRate,
     totalHours: ruleResults.totalHours,
