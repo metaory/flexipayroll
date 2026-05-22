@@ -9,20 +9,21 @@ const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').
 
 const styles = `
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Courier New', monospace; font-size: 10pt; line-height: 1.35; padding: 1rem; color: #000; }
+  body { font-family: 'Courier New', monospace; font-size: 10.5pt; line-height: 1.35; padding: 1rem; color: #000; font-weight: 700; }
   .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 0.75rem; margin-bottom: 1rem; }
-  .header h1 { font-size: 14pt; margin-bottom: 0.1rem; letter-spacing: 2px; }
-  .header p { font-size: 9pt; color: #333; }
+  .header h1 { font-size: 17pt; margin-bottom: 0.1rem; letter-spacing: 2px; font-weight: 900; }
+  .header p { font-size: 10pt; color: #111; font-weight: 800; }
   .section { margin-bottom: 0.75rem; }
-  .section-title { font-weight: bold; font-size: 10pt; border-bottom: 1px solid #000; padding-bottom: 0.15rem; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 1px; }
-  .row { display: flex; justify-content: space-between; padding: 0.15rem 0; border-bottom: 1px dotted #ccc; font-size: 10pt; }
+  .section-title { font-weight: 900; font-size: 12pt; border-bottom: 1px solid #000; padding-bottom: 0.15rem; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 1px; }
+  .row { display: flex; justify-content: space-between; padding: 0.15rem 0; border-bottom: 1px dotted #ccc; font-size: 10.5pt; }
   .row:last-child { border-bottom: none; }
-  .row.subtotal { border-top: 1px solid #000; border-bottom: 1px solid #000; font-weight: bold; margin-top: 0.35rem; padding: 0.35rem 0; }
-  .row.total { border-top: 2px solid #000; font-weight: bold; font-size: 12pt; margin-top: 0.35rem; padding: 0.5rem 0; }
-  .label { color: #333; }
-  .value { font-weight: 600; text-align: right; font-family: 'Courier New', monospace; }
-  .stats { display: flex; gap: 1rem; margin-bottom: 0.5rem; font-size: 9pt; color: #555; }
-  .footer { margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px solid #000; font-size: 8pt; color: #666; text-align: center; }
+  .row.subtotal { border-top: 1px solid #000; border-bottom: 1px solid #000; font-weight: 900; margin-top: 0.35rem; padding: 0.35rem 0; font-size: 11.5pt; }
+  .row.total { border-top: 2px solid #000; font-weight: 900; font-size: 14pt; margin-top: 0.35rem; padding: 0.5rem 0; }
+  .label { color: #111; font-weight: 800; }
+  .value { font-weight: 900; text-align: right; font-family: 'Courier New', monospace; }
+  .stats { display: flex; gap: 1rem; margin-bottom: 0.5rem; font-size: 10pt; color: #111; font-weight: 800; }
+  .stats b { font-weight: 900; }
+  .footer { margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px solid #000; font-size: 8.5pt; color: #111; text-align: center; font-weight: 800; }
   @media print { body { padding: 0.5rem; } }
 `
 
