@@ -3,7 +3,7 @@
  * Single-page summary for PDF export
  */
 
-import { formatCurrency, formatHours } from '../core.js'
+import { formatCurrency } from '../core.js'
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
@@ -37,13 +37,11 @@ const getAppliedRules = (result) => {
     if (category !== 'bonuses' && category !== 'deductions') return null
     Object.entries(rules || {}).map(([, ruleData]) => {
       const value = ruleData.finalValue !== undefined ? ruleData.finalValue : ruleData.value
-      if (value > 0) {
-        const rule = ruleData.rule
-        const pct = rule.type === 'percentage_monthly' || rule.type === 'percentage_base'
-          ? ` (${(rule.value * 100).toFixed(1)}%)`
-          : ''
-        applied[category].push({ label: rule.label + pct, value })
-      }
+      const rule = ruleData.rule
+      const pct = rule.type === 'percentage_monthly' || rule.type === 'percentage_base'
+        ? ` (${(rule.value * 100).toFixed(1)}%)`
+        : ''
+      applied[category].push({ label: rule.label + pct, value })
       return null
     })
     return null
@@ -51,31 +49,12 @@ const getAppliedRules = (result) => {
   return applied
 }
 
-const getAttendanceRows = (result) =>
-  (result.attendanceItems || [])
-    .map((item) => {
-      const hours = Number(item?.hours) || 0
-      if (hours === 0) return ''
-      const label = item?.label ? `${item.label}` : 'Attendance'
-      return row(label, formatHours(hours))
-    })
-    .filter(Boolean)
-
-const getAdjustmentRows = (result, fmt) =>
-  (result.adjustments || [])
-    .map((item) => {
-      const amount = Number(item?.amount) || 0
-      if (amount === 0) return ''
-      const label = item?.label ? `${item.label}` : 'Adjustment'
-      const sign = amount > 0 ? '+' : '-'
-      return row(label, `${sign}${fmt(Math.abs(amount))}`)
-    })
-    .filter(Boolean)
-
 export const printEmployeeReport = (result, period, currencySymbol = '$', organizationName = '') => {
   const fmt = (v) => formatCurrency(v, 'id-ID', 'IDR', currencySymbol)
   const applied = getAppliedRules(result)
+  const expectedMonthBase = result.baseSalary - (result.attendanceAdjustment || 0)
   const grossBeforeAdjustments = result.grossSalary - (result.adjustmentTotal || 0)
+  const totalAdjustments = result.adjustmentTotal || 0
   
   const html = `<!DOCTYPE html>
 <html>
@@ -92,25 +71,21 @@ export const printEmployeeReport = (result, period, currencySymbol = '$', organi
   
   <div class="stats">
     <span><b>Days:</b> ${result.actualDays}</span>
-    <span><b>Hours:</b> ${formatHours(result.totalHours)}</span>
     <span><b>Daily:</b> ${fmt(result.dailyRate)}</span>
     <span><b>Hourly:</b> ${fmt(result.hourlyRate)}</span>
   </div>
   
   ${section('Earnings', [
-    row('Base', fmt(result.baseSalary)),
+    row('Expected month base', fmt(expectedMonthBase)),
     ...applied.bonuses.map(b => row(b.label, '+' + fmt(b.value))),
+    ...applied.deductions.map(d => row(d.label, '-' + fmt(d.value))),
+    row(`Attendance (OT ${Number(result.ruleResults?.rawOvertimeHours || 0).toFixed(2)}h, UT ${Number(result.ruleResults?.rawUndertimeHours || 0).toFixed(2)}h)`, `${result.attendanceAdjustment >= 0 ? '+' : '-'}${fmt(Math.abs(result.attendanceAdjustment || 0))}`),
     row('Gross', fmt(grossBeforeAdjustments), 'subtotal')
   ].filter(Boolean).join(''))}
 
   ${section('Adjustments', [
-    ...applied.deductions.map(d => row(d.label, '-' + fmt(d.value))),
-    ...getAdjustmentRows(result, fmt)
-  ].join('') || row('None', '-'))}
-
-  ${section('Attendance', [
-    ...getAttendanceRows(result)
-  ].join('') || row('None', '-'))}
+    row('Total adjustments', `${totalAdjustments >= 0 ? '+' : '-'}${fmt(Math.abs(totalAdjustments))}`)
+  ].join(''))}
   
   ${section('Summary', row('Net', fmt(result.finalSalary), 'total'))}
 
