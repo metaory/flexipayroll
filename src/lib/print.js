@@ -49,6 +49,17 @@ const getAppliedRules = (result) => {
   return applied
 }
 
+const getAdjustmentRows = (result, fmt) =>
+  (result.adjustments || [])
+    .map((item) => {
+      const amount = Number(item?.amount) || 0
+      if (amount === 0) return ''
+      const label = item?.label ? `${item.label}` : 'Adjustment'
+      const sign = amount > 0 ? '+' : '-'
+      return row(label, `${sign}${fmt(Math.abs(amount))}`)
+    })
+    .filter(Boolean)
+
 export const printEmployeeReport = (result, period, currencySymbol = '$', organizationName = '') => {
   const fmt = (v) => formatCurrency(v, 'id-ID', 'IDR', currencySymbol)
   const applied = getAppliedRules(result)
@@ -84,8 +95,9 @@ export const printEmployeeReport = (result, period, currencySymbol = '$', organi
   ].filter(Boolean).join(''))}
 
   ${section('Adjustments', [
-    row('Total adjustments', `${totalAdjustments >= 0 ? '+' : '-'}${fmt(Math.abs(totalAdjustments))}`)
-  ].join(''))}
+    ...getAdjustmentRows(result, fmt),
+    row('Total adjustments', `${totalAdjustments >= 0 ? '+' : '-'}${fmt(Math.abs(totalAdjustments))}`, 'subtotal')
+  ].join('') || row('None', '-'))}
   
   ${section('Summary', row('Net', fmt(result.finalSalary), 'total'))}
 
