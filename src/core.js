@@ -267,6 +267,16 @@ export const filterEmployees = (employees, query) => {
 // ============================================================================
 
 const SESSION_PREFIX = 'xpayroll_'
+const bytesToBase64 = (bytes) => btoa(Array.from(bytes, (byte) => String.fromCharCode(byte)).join(''))
+const base64ToBytes = (base64) => Uint8Array.from(atob(base64), (char) => char.charCodeAt(0))
+const encodeUtf8Base64 = (text) => bytesToBase64(new TextEncoder().encode(text))
+const decodeUtf8Base64 = (base64) => new TextDecoder().decode(base64ToBytes(base64))
+const parseSessionPayload = (encoded) => {
+  const payload = encoded.trim()
+  const utf8Decoded = decodeUtf8Base64(payload)
+  if (utf8Decoded.startsWith('{')) return JSON.parse(utf8Decoded)
+  return JSON.parse(atob(payload))
+}
 
 export const storage = {
   get: (key, defaultValue = null) => {
@@ -296,10 +306,10 @@ export const storage = {
     }
   },
 
-  exportSession: () => btoa(JSON.stringify({ ...localStorage })),
+  exportSession: () => encodeUtf8Base64(JSON.stringify({ ...localStorage })),
 
   importSession: (encoded) => {
-    Object.entries(JSON.parse(atob(encoded))).map(([k, v]) => localStorage.setItem(k, v))
+    Object.entries(parseSessionPayload(encoded)).map(([k, v]) => localStorage.setItem(k, v))
     location.reload()
   },
 
@@ -314,6 +324,7 @@ export const storage = {
   },
 
   loadSessionFile: (file) => {
+    if (!file) return
     const reader = new FileReader()
     reader.onload = (e) => storage.importSession(e.target.result)
     reader.readAsText(file)
