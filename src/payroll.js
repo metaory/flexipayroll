@@ -5,14 +5,15 @@
 
 import { calculateDailyRate, calculateHourlyRate } from './core.js'
 import { applyRules, RULE_TYPES } from './rules.js'
+import { ICONS } from './lib/icons.js'
 
 // Step definitions - simplified for rules-based system
 export const STEPS = [
-  { id: 'config', title: 'Configuration', icon: 'solar:settings-bold-duotone', type: 'config' },
-  { id: 'employees', title: 'Employees', icon: 'solar:users-group-rounded-bold-duotone', type: 'form' },
-  { id: 'attendance', title: 'Attendance', icon: 'solar:calendar-mark-bold-duotone', type: 'form' },
-  { id: 'adjustments', title: 'Adjustments', icon: 'solar:settings-minimalistic-bold-duotone', type: 'form' },
-  { id: 'report', title: 'Reports', icon: 'solar:document-text-bold-duotone', type: 'report' }
+  { id: 'config', title: 'Configuration', icon: ICONS.stepConfig, type: 'config' },
+  { id: 'employees', title: 'Employees', icon: ICONS.stepEmployees, type: 'form' },
+  { id: 'attendance', title: 'Attendance', icon: ICONS.stepAttendance, type: 'form' },
+  { id: 'adjustments', title: 'Adjustments', icon: ICONS.stepAdjustments, type: 'form' },
+  { id: 'report', title: 'Reports', icon: ICONS.stepReport, type: 'report' }
 ]
 
 // Pure calculation functions using rules engine

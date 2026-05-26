@@ -1,7 +1,8 @@
 <script>
-  import Icon from '@iconify/svelte'
+  import Icon from '@iconify/svelte/dist/OfflineIcon.svelte'
   import { addAttendanceItem, updateAttendanceItem, removeAttendanceItem, getAttendanceItems } from '../stores.js'
   import { round2 } from '../core.js'
+  import { ICONS } from '../lib/icons.js'
   import { toasts } from '../lib/toast.js'
   import { confirmDialog } from '../lib/dialog.js'
 
@@ -212,7 +213,7 @@
                   <Icon icon="tabler:check" width="1rem" height="1rem" />Update</button>
               {:else}
                 <button class="primary" onclick={() => handleAdd(employee.id)} disabled={!forms[employee.id]?.label || (!(parseInt(forms[employee.id]?.hours) || 0) && !(parseInt(forms[employee.id]?.minutes) || 0))}>
-                  <Icon icon="typcn:plus" width="1rem" height="1rem" />Add</button>
+                  <Icon icon={ICONS.add} width="1rem" height="1rem" />Add</button>
               {/if}
             </div>
           </div>

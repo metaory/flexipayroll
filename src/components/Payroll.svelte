@@ -5,7 +5,7 @@
   import Attendance from './Attendance.svelte'
   import Adjustments from './Adjustments.svelte'
   import Report from './Report.svelte'
-  import Icon from '@iconify/svelte'
+  import Icon from '@iconify/svelte/dist/OfflineIcon.svelte'
   
   import { employees, rules, basicConfig, currentPeriod, attendanceItems, adjustments, wizardStep } from '../stores.js'
   import { STEPS, calculateEmployeePayroll } from '../payroll.js'

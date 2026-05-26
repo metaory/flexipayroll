@@ -1,9 +1,10 @@
 <script>
-  import Icon from '@iconify/svelte'
+  import Icon from '@iconify/svelte/dist/OfflineIcon.svelte'
   import { EMPLOYEE_FIELDS } from '../payroll.js'
   import { addEmployee, updateEmployee, removeEmployee, basicConfig } from '../stores.js'
   import { generateEmployeeId, formatCurrency, calculateHourlyRate } from '../core.js'
   import { toasts } from '../lib/toast.js'
+  import { ICONS } from '../lib/icons.js'
   import { confirmDialog } from '../lib/dialog.js'
   import Dialog from './Dialog.svelte'
 
@@ -118,7 +119,7 @@
       <h3>Employees ({employees.length})</h3>
       <div class="employee-actions">
         <button class="primary" onclick={startAddEmployee}>
-          <Icon icon="typcn:plus" width="1rem" height="1rem" />
+          <Icon icon={ICONS.add} width="1rem" height="1rem" />
           Add
         </button>
       </div>

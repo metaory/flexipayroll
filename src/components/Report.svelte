@@ -1,5 +1,5 @@
 <script>
-  import Icon from '@iconify/svelte'
+  import Icon from '@iconify/svelte/dist/OfflineIcon.svelte'
   import Dialog from './Dialog.svelte'
   import { formatCurrency, formatHours } from '../core.js'
   import { buildCalculationSteps } from '../payroll.js'

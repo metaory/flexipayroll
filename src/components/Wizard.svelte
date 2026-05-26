@@ -1,6 +1,7 @@
 <script>
-  import Icon from '@iconify/svelte'
+  import Icon from '@iconify/svelte/dist/OfflineIcon.svelte'
   import { STEPS } from '../payroll.js'
+  import { ICONS } from '../lib/icons.js'
 
   let { currentStep = 0, onNext, onPrev } = $props()
 
@@ -25,12 +26,12 @@
     </div>
     <div class="wizard-nav">
       <button type="button" class="secondary" onclick={onPrev} disabled={currentStep === 0}>
-        <Icon icon="mingcute:arrow-left-fill" width="1.25rem" height="1.25rem" />
+        <Icon icon={ICONS.arrowLeft} width="1.25rem" height="1.25rem" />
         Previous
       </button>
       <button type="button" class="primary" onclick={onNext} disabled={currentStep >= STEPS.length - 1}>
         Next
-        <Icon icon="mingcute:arrow-right-fill" width="1.25rem" height="1.25rem" />
+        <Icon icon={ICONS.arrowRight} width="1.25rem" height="1.25rem" />
       </button>
     </div>
   </div>

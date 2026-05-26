@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="public/logo.png" height="128" />
+    <img src="public/logo.svg" height="128" />
     <h1>FlexiPayroll</h1>
     <img src=".github/assets/social.png" width="70%" />
     <h5>A lightweight, browser-based payroll management system for small businesses</h5>

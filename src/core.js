@@ -267,6 +267,16 @@ export const filterEmployees = (employees, query) => {
 // ============================================================================
 
 const SESSION_PREFIX = 'xpayroll_'
+const DATA_KEYS = [
+  'xpayroll_basic_config',
+  'xpayroll_rules',
+  'xpayroll_settings',
+  'xpayroll_employees',
+  'xpayroll_attendance',
+  'xpayroll_attendance_items',
+  'xpayroll_adjustments'
+]
+const SESSION_RESET_KEYS = [...DATA_KEYS, 'xpayroll_payroll', 'xpayroll_salary_records']
 const bytesToBase64 = (bytes) => btoa(Array.from(bytes, (byte) => String.fromCharCode(byte)).join(''))
 const base64ToBytes = (base64) => Uint8Array.from(atob(base64), (char) => char.charCodeAt(0))
 const encodeUtf8Base64 = (text) => bytesToBase64(new TextEncoder().encode(text))
@@ -306,11 +316,29 @@ export const storage = {
     }
   },
 
-  exportSession: () => encodeUtf8Base64(JSON.stringify({ ...localStorage })),
+  exportSession: () => encodeUtf8Base64(JSON.stringify(
+    Object.fromEntries(
+      DATA_KEYS
+        .map((key) => [key, localStorage.getItem(key)])
+        .filter(([, value]) => value !== null)
+    )
+  )),
 
   importSession: (encoded) => {
-    Object.entries(parseSessionPayload(encoded)).map(([k, v]) => localStorage.setItem(k, v))
-    location.reload()
+    try {
+      const payload = parseSessionPayload(encoded)
+      const entries = Object.entries(payload).filter(([key]) => key.startsWith(SESSION_PREFIX))
+      const hasDataKey = entries.some(([key]) => DATA_KEYS.includes(key))
+      if (!hasDataKey) return false
+      SESSION_RESET_KEYS.map((key) => localStorage.removeItem(key))
+      entries
+        .filter(([key]) => DATA_KEYS.includes(key))
+        .map(([key, value]) => localStorage.setItem(key, value))
+      location.reload()
+      return true
+    } catch {
+      return false
+    }
   },
 
   downloadSession: () => {

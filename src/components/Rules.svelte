@@ -1,7 +1,8 @@
 <script>
-  import Icon from '@iconify/svelte'
+  import Icon from '@iconify/svelte/dist/OfflineIcon.svelte'
   import { rules, basicConfig, addRule, updateRule, removeRule, toggleRule, reorderRules, resetRules, updateBasicConfig } from '../stores.js'
   import { RULE_TYPES, RULE_CATEGORIES, CRITERIA_TYPES } from '../rules.js'
+  import { ICONS } from '../lib/icons.js'
   import { toasts } from '../lib/toast.js'
   import { confirmDialog } from '../lib/dialog.js'
   import Dialog from './Dialog.svelte'
@@ -152,7 +153,7 @@
     </div>
     <div class="config-actions">
       <button class="danger" onclick={resetAllStorage}>
-        <Icon icon="clarity:warning-solid" width="1.4rem" height="1.4rem" />
+        <Icon icon={ICONS.warning} width="1.4rem" height="1.4rem" />
         Reset
       </button>
     </div>
@@ -168,7 +169,7 @@
           Reset
         </button>
         <button class="primary" onclick={startAddRule}>
-          <Icon icon="typcn:plus" width="1rem" height="1rem" />
+          <Icon icon={ICONS.add} width="1rem" height="1rem" />
           Add
         </button>
       </div>

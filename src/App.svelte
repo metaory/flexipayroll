@@ -1,10 +1,13 @@
 <script>
   import Payroll from './components/Payroll.svelte'
-  import Icon from '@iconify/svelte'
+  import Icon from '@iconify/svelte/dist/OfflineIcon.svelte'
+  import { ICONS } from './lib/icons.js'
   import { theme, toggleTheme } from './stores.js'
   import { storage } from './core.js'
 
   let fileInput = $state()
+  let installEvent = $state()
+  let installReady = $state(false)
 
   // Apply theme to document on mount and changes
   $effect(() => {
@@ -12,19 +15,54 @@
     document.documentElement.classList.toggle('dark', isDark)
   })
 
+  const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
+
+  $effect(() => {
+    if (typeof window === 'undefined') return
+    installReady = !isStandalone()
+    const onBeforeInstallPrompt = (event) => {
+      event.preventDefault()
+      installEvent = event
+      installReady = true
+    }
+    const onAppInstalled = () => {
+      installEvent = null
+      installReady = false
+    }
+    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt)
+    window.addEventListener('appinstalled', onAppInstalled)
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt)
+      window.removeEventListener('appinstalled', onAppInstalled)
+    }
+  })
+
   const handleLoad = (e) => storage.loadSessionFile(e.target.files[0])
+  const handleInstall = async () => {
+    if (!installEvent) return
+    await installEvent.prompt()
+    const { outcome } = await installEvent.userChoice
+    if (outcome !== 'accepted') return
+    installEvent = null
+    installReady = false
+  }
 </script>
 
 <div class="toolbar">
   <button class="toolbar-btn" onclick={() => storage.downloadSession()} aria-label="Save session">
-    <Icon icon="ic:round-save" width="1.5rem" height="1.5rem" />
+    <Icon icon={ICONS.save} width="1.5rem" height="1.5rem" />
   </button>
   <button class="toolbar-btn" onclick={() => fileInput.click()} aria-label="Load session">
-    <Icon icon="tabler:folder-open-filled" width="1.5rem" height="1.5rem" />
+    <Icon icon={ICONS.folderOpen} width="1.5rem" height="1.5rem" />
   </button>
   <button class="toolbar-btn" onclick={toggleTheme} aria-label="Toggle color scheme">
-    <Icon icon={$theme.mode === 'dark' ? 'line-md:moon-filled-to-sunny-filled-transition' : 'line-md:sunny-outline-to-moon-alt-loop-transition'} width="1.5rem" height="1.5rem" />
+    <Icon icon={$theme.mode === 'dark' ? ICONS.themeLight : ICONS.themeDark} width="1.5rem" height="1.5rem" />
   </button>
+  {#if installReady}
+    <button class="toolbar-btn" onclick={handleInstall} aria-label="Install app">
+      <Icon icon={ICONS.install} width="1.5rem" height="1.5rem" />
+    </button>
+  {/if}
 </div>
 <input type="file" accept=".txt" bind:this={fileInput} onchange={handleLoad} hidden />
 
@@ -42,7 +80,7 @@
     left: 0
     width: 100vw
     height: 100vh
-    background-image: url('./bg-animated.svg')
+    background-image: url('/bg-animated.svg')
     background-size: cover
     background-position: center
     background-repeat: no-repeat
