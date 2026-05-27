@@ -3,8 +3,10 @@ import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { VitePWA } from 'vite-plugin-pwa'
 import { resolve } from 'path'
 
+const base = process.env.BASE || '/flexipayroll/'
+
 export default defineConfig({
-  base: '/flexipayroll/',
+  base,
   server: { host: true },
   resolve: {
     alias: {
@@ -32,12 +34,12 @@ export default defineConfig({
       injectRegister: 'auto',
       includeAssets: ['main.svg', 'logo.svg', 'bg-animated.svg', 'scheme/dark.svg', 'scheme/light.svg'],
       manifest: {
-        id: '/flexipayroll/',
+        id: base,
         name: 'FlexiPayroll',
         short_name: 'FlexiPayroll',
         description: 'A lightweight, browser-based payroll management system for SMEs.',
-        start_url: '/flexipayroll/',
-        scope: '/flexipayroll/',
+        start_url: base,
+        scope: base,
         display: 'standalone',
         theme_color: '#ffa3a5',
         background_color: '#131214',

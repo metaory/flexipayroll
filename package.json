@@ -8,7 +8,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "build:offline": "BASE=./ vite build",
+    "preview": "vite preview",
+    "serve": "npm run build:offline && npx serve dist -l 3000",
+    "serve:pages": "npm run build && rm -rf .tmp-serve && mkdir -p .tmp-serve/flexipayroll && cp -r dist/* .tmp-serve/flexipayroll/ && npx serve .tmp-serve -l 3000"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^5.0.0",
