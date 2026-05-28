@@ -5,7 +5,7 @@
 
 import { writable, derived, get } from 'svelte/store'
 import { storage } from './core.js'
-import { DEFAULT_RULES, createRule, validateRule, getNextOrder } from './rules.js'
+import { DEFAULT_RULES, createRule, validateRule, getNextOrder, ensureRuleId } from './rules.js'
 
 // ============================================================================
 // STORAGE KEYS
@@ -67,7 +67,26 @@ export const wizardStep = writable(storage.get(KEYS.WIZARD_STEP, 0))
 wizardStep.subscribe(value => storage.set(KEYS.WIZARD_STEP, value))
 
 // Rules store
-export const rules = writable(storage.get(KEYS.RULES, DEFAULT_RULES))
+const uniqId = (id, used) => {
+  const base = String(id)
+  if (!used.has(base)) return base
+  const next = (n) => `${base}_${n}`
+  const n = Array.from({ length: 999 }, (_, i) => i + 2).find(i => !used.has(next(i)))
+  return n ? next(n) : `${base}_${Date.now().toString(36)}`
+}
+
+const normalizeRules = (list) => {
+  const used = new Set()
+  return (Array.isArray(list) ? list : [])
+    .map((r, i) => ({ ...r, order: Number.isFinite(Number(r?.order)) ? Number(r.order) : i + 1 }))
+    .map((r) => {
+      const id = uniqId(ensureRuleId(r), used)
+      used.add(id)
+      return { ...r, id }
+    })
+}
+
+export const rules = writable(normalizeRules(storage.get(KEYS.RULES, DEFAULT_RULES)))
 rules.subscribe(value => storage.set(KEYS.RULES, value))
 
 const toNum = (v, fallback) => (Number.isFinite(Number(v)) ? Number(v) : fallback)
@@ -304,7 +323,9 @@ export const addRule = (ruleData) => {
   }
   
   rules.update(current => {
-    const newRule = { ...rule, order: getNextOrder(current) }
+    const used = new Set(current.map(r => r.id))
+    const id = uniqId(rule.id, used)
+    const newRule = { ...rule, id, order: getNextOrder(current) }
     return [...current, newRule]
   })
 }
@@ -313,7 +334,10 @@ export const updateRule = (id, updates) => {
   rules.update(current => 
     current.map(rule => {
       if (rule.id === id) {
-        const updatedRule = { ...rule, ...updates }
+        const nextId = updates?.id && updates.id !== id
+          ? uniqId(ensureRuleId(updates), new Set(current.filter(r => r.id !== id).map(r => r.id)))
+          : rule.id
+        const updatedRule = { ...rule, ...updates, id: nextId }
         const errors = validateRule(updatedRule)
         if (errors) {
           throw new Error(`Invalid rule: ${Object.values(errors).join(', ')}`)

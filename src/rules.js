@@ -365,9 +365,20 @@ export const generateRuleId = (label) => {
     .replace(/^_|_$/g, '')
 }
 
+const uid = () =>
+  globalThis.crypto?.randomUUID?.() ||
+  `t${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`
+
+export const ensureRuleId = (data) => {
+  const raw = String(data?.id || '').trim()
+  const fromLabel = generateRuleId(String(data?.label || ''))
+  const base = raw.length >= 2 ? raw : (fromLabel.length >= 2 ? fromLabel : `rule_${uid()}`)
+  return base
+}
+
 export const createRule = (data) => {
   const rule = {
-    id: data.id || generateRuleId(data.label),
+    id: ensureRuleId(data),
     label: data.label,
     type: normalizeRuleType(data.type),
     value: data.value,
