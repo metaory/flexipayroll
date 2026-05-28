@@ -160,10 +160,11 @@ const buildAttendanceMetrics = (attendanceItems, config) => {
     sum + Math.max(0, Number(item.hours) || 0), 0)
   const overtimeDayBlocks = Math.floor(rawOvertimeHours / workdayHours)
   const undertimeDayBlocks = Math.floor(rawUndertimeHours / workdayHours)
+  const absentDayBlocks = undertimeDayBlocks
   const hourEquivalentDays = rawHours / workdayHours
   const monthHourEquivalentDays = Math.max(0, workDays + hourEquivalentDays)
   const dayEquivalent = Math.max(0, workDays + hourEquivalentDays)
-  const effectiveDays = Math.min(monthDays, Math.max(0, workDays + overtimeDayBlocks - undertimeDayBlocks))
+  const effectiveDays = Math.max(0, Math.min(monthDays, monthDays - absentDayBlocks))
 
   return {
     workDays,
@@ -173,6 +174,7 @@ const buildAttendanceMetrics = (attendanceItems, config) => {
     rawOvertimeHours,
     overtimeDayBlocks,
     undertimeDayBlocks,
+    absentDayBlocks,
     monthHourEquivalentDays,
     dayEquivalent,
     effectiveDays
@@ -238,6 +240,7 @@ export const applyRules = (employee, attendanceItems, rules, config) => {
   const hourlyRate = employee.dailySalary / workdayHours
   const attendanceMetrics = buildAttendanceMetrics(attendanceItems, config)
   const workDays = attendanceMetrics.workDays
+  const monthDays = attendanceMetrics.monthDays
   const expectedHours = workDays * workdayHours
   const rawOt = Number.isFinite(Number(config.overtimeRate)) ? Number(config.overtimeRate) : 1.5
   const otRate = rawOt > 0 && rawOt < 1 ? 1 + rawOt : rawOt
@@ -251,18 +254,20 @@ export const applyRules = (employee, attendanceItems, rules, config) => {
   const rawHours = attendanceMetrics.rawHours
   const rawUndertimeHours = attendanceMetrics.rawUndertimeHours
   const rawOvertimeHours = attendanceMetrics.rawOvertimeHours
-  const daysNotWorked = Math.floor(rawUndertimeHours / workdayHours)
-  const totalDaysWorked = Math.max(0, workDays - daysNotWorked)
+  const daysNotWorked = attendanceMetrics.absentDayBlocks
+  const totalDaysWorked = attendanceMetrics.effectiveDays
   const attendanceDays = hoursDeltaToDays(rawHours, workdayHours)
   const overtimePay = rawOvertimeHours * otRate * hourlyRate
   const undertimePay = rawUndertimeHours * utRate * hourlyRate
-  const expectedBase = employee.dailySalary * workDays
+  const expectedBaseFull = employee.dailySalary * monthDays
+  const cappedEffectiveDays = monthDays > 0 ? Math.min(attendanceMetrics.effectiveDays, monthDays) : 0
+  const expectedBase = monthDays > 0 ? (expectedBaseFull * cappedEffectiveDays) / monthDays : 0
   const attendancePayAdjustment = overtimePay - undertimePay
-  const baseSalary = expectedBase + attendancePayAdjustment
+  const baseSalary = expectedBase
   const baseFromDays = expectedBase
   const totalHours = expectedHours + hoursAdjustment
   const actualDays = attendanceMetrics.effectiveDays
-  const attendanceAdjustment = baseSalary - expectedBase
+  const attendanceAdjustment = 0
 
   if (employee.probationary) {
     return {
@@ -279,6 +284,8 @@ export const applyRules = (employee, attendanceItems, rules, config) => {
       rawOvertimeHours,
       rawUndertimeHours,
       baseFromDays,
+      expectedBaseFull,
+      cappedEffectiveDays,
       overtimePay,
       undertimePay,
       attendancePayAdjustment,
@@ -345,6 +352,8 @@ export const applyRules = (employee, attendanceItems, rules, config) => {
     rawOvertimeHours,
     rawUndertimeHours,
     baseFromDays,
+    expectedBaseFull,
+    cappedEffectiveDays,
     overtimePay,
     undertimePay,
     attendancePayAdjustment,
