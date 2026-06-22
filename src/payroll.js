@@ -109,17 +109,17 @@ const createFixedRuleStep = (ruleData, _result, type) => ({
 
 const createHourlyProratedStep = (ruleData, result, type) => {
   const monthDays = result.configSnapshot?.monthDays ?? 30
-  const monthHourEquivalentDays = result.ruleResults?.monthHourEquivalentDays ?? monthDays
-  const ratio = monthDays > 0 ? monthHourEquivalentDays / monthDays : 0
+  const effectiveDays = result.ruleResults?.effectiveDays ?? monthDays
+  const cappedEffectiveDays = Math.min(effectiveDays, monthDays)
   const fullValue = ruleData.rule.value
-  const formulaWithValues = `${fullValue.toLocaleString()} × (${monthHourEquivalentDays.toFixed(2)} ÷ ${monthDays}) = ${ruleData.value.toLocaleString()}`
+  const formulaWithValues = `(${fullValue.toLocaleString()} × min(${effectiveDays}, ${monthDays})) ÷ ${monthDays} = ${ruleData.value.toLocaleString()}`
   return {
     label: ruleData.rule.label,
-    formula: 'Value × (Hour-equivalent month days ÷ Month days)',
+    formula: '(Value × Effective days) ÷ Month days',
     formulaWithValues,
     result: ruleData.value,
-    explanation: `${type.charAt(0).toUpperCase() + type.slice(1)} uses hour-based attendance converted to month day-equivalent (${monthHourEquivalentDays.toFixed(2)}).`,
-    inputs: { fullValue, monthHourEquivalentDays, monthDays, ratio },
+    explanation: `${type.charAt(0).toUpperCase() + type.slice(1)} uses absent day blocks from undertime, capped at month days.`,
+    inputs: { fullValue, effectiveDays, cappedEffectiveDays, monthDays },
     type
   }
 }
