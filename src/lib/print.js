@@ -14,6 +14,7 @@ const styles = `
   .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 0.75rem; margin-bottom: 1rem; }
   .header h1 { font-size: 17pt; margin-bottom: 0.1rem; letter-spacing: 2px; font-weight: 900; }
   .header p { font-size: 10pt; color: #111; font-weight: 800; }
+  .header .probation { font-size: 9pt; font-weight: 800; margin-top: 0.25rem; }
   .section { margin-bottom: 0.75rem; }
   .section-title { font-weight: 900; font-size: 12pt; border-bottom: 1px solid #000; padding-bottom: 0.15rem; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 1px; }
   .row { display: flex; justify-content: space-between; padding: 0.15rem 0; border-bottom: 1px dotted #ccc; font-size: 10.5pt; }
@@ -69,9 +70,10 @@ export const printEmployeeReport = (result, period, currencySymbol = '$', organi
   const totalAdjustments = result.adjustmentTotal || 0
   
   const probationLabel = getProbationLabel(result.employee)
-  const headerLine = probationLabel
-    ? `${esc(result.employee.name)} · ${esc(period)} · ${esc(probationLabel)}`
-    : `${esc(result.employee.name)} · ${esc(period)}`
+  const headerLine = `${esc(result.employee.name)} · ${esc(period)}`
+  const probationLine = probationLabel
+    ? `<p class="probation">${esc(probationLabel)}</p>`
+    : ''
   
   const html = `<!DOCTYPE html>
 <html>
@@ -84,6 +86,7 @@ export const printEmployeeReport = (result, period, currencySymbol = '$', organi
   <div class="header">
     ${organizationName ? `<h1>${esc(organizationName)}</h1><p style="font-size:12pt;font-weight:bold;margin:0.3rem 0">PAYSLIP</p>` : '<h1>PAYSLIP</h1>'}
     <p>${headerLine}</p>
+    ${probationLine}
   </div>
   
   <div class="stats">

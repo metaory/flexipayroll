@@ -86,8 +86,18 @@
       {@const isExpanded = expandedCards[employeeId]}
       <div class="card report-card" class:expanded={isExpanded} role="button" tabindex="0" onclick={() => { expandedCards = { ...expandedCards, [employeeId]: !isExpanded } }} onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (expandedCards = { ...expandedCards, [employeeId]: !isExpanded })}>
         <div class="top">
-          <h3>{result.employee.name}{#if getProbationLabel(result.employee)} <span class="probation-badge" class:has-rules={hasProbationRules(result.employee, resolveProbation(result.employee))}>{#if hasProbationRules(result.employee, resolveProbation(result.employee))}<Icon icon="tabler:list-check" width="0.75rem" height="0.75rem" />{/if}{getProbationLabel(result.employee)}</span>{/if}</h3>
-          <span>{period}</span>
+          <h3>{result.employee.name}</h3>
+          <span class="top-center">
+            {#if getProbationLabel(result.employee)}
+              <span class="probation-badge" class:has-rules={hasProbationRules(result.employee, resolveProbation(result.employee))}>
+                {#if hasProbationRules(result.employee, resolveProbation(result.employee))}
+                  <Icon icon="tabler:list-check" width="0.75rem" height="0.75rem" />
+                {/if}
+                {getProbationLabel(result.employee)}
+              </span>
+            {/if}
+          </span>
+          <span class="period">{period}</span>
         </div>
         <div class="stats">
           <span><Icon icon="tabler:calendar-check" width="1.1rem" height="1.1rem" />{result.actualDays} days</span>
@@ -214,31 +224,34 @@
       border-color: var(--secondary)
       
     .top
-      display: flex
-      justify-content: space-between
-      align-items: baseline
+      display: grid
+      grid-template-columns: 1fr auto 1fr
+      align-items: center
       gap: 0.5rem
       h3
         font-weight: 700
         font-size: 1.2rem
         margin: 0
+        justify-self: start
         @extend %transition
-        .probation-badge
-          display: inline-flex
-          align-items: center
-          gap: 0.2rem
-          padding: 0.1rem 0.35rem
-          background: var(--accent)
-          color: var(--bg)
-          border-radius: 0.25rem
-          font-size: 0.65rem
-          font-weight: 600
-          vertical-align: middle
-          &.has-rules
-            background: var(--primary)
-      span
+      .top-center
+        justify-self: center
+      .probation-badge
+        display: inline-flex
+        align-items: center
+        gap: 0.2rem
+        padding: 0.1rem 0.35rem
+        background: var(--accent)
+        color: var(--bg)
+        border-radius: 0.25rem
+        font-size: 0.65rem
+        font-weight: 600
+        &.has-rules
+          background: var(--primary)
+      .period
         font-size: 0.85rem
         color: var(--fg-muted)
+        justify-self: end
         
     .stats
       display: flex
