@@ -106,6 +106,16 @@ const run = () => {
     assert.ok(near(r.bonuses.fdp.value, expected), `expected fixed_daily_prorated ${expected}, got ${r.bonuses.fdp.value}`)
     assert.ok(near(r.bonuses.hp.value, (hourlyProratedRule.value * 30) / 31), `expected hourly_prorated ${(hourlyProratedRule.value * 30) / 31}, got ${r.bonuses.hp.value}`)
   }
+
+  {
+    const otConfig = { ...baseConfig, overtimeRate: 1.5, undertimeDeductionRate: 0.5 }
+    const attendanceItems = [{ hours: 4 }, { hours: -2 }]
+    const r = applyRules(employee, attendanceItems, [], otConfig)
+    const hourlyRate = employee.dailySalary / otConfig.workdayHours
+    const expectedAdj = 4 * 1.5 * hourlyRate - 2 * 0.5 * hourlyRate
+    assert.ok(near(r.attendanceAdjustment, expectedAdj), `expected attendanceAdjustment ${expectedAdj}, got ${r.attendanceAdjustment}`)
+    assert.ok(near(r.grossSalary, r.baseSalary + expectedAdj), `expected gross ${r.baseSalary + expectedAdj}, got ${r.grossSalary}`)
+  }
 }
 
 run()
