@@ -403,12 +403,39 @@ export const buildCalculationSteps = (result) => {
   return steps
 }
 
+export const resolveProbation = (employee) => {
+  const a = employee.probationRulesA ?? []
+  const b = employee.probationRulesB ?? []
+  if (a.length > 0) return 'a'
+  if (b.length > 0) return 'b'
+  return employee.probation ?? null
+}
+
+export const isOnProbation = (employee) => !!resolveProbation(employee)
+
+export const getProbationLabel = (employee) => {
+  const key = resolveProbation(employee)
+  return key === 'a' ? 'Probation A' : key === 'b' ? 'Probation B' : null
+}
+
+export const probationRulesKey = (key) => key === 'a' ? 'probationRulesA' : 'probationRulesB'
+
+export const getProbationRulesFor = (employee, key) =>
+  employee[probationRulesKey(key)] ?? []
+
+export const hasProbationRules = (employee, key) =>
+  getProbationRulesFor(employee, key).length > 0
+
+export const getActiveProbationRules = (employee) => {
+  const key = resolveProbation(employee)
+  return key ? getProbationRulesFor(employee, key) : []
+}
+
 export const EMPLOYEE_FIELDS = [
   { key: 'name', label: 'Name', type: 'text', required: true },
   { key: 'gender', label: 'Gender', type: 'select', options: [{ value: 'male', label: 'Male' }, { value: 'female', label: 'Female' }] },
   { key: 'maritalStatus', label: 'Marital Status', type: 'select', options: [{ value: 'single', label: 'Single' }, { value: 'married', label: 'Married' }] },
   { key: 'childrenStatus', label: 'Has children', type: 'checkbox' },
   { key: 'dailySalary', label: 'Daily Salary', type: 'number', required: true, min: 0 },
-  { key: 'yearsOfExperience', label: 'Years of Experience', type: 'number', min: 0, step: 0.1 },
-  { key: 'probationary', label: 'Probationary', type: 'checkbox' }
+  { key: 'yearsOfExperience', label: 'Years of Experience', type: 'number', min: 0, step: 0.1 }
 ]

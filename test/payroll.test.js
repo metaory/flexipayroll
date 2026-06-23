@@ -4,7 +4,7 @@ import { applyRules } from '../src/rules.js'
 const near = (a, b, eps = 1e-9) => Math.abs(a - b) <= eps
 
 const run = () => {
-  const employee = { dailySalary: 100, probationary: false }
+  const employee = { dailySalary: 100 }
   const fixedDailyRule = {
     id: 'fdp',
     label: 'Fixed Daily Prorated',
@@ -115,6 +115,39 @@ const run = () => {
     const expectedAdj = 4 * 1.5 * hourlyRate - 2 * 0.5 * hourlyRate
     assert.ok(near(r.attendanceAdjustment, expectedAdj), `expected attendanceAdjustment ${expectedAdj}, got ${r.attendanceAdjustment}`)
     assert.ok(near(r.grossSalary, r.baseSalary + expectedAdj), `expected gross ${r.baseSalary + expectedAdj}, got ${r.grossSalary}`)
+  }
+
+  {
+    const deductionRule = {
+      id: 'ins',
+      label: 'Insurance',
+      type: 'percentage_monthly',
+      value: 0.07,
+      criteria: { appliesTo: [] },
+      category: 'deduction',
+      order: 3,
+      enabled: true
+    }
+    const allRules = [fixedDailyRule, hourlyProratedRule, deductionRule]
+    const probationEmpty = { dailySalary: 100, probation: 'a', probationRulesA: [] }
+    const r = applyRules(probationEmpty, [], allRules, config31)
+    assert.equal(Object.keys(r.bonuses).length, 0, 'probation with no rules should have no bonuses')
+    assert.equal(Object.keys(r.deductions).length, 0, 'probation with no rules should have no deductions')
+    assert.ok(near(r.grossSalary, r.baseSalary), 'probation with no rules gross should equal base')
+  }
+
+  {
+    const probationSubset = { dailySalary: 100, probation: 'b', probationRulesB: ['fdp'] }
+    const r = applyRules(probationSubset, [], [fixedDailyRule, hourlyProratedRule], config31)
+    assert.ok(r.bonuses.fdp, 'probation should apply selected rule')
+    assert.equal(r.bonuses.hp, undefined, 'probation should not apply unselected rule')
+    assert.ok(near(r.bonuses.fdp.value, fixedDailyRule.value), `expected fdp ${fixedDailyRule.value}, got ${r.bonuses.fdp.value}`)
+  }
+
+  {
+    const regular = { dailySalary: 100 }
+    const r = applyRules(regular, [], [fixedDailyRule, hourlyProratedRule], config31)
+    assert.ok(r.bonuses.fdp && r.bonuses.hp, 'non-probation employee should get all enabled rules')
   }
 }
 

@@ -1,7 +1,8 @@
 <script>
   import Icon from '@iconify/svelte/dist/OfflineIcon.svelte'
-  import { EMPLOYEE_FIELDS } from '../payroll.js'
-  import { addEmployee, updateEmployee, removeEmployee, basicConfig } from '../stores.js'
+  import { EMPLOYEE_FIELDS, getProbationLabel, hasProbationRules, probationRulesKey, resolveProbation } from '../payroll.js'
+  import { addEmployee, updateEmployee, removeEmployee, basicConfig, rules } from '../stores.js'
+  import { RULE_CATEGORIES } from '../rules.js'
   import { generateEmployeeId, formatCurrency, calculateHourlyRate } from '../core.js'
   import { toasts } from '../lib/toast.js'
   import { ICONS } from '../lib/icons.js'
@@ -10,7 +11,6 @@
 
   let { employees = [] } = $props()
 
-  // Constants
   const EMPTY_EMPLOYEE = {
     name: '',
     gender: 'male',
@@ -18,7 +18,47 @@
     childrenStatus: 'no_children',
     dailySalary: '',
     yearsOfExperience: '',
-    probationary: false
+    probation: null,
+    probationRulesA: [],
+    probationRulesB: []
+  }
+
+  const PROBATION_OPTIONS = [
+    { key: 'a', label: 'Probation A' },
+    { key: 'b', label: 'Probation B' }
+  ]
+
+  const RULE_GROUPS = [
+    { category: RULE_CATEGORIES.BONUS, label: 'Bonuses' },
+    { category: RULE_CATEGORIES.DEDUCTION, label: 'Deductions' }
+  ]
+
+  const enabledRules = $derived(
+    [...$rules].filter(r => r.enabled).sort((a, b) => a.order - b.order)
+  )
+
+  const rulesByCategory = (category) =>
+    enabledRules.filter(r => r.category === category)
+
+  const setProbationFromRules = (rulesA, rulesB) =>
+    rulesA.length > 0 ? 'a' : rulesB.length > 0 ? 'b' : null
+
+  const toggleProbationRule = (key, ruleId, checked) => {
+    const field = probationRulesKey(key)
+    const otherKey = key === 'a' ? 'b' : 'a'
+    const otherField = probationRulesKey(otherKey)
+    const current = newEmployee[field] ?? []
+    const nextRules = checked ? [...current, ruleId] : current.filter(id => id !== ruleId)
+    const otherRules = checked ? [] : (newEmployee[otherField] ?? [])
+    newEmployee = {
+      ...newEmployee,
+      [field]: nextRules,
+      [otherField]: otherRules,
+      probation: setProbationFromRules(
+        key === 'a' ? nextRules : otherRules,
+        key === 'b' ? nextRules : otherRules
+      )
+    }
   }
 
   const EMPTY_ERRORS = {
@@ -52,7 +92,13 @@
 
   const startEditEmployee = (employee) => {
     editingEmployee = employee
-    newEmployee = { ...employee, probationary: Boolean(employee.probationary), childrenStatus: employee.childrenStatus || 'no_children' }
+    newEmployee = {
+      ...employee,
+      childrenStatus: employee.childrenStatus || 'no_children',
+      probation: employee.probation ?? null,
+      probationRulesA: employee.probationRulesA ?? [],
+      probationRulesB: employee.probationRulesB ?? []
+    }
     showEmployeeDialog = true
   }
 
@@ -76,11 +122,16 @@
     }
     
     try {
-      const data = { 
-        ...newEmployee, 
+      const { probationary, probationRules, ...rest } = newEmployee
+      const rulesA = newEmployee.probationRulesA ?? []
+      const rulesB = newEmployee.probationRulesB ?? []
+      const data = {
+        ...rest,
         dailySalary: parseInt(newEmployee.dailySalary),
         yearsOfExperience: parseFloat(newEmployee.yearsOfExperience),
-        probationary: Boolean(newEmployee.probationary)
+        probation: rulesA.length > 0 ? 'a' : rulesB.length > 0 ? 'b' : null,
+        probationRulesA: rulesA,
+        probationRulesB: rulesB
       }
       
       if (editingEmployee) {
@@ -136,7 +187,7 @@
                 <p>{employee.gender} • {employee.maritalStatus} • <label class="children-check" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()}>
                   <input type="checkbox" checked={employee.childrenStatus === 'has_children'} onchange={() => updateEmployee(employee.id, { childrenStatus: employee.childrenStatus === 'has_children' ? 'no_children' : 'has_children' })} />
                   <span>Has children</span>
-                </label>{#if employee.probationary} • <span class="probationary-badge">Probationary</span>{/if}</p>
+                </label>{#if getProbationLabel(employee)} • <span class="probationary-badge" class:has-rules={hasProbationRules(employee, resolveProbation(employee))}>{#if hasProbationRules(employee, resolveProbation(employee))}<Icon icon="tabler:list-check" width="0.85rem" height="0.85rem" />{/if}{getProbationLabel(employee)}</span>{/if}</p>
                 <p class="salary">{formatCurrency(employee.dailySalary || 0, 'id-ID', 'IDR', $basicConfig.currencySymbol)}/day</p>
                 {#if employee.dailySalary}
                   <p class="monthly-ref">({formatCurrency((employee.dailySalary || 0) * ($basicConfig.workingDaysPerMonth || 22), 'id-ID', 'IDR', $basicConfig.currencySymbol)} expected/month base)</p>
@@ -174,7 +225,8 @@
   <Dialog
     bind:open={showEmployeeDialog}
     title={editingEmployee ? 'Edit Employee' : 'Add New Employee'}
-    size="medium"
+    size="large"
+    on:close={handleDialogClose}
   >
     <div class="form-grid">
       {#each EMPLOYEE_FIELDS as field}
@@ -233,6 +285,33 @@
             {/if}
           </label>
         {/if}
+      {/each}
+    </div>
+
+    <div class="probation-section">
+      {#each PROBATION_OPTIONS as opt}
+        <div class="probation-col">
+          <p class="probation-title">
+            {opt.label}
+            {#if hasProbationRules(newEmployee, opt.key)}
+              <Icon icon="tabler:list-check" width="1rem" height="1rem" />
+            {/if}
+          </p>
+          <div class="rule-list">
+            {#each RULE_GROUPS as group}
+              {#each rulesByCategory(group.category) as rule}
+                <label class="field checkbox-field rule-check">
+                  <input
+                    type="checkbox"
+                    checked={(newEmployee[probationRulesKey(opt.key)] ?? []).includes(rule.id)}
+                    onchange={(e) => toggleProbationRule(opt.key, rule.id, e.currentTarget.checked)}
+                  />
+                  <span>{rule.label}</span>
+                </label>
+              {/each}
+            {/each}
+          </div>
+        </div>
       {/each}
     </div>
 
@@ -332,7 +411,9 @@
       user-select: none
 
     .probationary-badge
-      display: inline-block
+      display: inline-flex
+      align-items: center
+      gap: 0.25rem
       padding: 0.15rem 0.4rem
       background: var(--accent)
       color: var(--bg)
@@ -340,6 +421,8 @@
       font-size: 0.75rem
       font-weight: 600
       margin-left: 0.35rem
+      &.has-rules
+        background: var(--primary)
 
     .experience
       font-size: 0.85rem
@@ -374,6 +457,47 @@
     @include auto-grid(180px)
     gap: 1rem
     margin-bottom: 1.25rem
+
+  .probation-section
+    display: grid
+    grid-template-columns: 1fr 1fr
+    gap: 1rem
+    margin-bottom: 1.25rem
+
+  .probation-col
+    @extend %grid
+    gap: 0.5rem
+    padding: 0.75rem
+    border-radius: var(--radius)
+    background: var(--surface-muted)
+
+    .probation-title
+      display: flex
+      align-items: center
+      gap: 0.4rem
+      font-weight: 700
+      font-size: 0.95rem
+      color: var(--primary)
+      margin: 0 0 0.25rem
+
+    .rule-list
+      display: grid
+      gap: 0
+      overflow: hidden
+
+      .rule-check
+        padding: 0.5rem 0.75rem
+        border-radius: 0
+        margin: 0
+
+        &:first-child
+          border-radius: var(--radius) var(--radius) 0 0
+
+        &:last-child
+          border-radius: 0 0 var(--radius) var(--radius)
+
+        &:only-child
+          border-radius: var(--radius)
 
   .form-actions
     @extend %flex

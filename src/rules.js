@@ -277,36 +277,18 @@ export const applyRules = (employee, attendanceItems, rules, config) => {
   const totalHours = expectedHours + hoursAdjustment
   const actualDays = attendanceMetrics.effectiveDays
 
-  if (employee.probationary) {
-    return {
-      baseSalary,
-      attendanceAdjustment,
-      hoursAdjustment,
-      attendanceDays,
-      totalDaysWorked,
-      workedDayEquivalent: attendanceMetrics.dayEquivalent,
-      effectiveDays: attendanceMetrics.effectiveDays,
-      monthHourEquivalentDays: attendanceMetrics.monthHourEquivalentDays,
-      proratedWorkDays: workDays,
-      daysNotWorked,
-      rawOvertimeHours,
-      rawUndertimeHours,
-      baseFromDays,
-      expectedBaseFull,
-      cappedEffectiveDays,
-      overtimePay,
-      undertimePay,
-      attendancePayAdjustment,
-      bonuses: {},
-      deductions: {},
-      grossSalary: baseSalary + attendancePayAdjustment,
-      totalHours,
-      actualDays
-    }
-  }
+  const activeProbationRules = employee.probation === 'a'
+    ? (employee.probationRulesA ?? employee.probationRules ?? [])
+    : employee.probation === 'b'
+      ? (employee.probationRulesB ?? employee.probationRules ?? [])
+      : null
+
+  const eligibleRules = activeProbationRules !== null
+    ? rules.filter(r => activeProbationRules.includes(r.id))
+    : rules
 
   // Process enabled rules (include value 0 so days_multiplier etc. appear in detailed steps)
-  const processedRules = [...rules]
+  const processedRules = [...eligibleRules]
     .sort((a, b) => a.order - b.order)
     .filter(r => r.enabled)
     .map(rule => ({ rule, value: calculateRuleValue(rule, employee, attendanceItems, config, totalDaysWorked) }))

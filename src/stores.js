@@ -102,8 +102,19 @@ const normalizeBasicConfig = (c) => ({
 export const basicConfig = writable(normalizeBasicConfig(storage.get(KEYS.BASIC_CONFIG, {})))
 basicConfig.subscribe(value => storage.set(KEYS.BASIC_CONFIG, value))
 
+const normalizeEmployee = (emp) => {
+  const { probationary, probationRules, ...rest } = emp
+  const legacyRules = Array.isArray(probationRules) ? probationRules : []
+  const probationRulesA = rest.probationRulesA ?? (rest.probation === 'a' ? legacyRules : [])
+  const probationRulesB = rest.probationRulesB ?? (rest.probation === 'b' ? legacyRules : [])
+  const probation = probationRulesA.length > 0 ? 'a' : probationRulesB.length > 0 ? 'b' : null
+  return { ...rest, probation, probationRulesA, probationRulesB }
+}
+
 // Employees store
-export const employees = writable(storage.get(KEYS.EMPLOYEES, []))
+export const employees = writable(
+  (storage.get(KEYS.EMPLOYEES, []) || []).map(normalizeEmployee)
+)
 employees.subscribe(value => storage.set(KEYS.EMPLOYEES, value))
 
 // Attendance store
@@ -166,12 +177,12 @@ export const toggleTheme = () => {
 
 // Employee actions
 export const addEmployee = (employee) => {
-  employees.update(current => [...current, employee])
+  employees.update(current => [...current, normalizeEmployee(employee)])
 }
 
 export const updateEmployee = (id, updates) => {
-  employees.update(current => 
-    current.map(emp => emp.id === id ? { ...emp, ...updates } : emp)
+  employees.update(current =>
+    current.map(emp => emp.id === id ? normalizeEmployee({ ...emp, ...updates }) : emp)
   )
 }
 

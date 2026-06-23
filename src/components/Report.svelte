@@ -2,7 +2,7 @@
   import Icon from '@iconify/svelte/dist/OfflineIcon.svelte'
   import Dialog from './Dialog.svelte'
   import { formatCurrency, formatHours } from '../core.js'
-  import { buildCalculationSteps } from '../payroll.js'
+  import { buildCalculationSteps, getProbationLabel, hasProbationRules, resolveProbation } from '../payroll.js'
   import { basicConfig } from '../stores.js'
   import { printEmployeeReport } from '../lib/print.js'
   
@@ -86,7 +86,7 @@
       {@const isExpanded = expandedCards[employeeId]}
       <div class="card report-card" class:expanded={isExpanded} role="button" tabindex="0" onclick={() => { expandedCards = { ...expandedCards, [employeeId]: !isExpanded } }} onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (expandedCards = { ...expandedCards, [employeeId]: !isExpanded })}>
         <div class="top">
-          <h3>{result.employee.name}</h3>
+          <h3>{result.employee.name}{#if getProbationLabel(result.employee)} <span class="probation-badge" class:has-rules={hasProbationRules(result.employee, resolveProbation(result.employee))}>{#if hasProbationRules(result.employee, resolveProbation(result.employee))}<Icon icon="tabler:list-check" width="0.75rem" height="0.75rem" />{/if}{getProbationLabel(result.employee)}</span>{/if}</h3>
           <span>{period}</span>
         </div>
         <div class="stats">
@@ -223,6 +223,19 @@
         font-size: 1.2rem
         margin: 0
         @extend %transition
+        .probation-badge
+          display: inline-flex
+          align-items: center
+          gap: 0.2rem
+          padding: 0.1rem 0.35rem
+          background: var(--accent)
+          color: var(--bg)
+          border-radius: 0.25rem
+          font-size: 0.65rem
+          font-weight: 600
+          vertical-align: middle
+          &.has-rules
+            background: var(--primary)
       span
         font-size: 0.85rem
         color: var(--fg-muted)

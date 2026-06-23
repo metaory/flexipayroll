@@ -4,6 +4,7 @@
  */
 
 import { formatCurrency } from '../core.js'
+import { getProbationLabel } from '../payroll.js'
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
@@ -67,6 +68,11 @@ export const printEmployeeReport = (result, period, currencySymbol = '$', organi
   const grossBeforeAdjustments = result.grossSalary - (result.adjustmentTotal || 0)
   const totalAdjustments = result.adjustmentTotal || 0
   
+  const probationLabel = getProbationLabel(result.employee)
+  const headerLine = probationLabel
+    ? `${esc(result.employee.name)} · ${esc(period)} · ${esc(probationLabel)}`
+    : `${esc(result.employee.name)} · ${esc(period)}`
+  
   const html = `<!DOCTYPE html>
 <html>
 <head>
@@ -77,7 +83,7 @@ export const printEmployeeReport = (result, period, currencySymbol = '$', organi
 <body>
   <div class="header">
     ${organizationName ? `<h1>${esc(organizationName)}</h1><p style="font-size:12pt;font-weight:bold;margin:0.3rem 0">PAYSLIP</p>` : '<h1>PAYSLIP</h1>'}
-    <p>${esc(result.employee.name)} · ${esc(period)}</p>
+    <p>${headerLine}</p>
   </div>
   
   <div class="stats">
