@@ -3,6 +3,7 @@
   import { EMPLOYEE_FIELDS, getProbationLabel, hasProbationRules, probationRulesKey, resolveProbation } from '../payroll.js'
   import { addEmployee, updateEmployee, removeEmployee, basicConfig, rules } from '../stores.js'
   import { RULE_CATEGORIES } from '../rules.js'
+  import { normalizeProbationFields, PROBATION_BG, PROBATION_LABELS } from '../probation.js'
   import { generateEmployeeId, formatCurrency, calculateHourlyRate } from '../core.js'
   import { toasts } from '../lib/toast.js'
   import { ICONS } from '../lib/icons.js'
@@ -23,10 +24,7 @@
     probationRulesB: []
   }
 
-  const PROBATION_OPTIONS = [
-    { key: 'a', label: 'Probation A' },
-    { key: 'b', label: 'Probation B' }
-  ]
+  const PROBATION_OPTIONS = Object.entries(PROBATION_LABELS).map(([key, label]) => ({ key, label }))
 
   const RULE_GROUPS = [
     { category: RULE_CATEGORIES.BONUS, label: 'Bonuses' },
@@ -122,16 +120,21 @@
     }
     
     try {
-      const { probationary, probationRules, ...rest } = newEmployee
-      const rulesA = newEmployee.probationRulesA ?? []
-      const rulesB = newEmployee.probationRulesB ?? []
-      const data = {
-        ...rest,
+      const probation = normalizeProbationFields({
+        ...newEmployee,
         dailySalary: parseInt(newEmployee.dailySalary),
-        yearsOfExperience: parseFloat(newEmployee.yearsOfExperience),
-        probation: rulesA.length > 0 ? 'a' : rulesB.length > 0 ? 'b' : null,
-        probationRulesA: rulesA,
-        probationRulesB: rulesB
+        yearsOfExperience: parseFloat(newEmployee.yearsOfExperience)
+      })
+      const data = {
+        name: probation.name,
+        gender: probation.gender,
+        maritalStatus: probation.maritalStatus,
+        childrenStatus: probation.childrenStatus,
+        dailySalary: probation.dailySalary,
+        yearsOfExperience: probation.yearsOfExperience,
+        probation: probation.probation,
+        probationRulesA: [...probation.probationRulesA],
+        probationRulesB: [...probation.probationRulesB]
       }
       
       if (editingEmployee) {
@@ -187,7 +190,7 @@
                 <p>{employee.gender} • {employee.maritalStatus} • <label class="children-check" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()}>
                   <input type="checkbox" checked={employee.childrenStatus === 'has_children'} onchange={() => updateEmployee(employee.id, { childrenStatus: employee.childrenStatus === 'has_children' ? 'no_children' : 'has_children' })} />
                   <span>Has children</span>
-                </label>{#if getProbationLabel(employee)} • <span class="probationary-badge" class:has-rules={hasProbationRules(employee, resolveProbation(employee))}>{#if hasProbationRules(employee, resolveProbation(employee))}<Icon icon="tabler:list-check" width="0.85rem" height="0.85rem" />{/if}{getProbationLabel(employee)}</span>{/if}</p>
+                </label>{#if getProbationLabel(employee)} • <span class="probationary-badge" style:--probation-bg={PROBATION_BG[resolveProbation(employee)]} class:has-rules={hasProbationRules(employee, resolveProbation(employee))}>{#if hasProbationRules(employee, resolveProbation(employee))}<Icon icon="tabler:list-check" width="0.85rem" height="0.85rem" />{/if}{getProbationLabel(employee)}</span>{/if}</p>
                 <p class="salary">{formatCurrency(employee.dailySalary || 0, 'id-ID', 'IDR', $basicConfig.currencySymbol)}/day</p>
                 {#if employee.dailySalary}
                   <p class="monthly-ref">({formatCurrency((employee.dailySalary || 0) * ($basicConfig.workingDaysPerMonth || 22), 'id-ID', 'IDR', $basicConfig.currencySymbol)} expected/month base)</p>
@@ -290,11 +293,11 @@
 
     <div class="probation-section">
       {#each PROBATION_OPTIONS as opt}
-        <div class="probation-col">
+        <div class="probation-col" style:--probation-bg={PROBATION_BG[opt.key]}>
           <p class="probation-title">
             {opt.label}
             {#if hasProbationRules(newEmployee, opt.key)}
-              <Icon icon="tabler:list-check" width="1rem" height="1rem" />
+              <Icon icon="tabler:ban" width="1rem" height="1rem" />
             {/if}
           </p>
           <div class="rule-list">
@@ -415,14 +418,17 @@
       align-items: center
       gap: 0.25rem
       padding: 0.15rem 0.4rem
-      background: var(--accent)
-      color: var(--bg)
+      background: color-mix(in oklab, var(--probation-bg) 18%, var(--surface))
+      border: 2px solid color-mix(in oklab, var(--probation-bg) 50%, var(--border-muted))
+      color: color-mix(in oklab, var(--probation-bg) 80%, var(--fg))
       border-radius: 0.3rem
       font-size: 0.75rem
       font-weight: 600
       margin-left: 0.35rem
       &.has-rules
-        background: var(--primary)
+        background: var(--probation-bg)
+        border-color: var(--probation-bg)
+        color: var(--bg)
 
     .experience
       font-size: 0.85rem
@@ -469,7 +475,8 @@
     gap: 0.5rem
     padding: 0.75rem
     border-radius: var(--radius)
-    background: var(--surface-muted)
+    background: color-mix(in oklab, var(--probation-bg) 12%, var(--surface-muted))
+    border: 2px solid color-mix(in oklab, var(--probation-bg) 35%, var(--border-muted))
 
     .probation-title
       display: flex
@@ -477,7 +484,7 @@
       gap: 0.4rem
       font-weight: 700
       font-size: 0.95rem
-      color: var(--primary)
+      color: var(--probation-bg)
       margin: 0 0 0.25rem
 
     .rule-list

@@ -3,6 +3,7 @@
   import Dialog from './Dialog.svelte'
   import { formatCurrency, formatHours } from '../core.js'
   import { buildCalculationSteps, getProbationLabel, hasProbationRules, resolveProbation } from '../payroll.js'
+  import { PROBATION_BG } from '../probation.js'
   import { basicConfig } from '../stores.js'
   import { printEmployeeReport } from '../lib/print.js'
   
@@ -84,13 +85,14 @@
     {#each results as result}
       {@const employeeId = result.employee.id}
       {@const isExpanded = expandedCards[employeeId]}
-      <div class="card report-card" class:expanded={isExpanded} role="button" tabindex="0" onclick={() => { expandedCards = { ...expandedCards, [employeeId]: !isExpanded } }} onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (expandedCards = { ...expandedCards, [employeeId]: !isExpanded })}>
+      {@const probationKey = resolveProbation(result.employee)}
+      <div class="card report-card" class:expanded={isExpanded} class:probation={!!probationKey} style:--probation-bg={probationKey ? PROBATION_BG[probationKey] : undefined} role="button" tabindex="0" onclick={() => { expandedCards = { ...expandedCards, [employeeId]: !isExpanded } }} onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (expandedCards = { ...expandedCards, [employeeId]: !isExpanded })}>
         <div class="top">
           <h3>{result.employee.name}</h3>
           <span class="top-center">
             {#if getProbationLabel(result.employee)}
-              <span class="probation-badge" class:has-rules={hasProbationRules(result.employee, resolveProbation(result.employee))}>
-                {#if hasProbationRules(result.employee, resolveProbation(result.employee))}
+              <span class="probation-badge" style:--probation-bg={PROBATION_BG[probationKey]} class:has-rules={hasProbationRules(result.employee, probationKey)}>
+                {#if hasProbationRules(result.employee, probationKey)}
                   <Icon icon="tabler:list-check" width="0.75rem" height="0.75rem" />
                 {/if}
                 {getProbationLabel(result.employee)}
@@ -222,6 +224,15 @@
 
     &.expanded
       border-color: var(--secondary)
+
+    &.probation
+      border-color: color-mix(in oklab, var(--probation-bg) 50%, var(--border-muted))
+      background: color-mix(in oklab, var(--probation-bg) 12%, var(--surface))
+
+      &:hover,
+      &.expanded
+        border-color: var(--probation-bg)
+        box-shadow: 0 6px 20px color-mix(in oklab, var(--probation-bg) 28%, transparent)
       
     .top
       display: grid
@@ -241,13 +252,16 @@
         align-items: center
         gap: 0.2rem
         padding: 0.1rem 0.35rem
-        background: var(--accent)
-        color: var(--bg)
+        background: color-mix(in oklab, var(--probation-bg) 18%, var(--surface))
+        border: 1px solid color-mix(in oklab, var(--probation-bg) 50%, transparent)
+        color: color-mix(in oklab, var(--probation-bg) 80%, var(--fg))
         border-radius: 0.25rem
         font-size: 0.65rem
         font-weight: 600
         &.has-rules
-          background: var(--primary)
+          background: var(--probation-bg)
+          border-color: var(--probation-bg)
+          color: var(--bg)
       .period
         font-size: 0.85rem
         color: var(--fg-muted)

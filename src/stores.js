@@ -6,6 +6,7 @@
 import { writable, derived, get } from 'svelte/store'
 import { storage } from './core.js'
 import { DEFAULT_RULES, createRule, validateRule, getNextOrder, ensureRuleId } from './rules.js'
+import { normalizeProbationFields } from './probation.js'
 
 // ============================================================================
 // STORAGE KEYS
@@ -102,14 +103,7 @@ const normalizeBasicConfig = (c) => ({
 export const basicConfig = writable(normalizeBasicConfig(storage.get(KEYS.BASIC_CONFIG, {})))
 basicConfig.subscribe(value => storage.set(KEYS.BASIC_CONFIG, value))
 
-const normalizeEmployee = (emp) => {
-  const { probationary, probationRules, ...rest } = emp
-  const legacyRules = Array.isArray(probationRules) ? probationRules : []
-  const probationRulesA = rest.probationRulesA ?? (rest.probation === 'a' ? legacyRules : [])
-  const probationRulesB = rest.probationRulesB ?? (rest.probation === 'b' ? legacyRules : [])
-  const probation = probationRulesA.length > 0 ? 'a' : probationRulesB.length > 0 ? 'b' : null
-  return { ...rest, probation, probationRulesA, probationRulesB }
-}
+const normalizeEmployee = (emp) => normalizeProbationFields(emp)
 
 // Employees store
 export const employees = writable(

@@ -5,6 +5,15 @@
 
 import { calculateDailyRate, calculateHourlyRate } from './core.js'
 import { applyRules, RULE_TYPES } from './rules.js'
+import {
+  getProbationLabel,
+  getActiveProbationRules,
+  getProbationRulesFor,
+  hasProbationRules,
+  isOnProbation,
+  probationRulesKey,
+  resolveProbation
+} from './probation.js'
 import { ICONS } from './lib/icons.js'
 
 // Step definitions - simplified for rules-based system
@@ -403,33 +412,15 @@ export const buildCalculationSteps = (result) => {
   return steps
 }
 
-export const resolveProbation = (employee) => {
-  const a = employee.probationRulesA ?? []
-  const b = employee.probationRulesB ?? []
-  if (a.length > 0) return 'a'
-  if (b.length > 0) return 'b'
-  return employee.probation ?? null
-}
-
-export const isOnProbation = (employee) => !!resolveProbation(employee)
-
-export const getProbationLabel = (employee) => {
-  const key = resolveProbation(employee)
-  return key === 'a' ? 'Probation A' : key === 'b' ? 'Probation B' : null
-}
-
-export const probationRulesKey = (key) => key === 'a' ? 'probationRulesA' : 'probationRulesB'
-
-export const getProbationRulesFor = (employee, key) =>
-  employee[probationRulesKey(key)] ?? []
-
-export const hasProbationRules = (employee, key) =>
-  getProbationRulesFor(employee, key).length > 0
-
-export const getActiveProbationRules = (employee) => {
-  const key = resolveProbation(employee)
-  return key ? getProbationRulesFor(employee, key) : []
-}
+export {
+  getProbationLabel,
+  getActiveProbationRules,
+  getProbationRulesFor,
+  hasProbationRules,
+  isOnProbation,
+  probationRulesKey,
+  resolveProbation
+} from './probation.js'
 
 export const EMPLOYEE_FIELDS = [
   { key: 'name', label: 'Name', type: 'text', required: true },

@@ -3,6 +3,8 @@
  * Flexible, user-configurable calculation rules system
  */
 
+import { filterRulesForEmployee } from './probation.js'
+
 // ============================================================================
 // RULE TYPES & STRUCTURE
 // ============================================================================
@@ -277,15 +279,7 @@ export const applyRules = (employee, attendanceItems, rules, config) => {
   const totalHours = expectedHours + hoursAdjustment
   const actualDays = attendanceMetrics.effectiveDays
 
-  const activeProbationRules = employee.probation === 'a'
-    ? (employee.probationRulesA ?? employee.probationRules ?? [])
-    : employee.probation === 'b'
-      ? (employee.probationRulesB ?? employee.probationRules ?? [])
-      : null
-
-  const eligibleRules = activeProbationRules !== null
-    ? rules.filter(r => activeProbationRules.includes(r.id))
-    : rules
+  const eligibleRules = filterRulesForEmployee(employee, rules)
 
   // Process enabled rules (include value 0 so days_multiplier etc. appear in detailed steps)
   const processedRules = [...eligibleRules]

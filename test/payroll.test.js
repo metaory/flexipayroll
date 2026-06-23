@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict'
 import { applyRules } from '../src/rules.js'
+import { calculateEmployeePayroll } from '../src/payroll.js'
+import { normalizeProbationFields } from '../src/probation.js'
 
 const near = (a, b, eps = 1e-9) => Math.abs(a - b) <= eps
 
@@ -118,36 +120,88 @@ const run = () => {
   }
 
   {
-    const deductionRule = {
-      id: 'ins',
-      label: 'Insurance',
-      type: 'percentage_monthly',
-      value: 0.07,
+    const fixedBonus = {
+      id: 'fixed_bonus',
+      label: 'Fixed Bonus',
+      type: 'fixed',
+      value: 5000,
       criteria: { appliesTo: [] },
-      category: 'deduction',
+      category: 'bonus',
       order: 3,
       enabled: true
     }
-    const allRules = [fixedDailyRule, hourlyProratedRule, deductionRule]
-    const probationEmpty = { dailySalary: 100, probation: 'a', probationRulesA: [] }
-    const r = applyRules(probationEmpty, [], allRules, config31)
-    assert.equal(Object.keys(r.bonuses).length, 0, 'probation with no rules should have no bonuses')
-    assert.equal(Object.keys(r.deductions).length, 0, 'probation with no rules should have no deductions')
-    assert.ok(near(r.grossSalary, r.baseSalary), 'probation with no rules gross should equal base')
+    const allRules = [fixedDailyRule, hourlyProratedRule, fixedBonus]
+    const onProbationNoExclusions = { dailySalary: 100, probation: 'a', probationRulesA: [] }
+    const r = applyRules(onProbationNoExclusions, [], allRules, config31)
+    assert.ok(r.bonuses.fdp, 'probation with no exclusions should still apply rules')
+    assert.ok(r.bonuses.fixed_bonus, 'fixed rule should apply when not excluded')
   }
 
   {
-    const probationSubset = { dailySalary: 100, probation: 'b', probationRulesB: ['fdp'] }
-    const r = applyRules(probationSubset, [], [fixedDailyRule, hourlyProratedRule], config31)
-    assert.ok(r.bonuses.fdp, 'probation should apply selected rule')
-    assert.equal(r.bonuses.hp, undefined, 'probation should not apply unselected rule')
-    assert.ok(near(r.bonuses.fdp.value, fixedDailyRule.value), `expected fdp ${fixedDailyRule.value}, got ${r.bonuses.fdp.value}`)
+    const fixedBonus = {
+      id: 'fixed_bonus',
+      label: 'Fixed Bonus',
+      type: 'fixed',
+      value: 5000,
+      criteria: { appliesTo: [] },
+      category: 'bonus',
+      order: 3,
+      enabled: true
+    }
+    const excludeFixed = { dailySalary: 100, probation: 'b', probationRulesB: ['fixed_bonus'] }
+    const r = applyRules(excludeFixed, [], [fixedDailyRule, hourlyProratedRule, fixedBonus], config31)
+    assert.equal(r.bonuses.fixed_bonus, undefined, 'excluded fixed rule should not apply')
+    assert.ok(r.bonuses.fdp, 'non-excluded rule should apply')
+    assert.ok(r.bonuses.hp, 'non-excluded rule should apply')
   }
 
   {
-    const regular = { dailySalary: 100 }
-    const r = applyRules(regular, [], [fixedDailyRule, hourlyProratedRule], config31)
-    assert.ok(r.bonuses.fdp && r.bonuses.hp, 'non-probation employee should get all enabled rules')
+    const probationExcludeFdp = { dailySalary: 100, probation: 'b', probationRulesB: ['fdp'] }
+    const r = applyRules(probationExcludeFdp, [], [fixedDailyRule, hourlyProratedRule], config31)
+    assert.equal(r.bonuses.fdp, undefined, 'excluded rule should not apply')
+    assert.ok(r.bonuses.hp, 'non-excluded rule should apply')
+  }
+
+  {
+    const maleBonus = {
+      id: 'male_bonus',
+      label: 'Male Bonus',
+      type: 'fixed',
+      value: 5000,
+      criteria: { appliesTo: ['male'] },
+      category: 'bonus',
+      order: 4,
+      enabled: true
+    }
+    const excludeMaleOnly = {
+      dailySalary: 100,
+      gender: 'male',
+      probationRulesA: ['male_bonus'],
+      probationRulesB: []
+    }
+    const r = applyRules(excludeMaleOnly, [], [fixedDailyRule, maleBonus], config31)
+    assert.equal(r.bonuses.male_bonus, undefined, 'excluded male bonus should not apply')
+    assert.ok(r.bonuses.fdp, 'non-excluded rule should apply')
+  }
+
+  {
+    const bonus1 = { id: 'bonus_e', label: 'Bonus E', type: 'days_multiplier', value: 5, criteria: { appliesTo: [] }, category: 'bonus', order: 1, enabled: true }
+    const bonus2 = { id: 'marital_bonus', label: 'Marital Bonus', type: 'fixed', value: 150000, criteria: { appliesTo: ['married'] }, category: 'bonus', order: 3, enabled: true }
+    const bonus3 = { id: 'extra', label: 'Extra', type: 'fixed', value: 1000, criteria: { appliesTo: [] }, category: 'bonus', order: 4, enabled: true }
+    const allBonuses = [bonus1, bonus2, bonus3]
+    const employeeData = normalizeProbationFields({
+      id: '1',
+      name: 'Test',
+      gender: 'male',
+      maritalStatus: 'married',
+      dailySalary: 100,
+      probationRulesA: ['bonus_e', 'marital_bonus'],
+      probationRulesB: []
+    })
+    const result = calculateEmployeePayroll(employeeData, [], [], allBonuses, config31)
+    assert.equal(result.ruleResults.bonuses.bonus_e, undefined, 'excluded bonus_e should not apply')
+    assert.equal(result.ruleResults.bonuses.marital_bonus, undefined, 'excluded fixed marital_bonus should not apply')
+    assert.ok(result.ruleResults.bonuses.extra, 'non-excluded bonus should apply')
   }
 }
 
