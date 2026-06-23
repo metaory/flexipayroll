@@ -287,7 +287,7 @@
     justify-content: space-between
     align-items: center
     padding: 0.6rem 0.85rem
-    border-radius: 0.5rem
+    border-radius: 0 10px 10px 0;
     @extend %transition
     
     .row-label
