@@ -109,17 +109,17 @@ const createFixedRuleStep = (ruleData, _result, type) => ({
 
 const createHourlyProratedStep = (ruleData, result, type) => {
   const monthDays = result.configSnapshot?.monthDays ?? 30
-  const monthHourEquivalentDays = result.ruleResults?.monthHourEquivalentDays ?? monthDays
-  const ratio = monthDays > 0 ? monthHourEquivalentDays / monthDays : 0
+  const effectiveDays = result.ruleResults?.effectiveDays ?? monthDays
+  const cappedEffectiveDays = Math.min(effectiveDays, monthDays)
   const fullValue = ruleData.rule.value
-  const formulaWithValues = `${fullValue.toLocaleString()} × (${monthHourEquivalentDays.toFixed(2)} ÷ ${monthDays}) = ${ruleData.value.toLocaleString()}`
+  const formulaWithValues = `(${fullValue.toLocaleString()} × min(${effectiveDays}, ${monthDays})) ÷ ${monthDays} = ${ruleData.value.toLocaleString()}`
   return {
     label: ruleData.rule.label,
-    formula: 'Value × (Hour-equivalent month days ÷ Month days)',
+    formula: '(Value × Effective days) ÷ Month days',
     formulaWithValues,
     result: ruleData.value,
-    explanation: `${type.charAt(0).toUpperCase() + type.slice(1)} uses hour-based attendance converted to month day-equivalent (${monthHourEquivalentDays.toFixed(2)}).`,
-    inputs: { fullValue, monthHourEquivalentDays, monthDays, ratio },
+    explanation: `${type.charAt(0).toUpperCase() + type.slice(1)} uses absent day blocks from undertime, capped at month days.`,
+    inputs: { fullValue, effectiveDays, cappedEffectiveDays, monthDays },
     type
   }
 }
@@ -307,8 +307,8 @@ export const buildCalculationSteps = (result) => {
   const workdayHours = result.configSnapshot.workdayHours
   const expectedHours = workDays * workdayHours
   const fmtRate = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  const adj = result.hoursAdjustment ?? 0
   const attendanceEffect = result.attendanceAdjustment ?? 0
+  const hasAttendanceEffect = attendanceEffect !== 0
   const overtimePay = result.ruleResults.overtimePay ?? 0
   const undertimePay = result.ruleResults.undertimePay ?? 0
   const rawOvertimeHours = result.ruleResults.rawOvertimeHours ?? 0
@@ -317,17 +317,17 @@ export const buildCalculationSteps = (result) => {
   const monthDays = result.configSnapshot?.monthDays ?? 30
   const effectiveDays = result.ruleResults?.effectiveDays ?? monthDays
   const cappedEffectiveDays = Math.min(effectiveDays, monthDays)
-  const otUtFormula = adj !== 0
+  const otUtFormula = hasAttendanceEffect
     ? `(OT ${rawOvertimeHours.toFixed(2)}h × OT rate − UT ${rawUndertimeHours.toFixed(2)}h × UT rate) × ${fmtRate(result.hourlyRate)}/h = +${overtimePay.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} - ${undertimePay.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} = ${attendanceEffect >= 0 ? '+' : ''}${attendanceEffect.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
     : null
-  steps.push(adj !== 0
+  steps.push(hasAttendanceEffect
     ? {
         label: 'Overtime / Undertime',
         formula: '(OT hours × OT rate × Hourly rate) − (UT hours × UT rate × Hourly rate)',
         formulaWithValues: otUtFormula,
         result: attendanceEffect,
         explanation: 'Attendance adjustment is hour-based. Entered hours/minutes in attendance directly impact payroll using OT/UT rates.',
-        inputs: { expectedHours, hoursAdjustment: adj, hourlyRate: result.hourlyRate, rawOvertimeHours, rawUndertimeHours, overtimePay, undertimePay },
+        inputs: { expectedHours, hourlyRate: result.hourlyRate, rawOvertimeHours, rawUndertimeHours, overtimePay, undertimePay },
         type: 'attendance',
         section: 'attendance'
       }
@@ -370,14 +370,21 @@ export const buildCalculationSteps = (result) => {
     })
   }
   const totalBonuses = Object.values(result.ruleResults.bonuses || {}).reduce((sum, item) => sum + (item.finalValue || item.value), 0)
-  const grossSalaryCalc = result.baseSalary + totalBonuses + result.adjustmentTotal
+  const attendanceAdj = result.attendanceAdjustment ?? 0
+  const grossSalaryCalc = result.baseSalary + attendanceAdj + totalBonuses + result.adjustmentTotal
+  const grossParts = [
+    result.baseSalary.toLocaleString(),
+    ...(attendanceAdj !== 0 ? [`${attendanceAdj >= 0 ? '+' : ''}${attendanceAdj.toLocaleString()}`] : []),
+    totalBonuses.toLocaleString(),
+    result.adjustmentTotal.toLocaleString()
+  ].join(' + ')
   steps.push({
     label: 'Gross Salary',
-    formula: 'Base + Bonuses + Manual Adjustments',
-    formulaWithValues: `${result.baseSalary.toLocaleString()} + ${totalBonuses.toLocaleString()} + ${result.adjustmentTotal.toLocaleString()} = ${grossSalaryCalc.toLocaleString()}`,
+    formula: 'Base + Overtime/Undertime + Bonuses + Manual Adjustments',
+    formulaWithValues: `${grossParts} = ${grossSalaryCalc.toLocaleString()}`,
     result: result.grossSalary,
-    explanation: 'The total salary before deductions. This includes base salary (hours-based), all bonuses, and manual adjustments.',
-    inputs: { base: result.baseSalary, bonuses: totalBonuses, adjustments: result.adjustmentTotal },
+    explanation: 'The total salary before deductions. This includes base salary, overtime/undertime, all bonuses, and manual adjustments.',
+    inputs: { base: result.baseSalary, attendance: attendanceAdj, bonuses: totalBonuses, adjustments: result.adjustmentTotal },
     type: 'summary',
     section: 'summary'
   })

@@ -64,6 +64,7 @@
     const applied = getAppliedRules(result)
     return [
       { label: 'Base Salary', value: result.baseSalary, type: 'base', sign: '+' },
+      ...(result.attendanceAdjustment !== 0 ? [{ label: 'Overtime / Undertime', value: result.attendanceAdjustment, type: 'attendance', sign: result.attendanceAdjustment > 0 ? '+' : '-' }] : []),
       ...applied.bonuses.map(b => ({ label: b.label, value: b.value, type: 'bonus', sign: '+' })),
       ...(result.adjustmentTotal !== 0 ? [{ label: 'Adjustments', value: result.adjustmentTotal, type: 'adjustment', sign: result.adjustmentTotal > 0 ? '+' : '-' }] : []),
       { label: 'Gross Salary', value: result.grossSalary, type: 'subtotal', sign: '=' },
@@ -142,6 +143,9 @@
       
       <div class="summary-rows">
         <div class="row base"><span>Base Salary</span><span>{fmt(selectedResult.baseSalary)}</span></div>
+        {#if selectedResult.attendanceAdjustment !== 0}
+          <div class="row attendance"><span>Overtime / Undertime</span><span>{selectedResult.attendanceAdjustment > 0 ? '+' : '-'}{fmt(Math.abs(selectedResult.attendanceAdjustment))}</span></div>
+        {/if}
         {#each getAppliedRules(selectedResult).bonuses as bonus}
           <div class="row bonus"><span>{bonus.label}</span><span>+{fmt(bonus.value)}</span></div>
         {/each}
@@ -241,7 +245,7 @@
       align-items: center
       padding: 0.5rem 0.75rem
       background: var(--success-bg)
-      border-radius: 0.6rem
+      border-radius: 0 10px 10px 0;
       border-left: 4px solid var(--success)
       span
         font-size: 0.85rem
@@ -283,7 +287,7 @@
     justify-content: space-between
     align-items: center
     padding: 0.6rem 0.85rem
-    border-radius: 0.5rem
+    border-radius: 0 10px 10px 0;
     @extend %transition
     
     .row-label
@@ -323,6 +327,13 @@
       
       .row-value
         color: var(--warning)
+
+    &.attendance
+      background: var(--info-bg)
+      border-left: 4px solid var(--info)
+
+      .row-value
+        color: var(--info)
         
     &.subtotal
       background: var(--surface-medium)
@@ -453,6 +464,12 @@
           border-left: 4px solid var(--warning)
           span:last-child
             color: var(--warning)
+
+        &.attendance
+          background: var(--info-bg)
+          border-left: 4px solid var(--info)
+          span:last-child
+            color: var(--info)
             
         &.subtotal
           background: var(--surface-medium)
