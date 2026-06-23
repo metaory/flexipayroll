@@ -245,7 +245,7 @@
       align-items: center
       padding: 0.5rem 0.75rem
       background: var(--success-bg)
-      border-radius: 0.6rem
+      border-radius: 0 10px 10px 0;
       border-left: 4px solid var(--success)
       span
         font-size: 0.85rem
