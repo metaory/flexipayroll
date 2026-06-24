@@ -268,8 +268,8 @@ export const applyRules = (employee, attendanceData, rules, config) => {
   const daysNotWorked = attendanceMetrics.absentDays
   const totalDaysWorked = attendanceMetrics.effectiveDays
   const attendanceDays = hoursDeltaToDays(rawHours, workdayHours)
-  const overtimePay = attendancePay(rawOvertimeHours, otRate, employee.dailySalary, workdayHours)
-  const undertimePay = attendancePay(rawUndertimeHours, utRate, employee.dailySalary, workdayHours)
+  const overtimePay = attendancePay(rawOvertimeHours, otRate, employee.dailySalary)
+  const undertimePay = attendancePay(rawUndertimeHours, utRate, employee.dailySalary)
   const expectedBaseFull = employee.dailySalary * workDays
   const effectiveDays = attendanceMetrics.effectiveDays
   const cappedEffectiveDays = workDays > 0 ? Math.min(effectiveDays, workDays) : 0

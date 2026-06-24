@@ -81,14 +81,13 @@ export const normalizeAttendance = (data) => {
   }
 }
 
-/** (hourlyRate ÷ rate) × hours where hourlyRate = dailySalary / workdayHours */
-export const attendancePay = (hours, rate, dailySalary, workdayHours) => {
+/** (dailySalary ÷ rate) × hours */
+export const attendancePay = (hours, rate, dailySalary) => {
   const h = Number(hours)
   const r = Number(rate)
   const s = Number(dailySalary)
-  const w = Number(workdayHours)
-  if (!h || !r || !s || !w) return 0
-  return (s / w / r) * h
+  if (!h || !r || !s) return 0
+  return (s / r) * h
 }
 
 export const calculateDailyRate = (dailySalary) => 
