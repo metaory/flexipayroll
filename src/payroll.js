@@ -127,7 +127,7 @@ const createHourlyProratedStep = (ruleData, result, type) => {
     formula: '(Value × Effective days) ÷ Month days',
     formulaWithValues,
     result: ruleData.value,
-    explanation: `${type.charAt(0).toUpperCase() + type.slice(1)} uses absent day blocks from undertime, capped at month days.`,
+    explanation: `${type.charAt(0).toUpperCase() + type.slice(1)} uses absent days from attendance, capped at month days.`,
     inputs: { fullValue, effectiveDays, cappedEffectiveDays, monthDays },
     type
   }
@@ -164,7 +164,7 @@ const createDaysMultiplierStep = (ruleData, result, type) => {
     formula: '(Multiplier × Daily salary) × (Effective days ÷ Month days)',
     formulaWithValues,
     result: ruleData.value,
-    explanation: `${type.charAt(0).toUpperCase() + type.slice(1)} uses effective days (${effectiveDays}) derived from attendance day blocks (month baseline ${monthDays}, attendance delta ${deltaStr}).`,
+    explanation: `${type.charAt(0).toUpperCase() + type.slice(1)} uses effective days (${effectiveDays}) from absent days entered on the attendance page (month baseline ${monthDays}, attendance delta ${deltaStr}).`,
     inputs: { fullMonthValue, totalDaysWorked, effectiveDays, monthDays, dailyRate, multiplier: ruleData.rule.value },
     type
   }
@@ -284,7 +284,7 @@ export const buildCalculationSteps = (result) => {
   steps.push({
     label: 'Input Summary',
     formula: 'Base = Effective work days × Daily salary',
-    formulaWithValues: 'Effective work days = working days per month minus undertime day blocks (floor(undertime hours ÷ workday hours)).',
+    formulaWithValues: 'Effective work days = working days per month minus absent days from attendance.',
     result: result.employee.dailySalary,
     explanation: 'Employee daily salary and config. Overtime and undertime are calculated directly from attendance hours (including minute fractions).',
     inputs: { dailySalary: result.employee.dailySalary, workdayHours: result.configSnapshot.workdayHours, workDays: result.configSnapshot.workingDaysPerMonth ?? 22 },
@@ -337,6 +337,7 @@ export const buildCalculationSteps = (result) => {
     : null
   const dailyRate = result.employee.dailySalary
   const effectiveDays = result.ruleResults?.effectiveDays ?? workDays
+  const absentDays = result.ruleResults?.absentDays ?? 0
   steps.push(hasAttendanceHours
     ? {
         label: 'Overtime / Undertime',
@@ -364,8 +365,8 @@ export const buildCalculationSteps = (result) => {
     formula: 'Effective work days × Daily salary',
     formulaWithValues: baseFormulaValues,
     result: result.baseSalary,
-    explanation: `Effective work days (${effectiveDays}) = working days per month (${workDays}) minus undertime day blocks. Overtime and undertime pay are handled in the attendance section.`,
-    inputs: { workDays, effectiveDays, dailyRate, result: result.baseSalary },
+    explanation: `Effective work days (${effectiveDays}) = working days per month (${workDays}) minus absent days (${absentDays}). Overtime and undertime pay are handled in the attendance section.`,
+    inputs: { workDays, absentDays, effectiveDays, dailyRate, result: result.baseSalary },
     type: 'base',
     section: 'base'
   })

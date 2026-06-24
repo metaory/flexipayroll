@@ -4,7 +4,7 @@
  */
 
 import { filterRulesForEmployee } from './probation.js'
-import { attendancePay } from './core.js'
+import { attendancePay, normalizeAttendance } from './core.js'
 
 // ============================================================================
 // RULE TYPES & STRUCTURE
@@ -153,32 +153,30 @@ const normalizeRuleType = (type) =>
 const toDayBlocks = (hours, workdayHours) =>
   Math.floor(Math.abs(hours) / workdayHours)
 
-const resolveEffectiveDays = (workDays, undertimeHours, workdayHours) => {
-  const absentDayBlocks = toDayBlocks(undertimeHours, workdayHours)
-  return Math.max(0, workDays - absentDayBlocks)
-}
+const resolveEffectiveDays = (workDays, absentDays) =>
+  Math.max(0, workDays - Math.max(0, Math.floor(Number(absentDays) || 0)))
 
 const prorationRatio = (effectiveDays, monthDays) =>
   monthDays > 0 ? Math.min(effectiveDays, monthDays) / monthDays : 0
 
-const buildAttendanceMetrics = (attendanceItems, config) => {
+const buildAttendanceMetrics = (attendanceData, config) => {
+  const { items, absent } = normalizeAttendance(attendanceData)
   const workdayHours = resolveWorkdayHours(config)
   const workDays = resolveWorkingDays(config)
   const monthDays = resolveMonthDays(config)
-  const rawHours = rawHoursDelta(attendanceItems)
-  const rawUndertimeHours = (attendanceItems || []).reduce((sum, item) => {
+  const rawHours = rawHoursDelta(items)
+  const rawUndertimeHours = items.reduce((sum, item) => {
     const hours = Number(item.hours) || 0
     return hours < 0 ? sum + Math.abs(hours) : sum
   }, 0)
-  const rawOvertimeHours = (attendanceItems || []).reduce((sum, item) =>
+  const rawOvertimeHours = items.reduce((sum, item) =>
     sum + Math.max(0, Number(item.hours) || 0), 0)
   const overtimeDayBlocks = toDayBlocks(rawOvertimeHours, workdayHours)
   const undertimeDayBlocks = toDayBlocks(rawUndertimeHours, workdayHours)
-  const absentDayBlocks = undertimeDayBlocks
   const hourEquivalentDays = rawHours / workdayHours
   const monthHourEquivalentDays = Math.max(0, workDays + hourEquivalentDays)
   const dayEquivalent = Math.max(0, workDays + hourEquivalentDays)
-  const effectiveDays = resolveEffectiveDays(workDays, rawUndertimeHours, workdayHours)
+  const effectiveDays = resolveEffectiveDays(workDays, absent)
 
   return {
     workDays,
@@ -188,7 +186,7 @@ const buildAttendanceMetrics = (attendanceItems, config) => {
     rawOvertimeHours,
     overtimeDayBlocks,
     undertimeDayBlocks,
-    absentDayBlocks,
+    absentDays: absent,
     monthHourEquivalentDays,
     dayEquivalent,
     effectiveDays
@@ -227,36 +225,38 @@ const RULE_CALCULATORS = {
   [RULE_TYPES.HOURLY_MULTIPLIER]: (rule, _, __, hourlyRate) => hourlyRate * rule.value
 }
 
-export const calculateRuleValue = (rule, employee, attendanceItems, config, totalDaysWorked) => {
+export const calculateRuleValue = (rule, employee, attendanceData, config, totalDaysWorked) => {
   if (!appliesToEmployee(rule, employee)) return 0
 
   const normalizedType = normalizeRuleType(rule.type)
   const workdayHours = resolveWorkdayHours(config)
   const hourlyRate = employee.dailySalary / workdayHours
   const workDays = resolveWorkingDays(config)
-  const attendanceDelta = hoursDeltaToDays(rawHoursDelta(attendanceItems), workdayHours)
+  const { items } = normalizeAttendance(attendanceData)
+  const attendanceDelta = hoursDeltaToDays(rawHoursDelta(items), workdayHours)
   const days = totalDaysWorked ?? Math.max(0, workDays + attendanceDelta)
-  const metrics = buildAttendanceMetrics(attendanceItems, config)
+  const metrics = buildAttendanceMetrics(attendanceData, config)
 
   const calculator = RULE_CALCULATORS[normalizedType]
-  return calculator ? calculator(rule, employee, attendanceItems, hourlyRate, config, days, metrics) : 0
+  return calculator ? calculator(rule, employee, items, hourlyRate, config, days, metrics) : 0
 }
 
 // ============================================================================
 // RULE PROCESSING
 // ============================================================================
 
-export const applyRules = (employee, attendanceItems, rules, config) => {
+export const applyRules = (employee, attendanceData, rules, config) => {
+  const { items } = normalizeAttendance(attendanceData)
   const workdayHours = resolveWorkdayHours(config)
   const hourlyRate = employee.dailySalary / workdayHours
-  const attendanceMetrics = buildAttendanceMetrics(attendanceItems, config)
+  const attendanceMetrics = buildAttendanceMetrics(attendanceData, config)
   const workDays = attendanceMetrics.workDays
   const monthDays = attendanceMetrics.monthDays
   const expectedHours = workDays * workdayHours
   const otRate = Number(config.overtimeRate)
   const rawUt = config.undertimeRate ?? config.undertimeDeductionRate
   const utRate = Number(rawUt)
-  const hoursAdjustment = (attendanceItems || []).reduce((sum, item) => {
+  const hoursAdjustment = items.reduce((sum, item) => {
     const hours = Number(item.hours) || 0
     if (hours > 0) return sum + hours * otRate
     if (hours < 0) return sum + hours * utRate
@@ -265,7 +265,7 @@ export const applyRules = (employee, attendanceItems, rules, config) => {
   const rawHours = attendanceMetrics.rawHours
   const rawUndertimeHours = attendanceMetrics.rawUndertimeHours
   const rawOvertimeHours = attendanceMetrics.rawOvertimeHours
-  const daysNotWorked = attendanceMetrics.absentDayBlocks
+  const daysNotWorked = attendanceMetrics.absentDays
   const totalDaysWorked = attendanceMetrics.effectiveDays
   const attendanceDays = hoursDeltaToDays(rawHours, workdayHours)
   const overtimePay = attendancePay(rawOvertimeHours, otRate, employee.dailySalary, workdayHours)
@@ -286,7 +286,7 @@ export const applyRules = (employee, attendanceItems, rules, config) => {
   const processedRules = [...eligibleRules]
     .sort((a, b) => a.order - b.order)
     .filter(r => r.enabled)
-    .map(rule => ({ rule, value: calculateRuleValue(rule, employee, attendanceItems, config, totalDaysWorked) }))
+    .map(rule => ({ rule, value: calculateRuleValue(rule, employee, attendanceData, config, totalDaysWorked) }))
 
   // Categorize rules
   const categorized = processedRules.reduce((acc, { rule, value }) => {
@@ -331,6 +331,7 @@ export const applyRules = (employee, attendanceItems, rules, config) => {
     totalDaysWorked,
     workedDayEquivalent: attendanceMetrics.dayEquivalent,
     effectiveDays: attendanceMetrics.effectiveDays,
+    absentDays: attendanceMetrics.absentDays,
     monthHourEquivalentDays: attendanceMetrics.monthHourEquivalentDays,
     proratedWorkDays: workDays,
     daysNotWorked,
