@@ -271,11 +271,10 @@ export const applyRules = (employee, attendanceItems, rules, config) => {
   const undertimePay = rawUndertimeHours * utRate * hourlyRate
   const expectedBaseFull = employee.dailySalary * monthDays
   const cappedEffectiveDays = monthDays > 0 ? Math.min(attendanceMetrics.effectiveDays, monthDays) : 0
-  const expectedBase = monthDays > 0 ? (expectedBaseFull * cappedEffectiveDays) / monthDays : 0
   const attendancePayAdjustment = overtimePay - undertimePay
   const attendanceAdjustment = attendancePayAdjustment
-  const baseSalary = expectedBase
-  const baseFromDays = expectedBase
+  const baseSalary = expectedBaseFull
+  const baseFromDays = expectedBaseFull
   const totalHours = expectedHours + hoursAdjustment
   const actualDays = attendanceMetrics.effectiveDays
 

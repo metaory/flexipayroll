@@ -65,7 +65,7 @@ const getAdjustmentRows = (result, fmt) =>
 export const printEmployeeReport = (result, period, currencySymbol = '$', organizationName = '') => {
   const fmt = (v) => formatCurrency(v, 'id-ID', 'IDR', currencySymbol)
   const applied = getAppliedRules(result)
-  const expectedMonthBase = result.baseSalary - (result.attendanceAdjustment || 0)
+  const expectedMonthBase = result.baseSalary
   const grossBeforeAdjustments = result.grossSalary - (result.adjustmentTotal || 0)
   const totalAdjustments = result.adjustmentTotal || 0
   
