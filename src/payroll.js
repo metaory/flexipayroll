@@ -283,8 +283,8 @@ export const buildCalculationSteps = (result) => {
   
   steps.push({
     label: 'Input Summary',
-    formula: 'Base = Effective worked days × Daily salary',
-    formulaWithValues: 'Base salary is calculated directly from effective worked days, capped by month days.',
+    formula: 'Base = Month days × Daily salary',
+    formulaWithValues: 'Base salary is the full month amount. Overtime and undertime are applied separately.',
     result: result.employee.dailySalary,
     explanation: 'Employee daily salary and config. Overtime and undertime are calculated directly from attendance hours (including minute fractions).',
     inputs: { dailySalary: result.employee.dailySalary, workdayHours: result.configSnapshot.workdayHours, workDays: result.configSnapshot.workingDaysPerMonth ?? 22 },
@@ -324,8 +324,6 @@ export const buildCalculationSteps = (result) => {
   const rawUndertimeHours = result.ruleResults.rawUndertimeHours ?? 0
   const dailyRate = result.employee.dailySalary
   const monthDays = result.configSnapshot?.monthDays ?? 30
-  const effectiveDays = result.ruleResults?.effectiveDays ?? monthDays
-  const cappedEffectiveDays = Math.min(effectiveDays, monthDays)
   const otUtFormula = hasAttendanceEffect
     ? `(OT ${rawOvertimeHours.toFixed(2)}h × OT rate − UT ${rawUndertimeHours.toFixed(2)}h × UT rate) × ${fmtRate(result.hourlyRate)}/h = +${overtimePay.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} - ${undertimePay.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} = ${attendanceEffect >= 0 ? '+' : ''}${attendanceEffect.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
     : null
@@ -350,14 +348,14 @@ export const buildCalculationSteps = (result) => {
         type: 'attendance',
         section: 'attendance'
       })
-  const baseFormulaValues = `min(${effectiveDays}, ${monthDays}) days × ${dailyRate.toLocaleString()}/day = ${cappedEffectiveDays} × ${dailyRate.toLocaleString()} = ${result.baseSalary.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+  const baseFormulaValues = `${monthDays} days × ${dailyRate.toLocaleString()}/day = ${result.baseSalary.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
   steps.push({
     label: 'Base Salary',
-    formula: 'Effective worked days × Daily salary',
+    formula: 'Month days × Daily salary',
     formulaWithValues: baseFormulaValues,
     result: result.baseSalary,
-    explanation: 'Base salary uses effective worked days from attendance day blocks, capped at month days.',
-    inputs: { monthDays, effectiveDays, cappedEffectiveDays, dailyRate, result: result.baseSalary },
+    explanation: 'Base salary is the full month amount. Overtime and undertime are handled in the attendance section.',
+    inputs: { monthDays, dailyRate, result: result.baseSalary },
     type: 'base',
     section: 'base'
   })

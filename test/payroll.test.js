@@ -28,7 +28,7 @@ const run = () => {
   {
     const attendanceItems = [{ hours: -6.5 }]
     const r = applyRules(employee, attendanceItems, [], baseConfig)
-    const expected = employee.dailySalary * 29
+    const expected = employee.dailySalary * 30
     assert.ok(near(r.baseFromDays, expected), `expected baseFromDays ${expected}, got ${r.baseFromDays}`)
     assert.ok(near(r.baseSalary, expected), `expected baseSalary ${expected}, got ${r.baseSalary}`)
   }
