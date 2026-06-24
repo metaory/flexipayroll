@@ -39,6 +39,7 @@ const run = () => {
     const html = buildEarningsSection(baseResult, labels, fmt)
     assert.match(html, /Month salary/)
     assert.match(html, /Daily salary/)
+    assert.ok(html.indexOf('Daily salary') < html.indexOf('Month salary'))
     assert.match(html, /\$100000/)
     assert.match(html, /Attendance/)
     assert.doesNotMatch(html, /OT \d/)

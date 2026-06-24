@@ -78,8 +78,8 @@ export const buildEarningsSection = (result, labels, fmt) => {
   const applied = getAppliedRules(result)
   const grossBeforeAdjustments = result.grossSalary - (result.adjustmentTotal || 0)
   return [
-    row(labels.monthSalary, fmt(result.baseSalary)),
     row(labels.dailySalary, fmt(result.dailyRate)),
+    row(labels.monthSalary, fmt(result.baseSalary)),
     ...applied.bonuses.map(b => row(b.label, '+' + fmt(b.value))),
     ...applied.deductions.map(d => row(d.label, '-' + fmt(d.value))),
     ...(hasAttendanceHours ? [row(labels.attendance, signedFmt(result.attendanceAdjustment || 0, fmt))] : []),
