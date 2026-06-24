@@ -4,6 +4,7 @@
   import { ICONS } from './lib/icons.js'
   import { theme, toggleTheme } from './stores.js'
   import { storage } from './core.js'
+  import pkg from '../package.json'
 
   let fileInput = $state()
   let installEvent = $state()
@@ -70,6 +71,8 @@
   <Payroll />
 </main>
 
+<small class="version" aria-hidden="true">v{pkg.version}</small>
+
 <style lang="sass">
   @use "./styles.sass" as *
 
@@ -135,6 +138,21 @@
     :global(svg)
       color: var(--primary)
 
+  .version
+    position: fixed
+    bottom: 0.6rem
+    left: 0.8rem
+    z-index: 10
+    font-family: 'JetBrains Mono', monospace
+    font-size: 0.75rem
+    color: var(--fg-muted)
+    opacity: 0.4
+    pointer-events: none
+    user-select: none
+
+    @media print
+      display: none
+
   @media (max-width: $mobile)
     .toolbar
       top: 0.5rem
@@ -148,5 +166,8 @@
       padding: 1rem
       margin: 0 0.5em
       height: 100vh
+
+    .version
+      left: 0.5rem
 
 </style>
