@@ -120,7 +120,7 @@ export const buildPrintHtml = (result, period, config = {}) => {
   
   ${section('Earnings', buildEarningsSection(result, labels, fmt))}
 
-  ${section('Adjustments', buildAdjustmentSection(result, labels, fmt))}
+  ${section(labels.adjustments, buildAdjustmentSection(result, labels, fmt))}
   
   ${section('Summary', row(labels.net, fmt(result.finalSalary), 'total'))}
 

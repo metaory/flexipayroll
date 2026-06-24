@@ -32,6 +32,7 @@ const KEYS = {
 export const DEFAULT_PRINT_LABELS = {
   monthSalary: 'Month salary',
   dailySalary: 'Daily salary',
+  adjustments: 'Adjustments',
   adjustment: 'ADJUSTMENT',
   totalAdjustments: 'Total adjustments',
   attendance: 'Attendance',
@@ -41,6 +42,7 @@ export const DEFAULT_PRINT_LABELS = {
 export const PRINT_LABEL_FIELDS = [
   { key: 'monthSalary', label: 'Month salary', fallback: DEFAULT_PRINT_LABELS.monthSalary },
   { key: 'dailySalary', label: 'Daily salary', fallback: DEFAULT_PRINT_LABELS.dailySalary },
+  { key: 'adjustments', label: 'Adjustments section', fallback: DEFAULT_PRINT_LABELS.adjustments },
   { key: 'adjustment', label: 'Adjustment', fallback: DEFAULT_PRINT_LABELS.adjustment },
   { key: 'totalAdjustments', label: 'Total adjustments', fallback: DEFAULT_PRINT_LABELS.totalAdjustments },
   { key: 'attendance', label: 'Attendance', fallback: DEFAULT_PRINT_LABELS.attendance },

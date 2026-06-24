@@ -84,16 +84,17 @@ const run = () => {
     const html = buildPrintHtml(baseResult, '2026-01', { organizationName: 'Acme', currencySymbol: '$' })
     assert.match(html, /Acme/)
     assert.match(html, /Daily salary/)
-    assert.match(html, /Adjustments/)
+    assert.match(html, /section-title">Adjustments</)
     assert.match(html, />Net<\/span>/)
   }
 
   {
     const html = buildPrintHtml(baseResult, '2026-01', {
-      printLabels: { net: 'Gaji bersih' }
+      printLabels: { adjustments: 'Penyesuaian', net: 'Gaji bersih' }
     })
+    assert.match(html, /section-title">Penyesuaian</)
     assert.match(html, /Gaji bersih/)
-    assert.doesNotMatch(html, />Net<\/span>/)
+    assert.doesNotMatch(html, /section-title">Adjustments</)
   }
 
   console.log('print.test.js: all passed')
