@@ -4,6 +4,7 @@
  */
 
 import { filterRulesForEmployee } from './probation.js'
+import { attendancePay } from './core.js'
 
 // ============================================================================
 // RULE TYPES & STRUCTURE
@@ -252,9 +253,9 @@ export const applyRules = (employee, attendanceItems, rules, config) => {
   const workDays = attendanceMetrics.workDays
   const monthDays = attendanceMetrics.monthDays
   const expectedHours = workDays * workdayHours
-  const rawOt = Number.isFinite(Number(config.overtimeRate)) ? Number(config.overtimeRate) : 1.5
-  const otRate = rawOt > 0 && rawOt < 1 ? 1 + rawOt : rawOt
-  const utRate = Number.isFinite(Number(config.undertimeDeductionRate)) ? Number(config.undertimeDeductionRate) : 0.5
+  const otRate = Number.isFinite(Number(config.overtimeRate)) ? Number(config.overtimeRate) : 1.5
+  const rawUt = config.undertimeRate ?? config.undertimeDeductionRate
+  const utRate = Number.isFinite(Number(rawUt)) ? Number(rawUt) : 0.5
   const hoursAdjustment = (attendanceItems || []).reduce((sum, item) => {
     const hours = Number(item.hours) || 0
     if (hours > 0) return sum + hours * otRate
@@ -267,8 +268,8 @@ export const applyRules = (employee, attendanceItems, rules, config) => {
   const daysNotWorked = attendanceMetrics.absentDayBlocks
   const totalDaysWorked = attendanceMetrics.effectiveDays
   const attendanceDays = hoursDeltaToDays(rawHours, workdayHours)
-  const overtimePay = rawOvertimeHours * otRate * hourlyRate
-  const undertimePay = rawUndertimeHours * utRate * hourlyRate
+  const overtimePay = attendancePay(rawOvertimeHours, otRate, employee.dailySalary, workdayHours)
+  const undertimePay = attendancePay(rawUndertimeHours, utRate, employee.dailySalary, workdayHours)
   const expectedBaseFull = employee.dailySalary * monthDays
   const cappedEffectiveDays = monthDays > 0 ? Math.min(attendanceMetrics.effectiveDays, monthDays) : 0
   const attendancePayAdjustment = overtimePay - undertimePay
@@ -334,6 +335,8 @@ export const applyRules = (employee, attendanceItems, rules, config) => {
     daysNotWorked,
     rawOvertimeHours,
     rawUndertimeHours,
+    otRate,
+    utRate,
     baseFromDays,
     expectedBaseFull,
     cappedEffectiveDays,

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { applyRules } from '../src/rules.js'
 import { calculateEmployeePayroll } from '../src/payroll.js'
 import { normalizeProbationFields } from '../src/probation.js'
+import { attendancePay } from '../src/core.js'
 
 const near = (a, b, eps = 1e-9) => Math.abs(a - b) <= eps
 
@@ -22,7 +23,7 @@ const run = () => {
     workingDaysPerMonth: 22,
     monthDays: 30,
     overtimeRate: 0,
-    undertimeDeductionRate: 0
+    undertimeRate: 0
   }
 
   {
@@ -72,7 +73,7 @@ const run = () => {
     workingDaysPerMonth: 31,
     monthDays: 31,
     overtimeRate: 0,
-    undertimeDeductionRate: 0
+    undertimeRate: 0
   }
   const rules31 = [fixedDailyRule, hourlyProratedRule]
 
@@ -110,12 +111,12 @@ const run = () => {
   }
 
   {
-    const otConfig = { ...baseConfig, overtimeRate: 1.5, undertimeDeductionRate: 0.5 }
+    const otConfig = { ...baseConfig, overtimeRate: 1.5, undertimeRate: 0.5 }
     const attendanceItems = [{ hours: 4 }, { hours: -2 }]
     const r = applyRules(employee, attendanceItems, [], otConfig)
-    const hourlyRate = employee.dailySalary / otConfig.workdayHours
-    const expectedAdj = 4 * 1.5 * hourlyRate - 2 * 0.5 * hourlyRate
-    assert.ok(near(r.attendanceAdjustment, expectedAdj), `expected attendanceAdjustment ${expectedAdj}, got ${r.attendanceAdjustment}`)
+    const expectedAdj = attendancePay(4, 1.5, employee.dailySalary, otConfig.workdayHours)
+      - attendancePay(2, 0.5, employee.dailySalary, otConfig.workdayHours)
+    assert.equal(r.attendanceAdjustment, expectedAdj, `expected attendanceAdjustment ${expectedAdj}, got ${r.attendanceAdjustment}`)
     assert.ok(near(r.grossSalary, r.baseSalary + expectedAdj), `expected gross ${r.baseSalary + expectedAdj}, got ${r.grossSalary}`)
   }
 
@@ -202,6 +203,14 @@ const run = () => {
     assert.equal(result.ruleResults.bonuses.bonus_e, undefined, 'excluded bonus_e should not apply')
     assert.equal(result.ruleResults.bonuses.marital_bonus, undefined, 'excluded fixed marital_bonus should not apply')
     assert.ok(result.ruleResults.bonuses.extra, 'non-excluded bonus should apply')
+  }
+
+  {
+    const ot = attendancePay(47.92, 0.6, 3934000, 8)
+    const ut = attendancePay(12.73, 0.6, 3934000, 8)
+    assert.equal(ot, 14138796)
+    assert.equal(ut, 3755987)
+    assert.equal(ot - ut, 10382809)
   }
 }
 

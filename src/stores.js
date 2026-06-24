@@ -37,7 +37,7 @@ const DEFAULT_BASIC_CONFIG = {
   monthDays: 30,
   firstDayWeekday: 'Saturday',
   overtimeRate: 1.5,
-  undertimeDeductionRate: 0.5
+  undertimeRate: 0.5
 }
 
 const DEFAULT_THEME = {
@@ -96,7 +96,7 @@ const normalizeBasicConfig = (c) => ({
   ...DEFAULT_BASIC_CONFIG,
   ...c,
   overtimeRate: toNum(c?.overtimeRate, DEFAULT_BASIC_CONFIG.overtimeRate),
-  undertimeDeductionRate: toNum(c?.undertimeDeductionRate, DEFAULT_BASIC_CONFIG.undertimeDeductionRate)
+  undertimeRate: toNum(c?.undertimeRate ?? c?.undertimeDeductionRate, DEFAULT_BASIC_CONFIG.undertimeRate)
 })
 
 // Basic config store
@@ -387,7 +387,7 @@ export const resetRules = () => {
 export const updateBasicConfig = (updates) => {
   const normalized = { ...updates }
   if (updates.overtimeRate !== undefined) normalized.overtimeRate = toNum(updates.overtimeRate, DEFAULT_BASIC_CONFIG.overtimeRate)
-  if (updates.undertimeDeductionRate !== undefined) normalized.undertimeDeductionRate = toNum(updates.undertimeDeductionRate, DEFAULT_BASIC_CONFIG.undertimeDeductionRate)
+  if (updates.undertimeRate !== undefined) normalized.undertimeRate = toNum(updates.undertimeRate, DEFAULT_BASIC_CONFIG.undertimeRate)
   basicConfig.update(current => ({ ...current, ...normalized }))
 }
 
