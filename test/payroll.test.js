@@ -209,9 +209,9 @@ const run = () => {
     const hourly = 3934000 / 8
     const ot = attendancePay(47.92, 0.6, 3934000, 8)
     const ut = attendancePay(12.73, 0.6, 3934000, 8)
-    assert.ok(near(ot, (hourly * 0.6) / 47.92), `expected ot ${(hourly * 0.6) / 47.92}, got ${ot}`)
-    assert.ok(near(ut, (hourly * 0.6) / 12.73), `expected ut ${(hourly * 0.6) / 12.73}, got ${ut}`)
-    assert.ok(near(ot - ut, ((hourly * 0.6) / 47.92) - ((hourly * 0.6) / 12.73)), `expected ot-ut, got ${ot - ut}`)
+    assert.ok(near(ot, (hourly / 0.6) * 47.92), `expected ot ${(hourly / 0.6) * 47.92}, got ${ot}`)
+    assert.ok(near(ut, (hourly / 0.6) * 12.73), `expected ut ${(hourly / 0.6) * 12.73}, got ${ut}`)
+    assert.ok(near(ot - ut, ((hourly / 0.6) * 47.92) - ((hourly / 0.6) * 12.73)), `expected ot-ut, got ${ot - ut}`)
   }
 }
 

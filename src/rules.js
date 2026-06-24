@@ -253,9 +253,9 @@ export const applyRules = (employee, attendanceItems, rules, config) => {
   const workDays = attendanceMetrics.workDays
   const monthDays = attendanceMetrics.monthDays
   const expectedHours = workDays * workdayHours
-  const otRate = Number.isFinite(Number(config.overtimeRate)) ? Number(config.overtimeRate) : 1.5
+  const otRate = Number(config.overtimeRate)
   const rawUt = config.undertimeRate ?? config.undertimeDeductionRate
-  const utRate = Number.isFinite(Number(rawUt)) ? Number(rawUt) : 0.5
+  const utRate = Number(rawUt)
   const hoursAdjustment = (attendanceItems || []).reduce((sum, item) => {
     const hours = Number(item.hours) || 0
     if (hours > 0) return sum + hours * otRate
