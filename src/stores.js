@@ -54,11 +54,43 @@ export const resolvePrintLabels = (config = {}) => ({
   ...config?.printLabels
 })
 
+export const LOCALE_OPTIONS = [
+  { value: 'id-ID', label: 'Indonesian' },
+  { value: 'en-US', label: 'English (US)' },
+  { value: 'en-GB', label: 'English (UK)' },
+  { value: 'fa-IR', label: 'Persian' },
+  { value: 'ar-SA', label: 'Arabic' },
+  { value: 'de-DE', label: 'German' },
+  { value: 'fr-FR', label: 'French' },
+  { value: 'es-ES', label: 'Spanish' },
+  { value: 'nl-NL', label: 'Dutch' },
+  { value: 'pt-BR', label: 'Portuguese (Brazil)' },
+  { value: 'tr-TR', label: 'Turkish' },
+  { value: 'ja-JP', label: 'Japanese' },
+  { value: 'zh-CN', label: 'Chinese (Simplified)' },
+  { value: 'hi-IN', label: 'Hindi' }
+]
+
+const LOCALE_VALUES = new Set(LOCALE_OPTIONS.map((o) => o.value))
+
+export const resolveLocale = (locale) => {
+  const trimmed = String(locale ?? '').trim()
+  if (LOCALE_VALUES.has(trimmed)) return trimmed
+  if (!trimmed) return DEFAULT_BASIC_CONFIG.locale
+  try {
+    new Intl.DateTimeFormat(trimmed)
+    return trimmed
+  } catch {
+    return DEFAULT_BASIC_CONFIG.locale
+  }
+}
+
 const DEFAULT_BASIC_CONFIG = {
   organizationName: 'XPayroll',
   workdayHours: 8,
   workingDaysPerMonth: 22,
   currencySymbol: '$',
+  locale: 'id-ID',
   monthDays: 30,
   firstDayWeekday: 'Saturday',
   overtimeRate: 1.5,
@@ -122,6 +154,7 @@ const normalizeBasicConfig = (c) => ({
   ...DEFAULT_BASIC_CONFIG,
   ...c,
   printLabels: { ...DEFAULT_PRINT_LABELS, ...c?.printLabels },
+  locale: resolveLocale(c?.locale),
   overtimeRate: toNum(c?.overtimeRate, DEFAULT_BASIC_CONFIG.overtimeRate),
   undertimeRate: toNum(c?.undertimeRate ?? c?.undertimeDeductionRate, DEFAULT_BASIC_CONFIG.undertimeRate)
 })

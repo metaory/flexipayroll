@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { resolvePrintLabels, DEFAULT_PRINT_LABELS } from '../src/stores.js'
+import { formatLocalizedDate, formatLocalizedPeriod } from '../src/core.js'
 import {
   buildAdjustmentSection,
   buildEarningsSection,
@@ -96,6 +97,22 @@ const run = () => {
     assert.match(html, /section-title">Penyesuaian</)
     assert.match(html, /Gaji bersih/)
     assert.doesNotMatch(html, /section-title">Adjustments</)
+  }
+
+  {
+    const html = buildPrintHtml(baseResult, '2026-06', {
+      locale: 'fa-IR',
+      organizationName: 'Acme',
+      currencySymbol: '$'
+    })
+    assert.match(html, /۱۴۰۵\/۰۳/)
+    assert.doesNotMatch(html, /2026-06/)
+    assert.match(html, /Generated [\d۰-۹\/\-.]+ · XPayroll/)
+  }
+
+  {
+    assert.equal(formatLocalizedPeriod('2026-06', 'fa-IR'), '۱۴۰۵/۰۳')
+    assert.match(formatLocalizedDate(new Date(2026, 5, 24), 'fa-IR'), /۱۴۰۵/)
   }
 
   console.log('print.test.js: all passed')

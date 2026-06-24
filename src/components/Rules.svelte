@@ -1,6 +1,6 @@
 <script>
   import Icon from '@iconify/svelte/dist/OfflineIcon.svelte'
-  import { rules, basicConfig, addRule, updateRule, removeRule, toggleRule, reorderRules, resetRules, updateBasicConfig, PRINT_LABEL_FIELDS } from '../stores.js'
+  import { rules, basicConfig, addRule, updateRule, removeRule, toggleRule, reorderRules, resetRules, updateBasicConfig, PRINT_LABEL_FIELDS, LOCALE_OPTIONS } from '../stores.js'
   import { RULE_TYPES, RULE_CATEGORIES, CRITERIA_TYPES } from '../rules.js'
   import { ICONS } from '../lib/icons.js'
   import { toasts } from '../lib/toast.js'
@@ -24,6 +24,7 @@
     { key: 'undertimeRate', label: 'UT Rate', type: 'number', min: 0, max: 1, step: 'any', fallback: 0.5 },
     { key: 'workingDaysPerMonth', label: 'Days/Month', type: 'number', min: 1, max: 31, fallback: 22 },
     { key: 'currencySymbol', label: 'Currency', type: 'text', fallback: '$' },
+    { key: 'locale', label: 'Locale', type: 'select', fallback: 'id-ID', options: LOCALE_OPTIONS },
     { key: 'monthDays', label: 'Month Days', type: 'number', min: 28, max: 31, fallback: 30 },
     { key: 'firstDayWeekday', label: 'Week Start', type: 'select', fallback: 'Saturday', options: ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] }
   ]
@@ -142,7 +143,13 @@
           <span>{f.label}</span>
           {#if f.type === 'select'}
             <select value={basicConfigData[f.key] || f.fallback} onchange={(e) => updateBasicConfigField(f.key, e.target.value || f.fallback)}>
-              {#each f.options as opt}<option value={opt}>{opt}</option>{/each}
+              {#each f.options as opt}
+                {#if typeof opt === 'object'}
+                  <option value={opt.value}>{opt.label} ({opt.value})</option>
+                {:else}
+                  <option value={opt}>{opt}</option>
+                {/if}
+              {/each}
             </select>
           {:else}
             <input type={f.type} lang={f.type === 'number' ? 'en' : undefined} min={f.min} max={f.max} step={f.step}

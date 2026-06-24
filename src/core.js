@@ -178,6 +178,23 @@ export const formatDate = (date, locale = 'en-US') => {
   })
 }
 
+const localizedDateOptions = (locale, { day = true } = {}) => ({
+  year: 'numeric',
+  month: '2-digit',
+  ...(day ? { day: '2-digit' } : {}),
+  ...(String(locale).startsWith('fa') ? { calendar: 'persian' } : {})
+})
+
+export const formatLocalizedDate = (date = new Date(), locale = 'id-ID') =>
+  new Intl.DateTimeFormat(locale, localizedDateOptions(locale)).format(new Date(date))
+
+export const formatLocalizedPeriod = (period, locale = 'id-ID') => {
+  const [year, month] = String(period).split('-').map(Number)
+  if (!year || !month) return period
+  return new Intl.DateTimeFormat(locale, localizedDateOptions(locale, { day: false }))
+    .format(new Date(year, month - 1, 1))
+}
+
 export const formatTime = (time) => {
   if (!time) return ''
   return time.substring(0, 5) // HH:MM format

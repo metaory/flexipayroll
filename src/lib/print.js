@@ -3,9 +3,9 @@
  * Single-page summary for PDF export
  */
 
-import { formatCurrency } from '../core.js'
+import { formatCurrency, formatLocalizedDate, formatLocalizedPeriod } from '../core.js'
 import { getProbationLabel } from '../payroll.js'
-import { resolvePrintLabels } from '../stores.js'
+import { resolvePrintLabels, resolveLocale } from '../stores.js'
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
@@ -91,9 +91,11 @@ export const buildPrintHtml = (result, period, config = {}) => {
   const currencySymbol = config.currencySymbol ?? '$'
   const organizationName = config.organizationName ?? ''
   const labels = resolvePrintLabels(config)
-  const fmt = (v) => formatCurrency(v, 'id-ID', 'IDR', currencySymbol)
+  const locale = resolveLocale(config.locale)
+  const fmt = (v) => formatCurrency(v, locale, 'IDR', currencySymbol)
+  const periodLabel = formatLocalizedPeriod(period, locale)
   const probationLabel = getProbationLabel(result.employee)
-  const headerLine = `${esc(result.employee.name)} · ${esc(period)}`
+  const headerLine = `${esc(result.employee.name)} · ${esc(periodLabel)}`
   const probationLine = probationLabel
     ? `<p class="probation">${esc(probationLabel)}</p>`
     : ''
@@ -102,7 +104,7 @@ export const buildPrintHtml = (result, period, config = {}) => {
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Payslip - ${esc(result.employee.name)} - ${esc(period)}</title>
+  <title>Payslip - ${esc(result.employee.name)} - ${esc(periodLabel)}</title>
   <style>${styles}</style>
 </head>
 <body>
@@ -124,7 +126,7 @@ export const buildPrintHtml = (result, period, config = {}) => {
   
   ${section('Summary', row(labels.net, fmt(result.finalSalary), 'total'))}
 
-  <div class="footer">Generated ${new Date().toLocaleDateString()} · XPayroll</div>
+  <div class="footer">Generated ${formatLocalizedDate(new Date(), locale)} · XPayroll</div>
 </body>
 </html>`
 }
