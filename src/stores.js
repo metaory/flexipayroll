@@ -4,7 +4,7 @@
  */
 
 import { writable, derived, get } from 'svelte/store'
-import { storage } from './core.js'
+import { storage, normalizeAttendance } from './core.js'
 import { DEFAULT_RULES, createRule, validateRule, getNextOrder, ensureRuleId } from './rules.js'
 import { normalizeProbationFields } from './probation.js'
 
@@ -260,43 +260,83 @@ export const getAdjustments = (period, employeeId) =>
   get(adjustments)[period]?.[employeeId] || []
 
 // Attendance items actions
+const attendanceRecord = (period, employeeId, current) =>
+  normalizeAttendance(current[period]?.[employeeId])
+
 export const addAttendanceItem = (period, employeeId, item) => {
-  attendanceItems.update(current => ({
-    ...current,
-    [period]: {
-      ...current[period],
-      [employeeId]: [
-        ...(current[period]?.[employeeId] || []),
-        { id: `att_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`, ...item }
-      ]
+  attendanceItems.update(current => {
+    const record = attendanceRecord(period, employeeId, current)
+    return {
+      ...current,
+      [period]: {
+        ...current[period],
+        [employeeId]: {
+          ...record,
+          items: [
+            ...record.items,
+            { id: `att_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`, ...item }
+          ]
+        }
+      }
     }
-  }))
+  })
 }
 
 export const updateAttendanceItem = (period, employeeId, itemId, updates) => {
-  attendanceItems.update(current => ({
-    ...current,
-    [period]: {
-      ...current[period],
-      [employeeId]: (current[period]?.[employeeId] || []).map(item => 
-        item.id === itemId ? { ...item, ...updates } : item
-      )
+  attendanceItems.update(current => {
+    const record = attendanceRecord(period, employeeId, current)
+    return {
+      ...current,
+      [period]: {
+        ...current[period],
+        [employeeId]: {
+          ...record,
+          items: record.items.map(item =>
+            item.id === itemId ? { ...item, ...updates } : item
+          )
+        }
+      }
     }
-  }))
+  })
 }
 
 export const removeAttendanceItem = (period, employeeId, itemId) => {
-  attendanceItems.update(current => ({
-    ...current,
-    [period]: {
-      ...current[period],
-      [employeeId]: (current[period]?.[employeeId] || []).filter(item => item.id !== itemId)
+  attendanceItems.update(current => {
+    const record = attendanceRecord(period, employeeId, current)
+    return {
+      ...current,
+      [period]: {
+        ...current[period],
+        [employeeId]: {
+          ...record,
+          items: record.items.filter(item => item.id !== itemId)
+        }
+      }
     }
-  }))
+  })
 }
 
-export const getAttendanceItems = (period, employeeId) => 
-  get(attendanceItems)[period]?.[employeeId] || []
+export const setAbsentDays = (period, employeeId, absent) => {
+  attendanceItems.update(current => {
+    const record = attendanceRecord(period, employeeId, current)
+    return {
+      ...current,
+      [period]: {
+        ...current[period],
+        [employeeId]: {
+          ...record,
+          absent: Math.max(0, Math.floor(Number(absent) || 0))
+        }
+      }
+    }
+  })
+}
+
+export const getAttendanceItems = (period, employeeId) =>
+  attendanceRecord(period, employeeId, get(attendanceItems)).items
+
+export const getAbsentDays = (period, employeeId) =>
+  attendanceRecord(period, employeeId, get(attendanceItems)).absent
 
 // Payroll actions
 export const setPayroll = (period, employeeId, data) => {

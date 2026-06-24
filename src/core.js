@@ -71,6 +71,16 @@ export const validateAttendance = (data) => {
 
 export const round2 = (n) => Math.round(n * 100) / 100
 
+/** Legacy item arrays or { items, absent } attendance records */
+export const normalizeAttendance = (data) => {
+  if (Array.isArray(data)) return { items: data, absent: 0 }
+  if (!data || typeof data !== 'object') return { items: [], absent: 0 }
+  return {
+    items: Array.isArray(data.items) ? data.items : [],
+    absent: Math.max(0, Math.floor(Number(data.absent) || 0))
+  }
+}
+
 /** (hourlyRate ÷ rate) × hours where hourlyRate = dailySalary / workdayHours */
 export const attendancePay = (hours, rate, dailySalary, workdayHours) => {
   const h = Number(hours)

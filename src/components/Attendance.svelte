@@ -1,6 +1,6 @@
 <script>
   import Icon from '@iconify/svelte/dist/OfflineIcon.svelte'
-  import { addAttendanceItem, updateAttendanceItem, removeAttendanceItem, getAttendanceItems } from '../stores.js'
+  import { addAttendanceItem, updateAttendanceItem, removeAttendanceItem, getAttendanceItems, getAbsentDays, setAbsentDays } from '../stores.js'
   import { round2 } from '../core.js'
   import { ICONS } from '../lib/icons.js'
   import { toasts } from '../lib/toast.js'
@@ -43,10 +43,22 @@
     return acc
   }, {})
 
+  const loadAbsent = () => employees.reduce((acc, emp) => {
+    acc[emp.id] = getAbsentDays(period, emp.id)
+    return acc
+  }, {})
+
   let itemsData = $state(loadItems())
+  let absentData = $state(loadAbsent())
   
   $effect(() => { forms = initForms() })
-  $effect(() => { itemsData = loadItems() })
+  $effect(() => { itemsData = loadItems(); absentData = loadAbsent() })
+
+  const handleAbsentChange = (employeeId, value) => {
+    const absent = Math.max(0, Math.floor(Number(value) || 0))
+    setAbsentDays(period, employeeId, absent)
+    absentData = { ...absentData, [employeeId]: absent }
+  }
 
   const handleAdd = (employeeId) => {
     const form = forms[employeeId]
@@ -134,6 +146,18 @@
             <h4>{employee.name}</h4>
             <div class="employee-meta">
               <span>{employee.gender} • {employee.maritalStatus} • {employee.childrenStatus === 'has_children' ? 'Has children' : 'No children'}</span>
+              <label class="absent-field">
+                <span>Absent</span>
+                <input
+                  type="number"
+                  lang="en"
+                  min="0"
+                  max="31"
+                  step="1"
+                  value={absentData[employee.id] ?? 0}
+                  oninput={(e) => handleAbsentChange(employee.id, e.currentTarget.value)}
+                />
+              </label>
               <span class="total-hours" class:positive={getTotal(employee.id) > 0} class:negative={getTotal(employee.id) < 0}>
                 Total: {formatHours(getTotal(employee.id))}
               </span>
@@ -286,6 +310,23 @@
 
     span:first-child
       @include card-text(0.9rem)
+
+    .absent-field
+      @extend %flex
+      align-items: center
+      gap: 0.35rem
+      font-size: 0.85rem
+      font-weight: 600
+
+      span
+        color: var(--fg-muted)
+
+      input
+        @extend %input-base
+        width: 3.5rem
+        padding: 0.25rem 0.4rem
+        text-align: center
+        font-size: 0.85rem
 
     .total-hours
       font-weight: 600
