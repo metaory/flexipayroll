@@ -478,7 +478,7 @@
         justify-content: space-between
         align-items: center
         padding: 0.5rem 0.85rem
-        border-radius: 0.45rem
+        border-radius: 0 0.4rem 0.4rem 0
         font-size: 0.9rem
         
         span:first-child
