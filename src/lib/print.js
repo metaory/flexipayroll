@@ -122,7 +122,7 @@ export const buildPrintHtml = (result, period, config = {}) => {
 
   ${section('Adjustments', buildAdjustmentSection(result, labels, fmt))}
   
-  ${section('Summary', row('Net', fmt(result.finalSalary), 'total'))}
+  ${section('Summary', row(labels.net, fmt(result.finalSalary), 'total'))}
 
   <div class="footer">Generated ${new Date().toLocaleDateString()} · XPayroll</div>
 </body>

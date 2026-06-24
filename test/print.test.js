@@ -3,8 +3,7 @@ import { resolvePrintLabels, DEFAULT_PRINT_LABELS } from '../src/stores.js'
 import {
   buildAdjustmentSection,
   buildEarningsSection,
-  buildPrintHtml,
-  row
+  buildPrintHtml
 } from '../src/lib/print.js'
 
 const fmt = (v) => `$${v}`
@@ -86,6 +85,15 @@ const run = () => {
     assert.match(html, /Acme/)
     assert.match(html, /Daily salary/)
     assert.match(html, /Adjustments/)
+    assert.match(html, />Net<\/span>/)
+  }
+
+  {
+    const html = buildPrintHtml(baseResult, '2026-01', {
+      printLabels: { net: 'Gaji bersih' }
+    })
+    assert.match(html, /Gaji bersih/)
+    assert.doesNotMatch(html, />Net<\/span>/)
   }
 
   console.log('print.test.js: all passed')

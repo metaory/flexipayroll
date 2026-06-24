@@ -34,7 +34,8 @@ export const DEFAULT_PRINT_LABELS = {
   dailySalary: 'Daily salary',
   adjustment: 'ADJUSTMENT',
   totalAdjustments: 'Total adjustments',
-  attendance: 'Attendance'
+  attendance: 'Attendance',
+  net: 'Net'
 }
 
 export const PRINT_LABEL_FIELDS = [
@@ -42,7 +43,8 @@ export const PRINT_LABEL_FIELDS = [
   { key: 'dailySalary', label: 'Daily salary', fallback: DEFAULT_PRINT_LABELS.dailySalary },
   { key: 'adjustment', label: 'Adjustment', fallback: DEFAULT_PRINT_LABELS.adjustment },
   { key: 'totalAdjustments', label: 'Total adjustments', fallback: DEFAULT_PRINT_LABELS.totalAdjustments },
-  { key: 'attendance', label: 'Attendance', fallback: DEFAULT_PRINT_LABELS.attendance }
+  { key: 'attendance', label: 'Attendance', fallback: DEFAULT_PRINT_LABELS.attendance },
+  { key: 'net', label: 'Net', fallback: DEFAULT_PRINT_LABELS.net }
 ]
 
 export const resolvePrintLabels = (config = {}) => ({
