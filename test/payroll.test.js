@@ -29,7 +29,7 @@ const run = () => {
   {
     const attendanceItems = [{ hours: -6.5 }]
     const r = applyRules(employee, attendanceItems, [], baseConfig)
-    const expected = employee.dailySalary * 30
+    const expected = employee.dailySalary * (baseConfig.workingDaysPerMonth - 1)
     assert.ok(near(r.baseFromDays, expected), `expected baseFromDays ${expected}, got ${r.baseFromDays}`)
     assert.ok(near(r.baseSalary, expected), `expected baseSalary ${expected}, got ${r.baseSalary}`)
   }
@@ -37,8 +37,8 @@ const run = () => {
   {
     const attendanceItems = [{ hours: 6.5 * 20 }]
     const r = applyRules(employee, attendanceItems, [], baseConfig)
-    assert.ok(near(r.cappedEffectiveDays, baseConfig.monthDays), `expected cappedEffectiveDays ${baseConfig.monthDays}, got ${r.cappedEffectiveDays}`)
-    const expected = employee.dailySalary * baseConfig.monthDays
+    assert.ok(near(r.cappedEffectiveDays, baseConfig.workingDaysPerMonth), `expected cappedEffectiveDays ${baseConfig.workingDaysPerMonth}, got ${r.cappedEffectiveDays}`)
+    const expected = employee.dailySalary * baseConfig.workingDaysPerMonth
     assert.ok(near(r.baseFromDays, expected), `expected baseFromDays ${expected}, got ${r.baseFromDays}`)
     assert.ok(near(r.baseSalary, expected), `expected baseSalary ${expected}, got ${r.baseSalary}`)
   }
@@ -46,16 +46,16 @@ const run = () => {
   {
     const attendanceItems = [{ hours: -6.5 * 3 }]
     const r = applyRules(employee, attendanceItems, [fixedDailyRule], baseConfig)
-    assert.ok(near(r.effectiveDays, 27), `expected effectiveDays 27, got ${r.effectiveDays}`)
-    const expectedRuleValue = (fixedDailyRule.value * 27) / 30
+    assert.ok(near(r.effectiveDays, 19), `expected effectiveDays 19, got ${r.effectiveDays}`)
+    const expectedRuleValue = (fixedDailyRule.value * 19) / 30
     assert.ok(near(r.bonuses.fdp.value, expectedRuleValue), `expected fixed_daily_prorated ${expectedRuleValue}, got ${r.bonuses.fdp.value}`)
   }
 
   {
     const attendanceItems = [{ hours: 6.5 * 40 }]
     const r = applyRules(employee, attendanceItems, [fixedDailyRule], baseConfig)
-    assert.ok(near(r.effectiveDays, 30), `expected capped effectiveDays 30, got ${r.effectiveDays}`)
-    assert.ok(near(r.bonuses.fdp.value, fixedDailyRule.value), `expected fixed_daily_prorated ${fixedDailyRule.value}, got ${r.bonuses.fdp.value}`)
+    assert.ok(near(r.effectiveDays, 22), `expected effectiveDays 22, got ${r.effectiveDays}`)
+    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 22) / 30), `expected fixed_daily_prorated ${(fixedDailyRule.value * 22) / 30}, got ${r.bonuses.fdp.value}`)
   }
 
   const hourlyProratedRule = {
@@ -97,6 +97,7 @@ const run = () => {
     const r = applyRules(employee, attendanceItems, rules31, config31)
     const expected = (fixedDailyRule.value * 30) / 31
     assert.ok(near(r.effectiveDays, 30), `expected effectiveDays 30, got ${r.effectiveDays}`)
+    assert.ok(near(r.baseSalary, employee.dailySalary * 30), `expected baseSalary ${employee.dailySalary * 30}, got ${r.baseSalary}`)
     assert.ok(near(r.bonuses.fdp.value, expected), `expected fixed_daily_prorated ${expected}, got ${r.bonuses.fdp.value}`)
     assert.ok(near(r.bonuses.hp.value, (hourlyProratedRule.value * 30) / 31), `expected hourly_prorated ${(hourlyProratedRule.value * 30) / 31}, got ${r.bonuses.hp.value}`)
   }
@@ -106,8 +107,16 @@ const run = () => {
     const r = applyRules(employee, attendanceItems, rules31, config31)
     const expected = (fixedDailyRule.value * 30) / 31
     assert.ok(near(r.effectiveDays, 30), `expected effectiveDays 30, got ${r.effectiveDays}`)
+    assert.ok(near(r.baseSalary, employee.dailySalary * 30), `expected baseSalary ${employee.dailySalary * 30}, got ${r.baseSalary}`)
     assert.ok(near(r.bonuses.fdp.value, expected), `expected fixed_daily_prorated ${expected}, got ${r.bonuses.fdp.value}`)
     assert.ok(near(r.bonuses.hp.value, (hourlyProratedRule.value * 30) / 31), `expected hourly_prorated ${(hourlyProratedRule.value * 30) / 31}, got ${r.bonuses.hp.value}`)
+  }
+
+  {
+    const attendanceItems = [{ hours: -21 }]
+    const r = applyRules(employee, attendanceItems, [], { ...config31, workdayHours: 8, workingDaysPerMonth: 22, monthDays: 30 })
+    assert.ok(near(r.effectiveDays, 20), `expected effectiveDays 20 (22 - floor(21/8)), got ${r.effectiveDays}`)
+    assert.ok(near(r.baseSalary, employee.dailySalary * 20), `expected baseSalary ${employee.dailySalary * 20}, got ${r.baseSalary}`)
   }
 
   {
