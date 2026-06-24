@@ -71,14 +71,14 @@ export const validateAttendance = (data) => {
 
 export const round2 = (n) => Math.round(n * 100) / 100
 
-/** (hourlyRate × rate) ÷ hours where hourlyRate = dailySalary / workdayHours */
+/** (hourlyRate ÷ rate) × hours where hourlyRate = dailySalary / workdayHours */
 export const attendancePay = (hours, rate, dailySalary, workdayHours) => {
   const h = Number(hours)
   const r = Number(rate)
   const s = Number(dailySalary)
   const w = Number(workdayHours)
   if (!h || !r || !s || !w) return 0
-  return (s / w * r) / h
+  return (s / w / r) * h
 }
 
 export const calculateDailyRate = (dailySalary) => 

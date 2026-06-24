@@ -323,14 +323,14 @@ export const buildCalculationSteps = (result) => {
   const attendanceEffect = result.attendanceAdjustment ?? 0
   const overtimePay = result.ruleResults.overtimePay ?? 0
   const undertimePay = result.ruleResults.undertimePay ?? 0
-  const otRate = result.ruleResults.otRate ?? result.configSnapshot.overtimeRate ?? 1.5
-  const utRate = result.ruleResults.utRate ?? result.configSnapshot.undertimeRate ?? 0.5
+  const otRate = result.ruleResults.otRate ?? result.configSnapshot.overtimeRate
+  const utRate = result.ruleResults.utRate ?? result.configSnapshot.undertimeRate
   const hourly = fmtRate(result.hourlyRate)
   const otTerm = rawOvertimeHours > 0
-    ? `(${hourly}/h × ${otRate}) ÷ ${rawOvertimeHours.toFixed(2)}h = ${fmtAmt(overtimePay)}`
+    ? `(${hourly}/h ÷ ${otRate}) × ${rawOvertimeHours.toFixed(2)}h = ${fmtAmt(overtimePay)}`
     : null
   const utTerm = rawUndertimeHours > 0
-    ? `(${hourly}/h × ${utRate}) ÷ ${rawUndertimeHours.toFixed(2)}h = ${fmtAmt(undertimePay)}`
+    ? `(${hourly}/h ÷ ${utRate}) × ${rawUndertimeHours.toFixed(2)}h = ${fmtAmt(undertimePay)}`
     : null
   const otUtFormula = hasAttendanceHours
     ? `${[otTerm, utTerm].filter(Boolean).join(' − ')} = ${attendanceEffect >= 0 ? '+' : ''}${fmtAmt(attendanceEffect)}`
@@ -340,10 +340,10 @@ export const buildCalculationSteps = (result) => {
   steps.push(hasAttendanceHours
     ? {
         label: 'Overtime / Undertime',
-        formula: '(Hourly rate × Overtime rate ÷ Overtime hours) − (Hourly rate × Undertime rate ÷ Undertime hours)',
+        formula: '(Hourly rate ÷ Overtime rate × Overtime hours) − (Hourly rate ÷ Undertime rate × Undertime hours)',
         formulaWithValues: otUtFormula,
         result: attendanceEffect,
-        explanation: 'Overtime: (hourly salary rate × overtime rate from config) ÷ overtime hours worked extra. Undertime: (hourly salary rate × undertime rate from config) ÷ undertime hours missed. Net is overtime minus undertime.',
+        explanation: 'Overtime: (hourly salary rate ÷ overtimeRate from config) × overtime hours. Undertime: (hourly salary rate ÷ undertimeRate from config) × undertime hours. Net is overtime minus undertime.',
         inputs: { expectedHours, hourlyRate: result.hourlyRate, rawOvertimeHours, rawUndertimeHours, overtimePay, undertimePay },
         type: 'attendance',
         section: 'attendance'
