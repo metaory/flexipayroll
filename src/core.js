@@ -71,18 +71,14 @@ export const validateAttendance = (data) => {
 
 export const round2 = (n) => Math.round(n * 100) / 100
 
-const SCALE = 10000
-
-/** Integer-safe: (hours × rate × dailySalary) ÷ workdayHours → whole rupiah */
+/** (hourlyRate × rate) ÷ hours where hourlyRate = dailySalary / workdayHours */
 export const attendancePay = (hours, rate, dailySalary, workdayHours) => {
-  const h = BigInt(Math.round(Number(hours) * SCALE))
-  const r = BigInt(Math.round(Number(rate) * SCALE))
-  const s = BigInt(Math.round(Number(dailySalary)))
-  const w = BigInt(Math.round(Number(workdayHours) * SCALE))
-  if (h === 0n || r === 0n || w === 0n || s === 0n) return 0
-  const num = h * r * s
-  const den = w * BigInt(SCALE)
-  return Number((num + den / 2n) / den)
+  const h = Number(hours)
+  const r = Number(rate)
+  const s = Number(dailySalary)
+  const w = Number(workdayHours)
+  if (!h || !r || !s || !w) return 0
+  return (s / w * r) / h
 }
 
 export const calculateDailyRate = (dailySalary) => 

@@ -327,10 +327,10 @@ export const buildCalculationSteps = (result) => {
   const utRate = result.ruleResults.utRate ?? result.configSnapshot.undertimeRate ?? 0.5
   const hourly = fmtRate(result.hourlyRate)
   const otTerm = rawOvertimeHours > 0
-    ? `((${rawOvertimeHours.toFixed(2)}h × ${otRate}) × ${hourly}/h) = ${fmtAmt(overtimePay)}`
+    ? `(${hourly}/h × ${otRate}) ÷ ${rawOvertimeHours.toFixed(2)}h = ${fmtAmt(overtimePay)}`
     : null
   const utTerm = rawUndertimeHours > 0
-    ? `((${rawUndertimeHours.toFixed(2)}h × ${utRate}) × ${hourly}/h) = ${fmtAmt(undertimePay)}`
+    ? `(${hourly}/h × ${utRate}) ÷ ${rawUndertimeHours.toFixed(2)}h = ${fmtAmt(undertimePay)}`
     : null
   const otUtFormula = hasAttendanceHours
     ? `${[otTerm, utTerm].filter(Boolean).join(' − ')} = ${attendanceEffect >= 0 ? '+' : ''}${fmtAmt(attendanceEffect)}`
@@ -340,10 +340,10 @@ export const buildCalculationSteps = (result) => {
   steps.push(hasAttendanceHours
     ? {
         label: 'Overtime / Undertime',
-        formula: '((OT hours × OT rate) × Hourly rate) − ((UT hours × UT rate) × Hourly rate)',
+        formula: '(Hourly rate × Overtime rate ÷ Overtime hours) − (Hourly rate × Undertime rate ÷ Undertime hours)',
         formulaWithValues: otUtFormula,
         result: attendanceEffect,
-        explanation: 'Attendance adjustment is hour-based. Entered hours/minutes in attendance directly impact payroll using OT/UT rates.',
+        explanation: 'Overtime: (hourly salary rate × overtime rate from config) ÷ overtime hours worked extra. Undertime: (hourly salary rate × undertime rate from config) ÷ undertime hours missed. Net is overtime minus undertime.',
         inputs: { expectedHours, hourlyRate: result.hourlyRate, rawOvertimeHours, rawUndertimeHours, overtimePay, undertimePay },
         type: 'attendance',
         section: 'attendance'
