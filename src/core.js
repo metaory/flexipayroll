@@ -71,6 +71,20 @@ export const validateAttendance = (data) => {
 
 export const round2 = (n) => Math.round(n * 100) / 100
 
+const SCALE = 10000
+
+/** Integer-safe: (hours × rate × dailySalary) ÷ workdayHours → whole rupiah */
+export const attendancePay = (hours, rate, dailySalary, workdayHours) => {
+  const h = BigInt(Math.round(Number(hours) * SCALE))
+  const r = BigInt(Math.round(Number(rate) * SCALE))
+  const s = BigInt(Math.round(Number(dailySalary)))
+  const w = BigInt(Math.round(Number(workdayHours) * SCALE))
+  if (h === 0n || r === 0n || w === 0n || s === 0n) return 0
+  const num = h * r * s
+  const den = w * BigInt(SCALE)
+  return Number((num + den / 2n) / den)
+}
+
 export const calculateDailyRate = (dailySalary) => 
   dailySalary
 
@@ -122,7 +136,7 @@ export const stringToColor = (str) => {
 // FORMAT UTILITIES
 // ============================================================================
 
-export const formatCurrency = (amount, locale = 'id-ID', currency = 'IDR', currencySymbol = null) => {
+export const formatCurrency = (amount, locale = 'id-ID', currency = 'IDR', currencySymbol = null, decimals = 0) => {
   // Handle undefined, null, or NaN values
   if (amount === undefined || amount === null || isNaN(amount)) {
     return currencySymbol ? `${currencySymbol} 0` : '0'
@@ -133,15 +147,15 @@ export const formatCurrency = (amount, locale = 'id-ID', currency = 'IDR', curre
   
   if (currencySymbol) {
     return `${currencySymbol} ${numAmount.toLocaleString(locale, {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
     })}`
   }
   return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
   }).format(numAmount)
 }
 

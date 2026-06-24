@@ -316,21 +316,31 @@ export const buildCalculationSteps = (result) => {
   const workdayHours = result.configSnapshot.workdayHours
   const expectedHours = workDays * workdayHours
   const fmtRate = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  const attendanceEffect = result.attendanceAdjustment ?? 0
-  const hasAttendanceEffect = attendanceEffect !== 0
-  const overtimePay = result.ruleResults.overtimePay ?? 0
-  const undertimePay = result.ruleResults.undertimePay ?? 0
+  const fmtAmt = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })
   const rawOvertimeHours = result.ruleResults.rawOvertimeHours ?? 0
   const rawUndertimeHours = result.ruleResults.rawUndertimeHours ?? 0
+  const hasAttendanceHours = rawOvertimeHours > 0 || rawUndertimeHours > 0
+  const attendanceEffect = result.attendanceAdjustment ?? 0
+  const overtimePay = result.ruleResults.overtimePay ?? 0
+  const undertimePay = result.ruleResults.undertimePay ?? 0
+  const otRate = result.ruleResults.otRate ?? result.configSnapshot.overtimeRate ?? 1.5
+  const utRate = result.ruleResults.utRate ?? result.configSnapshot.undertimeRate ?? 0.5
+  const hourly = fmtRate(result.hourlyRate)
+  const otTerm = rawOvertimeHours > 0
+    ? `((${rawOvertimeHours.toFixed(2)}h × ${otRate}) × ${hourly}/h) = ${fmtAmt(overtimePay)}`
+    : null
+  const utTerm = rawUndertimeHours > 0
+    ? `((${rawUndertimeHours.toFixed(2)}h × ${utRate}) × ${hourly}/h) = ${fmtAmt(undertimePay)}`
+    : null
+  const otUtFormula = hasAttendanceHours
+    ? `${[otTerm, utTerm].filter(Boolean).join(' − ')} = ${attendanceEffect >= 0 ? '+' : ''}${fmtAmt(attendanceEffect)}`
+    : null
   const dailyRate = result.employee.dailySalary
   const monthDays = result.configSnapshot?.monthDays ?? 30
-  const otUtFormula = hasAttendanceEffect
-    ? `(OT ${rawOvertimeHours.toFixed(2)}h × OT rate − UT ${rawUndertimeHours.toFixed(2)}h × UT rate) × ${fmtRate(result.hourlyRate)}/h = +${overtimePay.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} - ${undertimePay.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} = ${attendanceEffect >= 0 ? '+' : ''}${attendanceEffect.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
-    : null
-  steps.push(hasAttendanceEffect
+  steps.push(hasAttendanceHours
     ? {
         label: 'Overtime / Undertime',
-        formula: '(OT hours × OT rate × Hourly rate) − (UT hours × UT rate × Hourly rate)',
+        formula: '((OT hours × OT rate) × Hourly rate) − ((UT hours × UT rate) × Hourly rate)',
         formulaWithValues: otUtFormula,
         result: attendanceEffect,
         explanation: 'Attendance adjustment is hour-based. Entered hours/minutes in attendance directly impact payroll using OT/UT rates.',

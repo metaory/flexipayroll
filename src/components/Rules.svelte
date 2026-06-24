@@ -21,7 +21,7 @@
     { key: 'organizationName', label: 'Organization', type: 'text', fallback: '' },
     { key: 'workdayHours', label: 'Hours/Day', type: 'number', min: 1, max: 24, step: 0.5, fallback: 8 },
     { key: 'overtimeRate', label: 'OT Rate', type: 'number', min: 0, max: 10, step: 'any', fallback: 1.5 },
-    { key: 'undertimeDeductionRate', label: 'UT Deduction', type: 'number', min: 0, max: 1, step: 'any', fallback: 0.5 },
+    { key: 'undertimeRate', label: 'UT Rate', type: 'number', min: 0, max: 1, step: 'any', fallback: 0.5 },
     { key: 'workingDaysPerMonth', label: 'Days/Month', type: 'number', min: 1, max: 31, fallback: 22 },
     { key: 'currencySymbol', label: 'Currency', type: 'text', fallback: '$' },
     { key: 'monthDays', label: 'Month Days', type: 'number', min: 28, max: 31, fallback: 30 },

@@ -64,6 +64,7 @@ const getAdjustmentRows = (result, fmt) =>
 
 export const printEmployeeReport = (result, period, currencySymbol = '$', organizationName = '') => {
   const fmt = (v) => formatCurrency(v, 'id-ID', 'IDR', currencySymbol)
+  const hasAttendanceHours = (result.ruleResults?.rawOvertimeHours ?? 0) > 0 || (result.ruleResults?.rawUndertimeHours ?? 0) > 0
   const applied = getAppliedRules(result)
   const expectedMonthBase = result.baseSalary
   const grossBeforeAdjustments = result.grossSalary - (result.adjustmentTotal || 0)
@@ -99,7 +100,7 @@ export const printEmployeeReport = (result, period, currencySymbol = '$', organi
     row('Expected month base', fmt(expectedMonthBase)),
     ...applied.bonuses.map(b => row(b.label, '+' + fmt(b.value))),
     ...applied.deductions.map(d => row(d.label, '-' + fmt(d.value))),
-    row(`Attendance (OT ${Number(result.ruleResults?.rawOvertimeHours || 0).toFixed(2)}h, UT ${Number(result.ruleResults?.rawUndertimeHours || 0).toFixed(2)}h)`, `${result.attendanceAdjustment >= 0 ? '+' : '-'}${fmt(Math.abs(result.attendanceAdjustment || 0))}`),
+    ...(hasAttendanceHours ? [row(`Attendance (OT ${Number(result.ruleResults?.rawOvertimeHours || 0).toFixed(2)}h, UT ${Number(result.ruleResults?.rawUndertimeHours || 0).toFixed(2)}h)`, `${result.attendanceAdjustment >= 0 ? '+' : '-'}${fmt(Math.abs(result.attendanceAdjustment || 0))}`)] : []),
     row('Gross', fmt(grossBeforeAdjustments), 'subtotal')
   ].filter(Boolean).join(''))}
 

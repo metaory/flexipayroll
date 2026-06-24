@@ -19,6 +19,8 @@
   }
   
   const fmt = (v) => formatCurrency(v, 'id-ID', 'IDR', $basicConfig.currencySymbol)
+  const hasAttendanceHours = (result) =>
+    (result.ruleResults?.rawOvertimeHours ?? 0) > 0 || (result.ruleResults?.rawUndertimeHours ?? 0) > 0
   const SECTION_LABELS = {
     inputs: 'Rates & inputs',
     attendance: 'Overtime / Undertime',
@@ -65,7 +67,7 @@
     const applied = getAppliedRules(result)
     return [
       { label: 'Base Salary', value: result.baseSalary, type: 'base', sign: '+' },
-      ...(result.attendanceAdjustment !== 0 ? [{ label: 'Overtime / Undertime', value: result.attendanceAdjustment, type: 'attendance', sign: result.attendanceAdjustment > 0 ? '+' : '-' }] : []),
+      ...(hasAttendanceHours(result) ? [{ label: 'Overtime / Undertime', value: result.attendanceAdjustment, type: 'attendance', sign: result.attendanceAdjustment >= 0 ? '+' : '-' }] : []),
       ...applied.bonuses.map(b => ({ label: b.label, value: b.value, type: 'bonus', sign: '+' })),
       ...(result.adjustmentTotal !== 0 ? [{ label: 'Adjustments', value: result.adjustmentTotal, type: 'adjustment', sign: result.adjustmentTotal > 0 ? '+' : '-' }] : []),
       { label: 'Gross Salary', value: result.grossSalary, type: 'subtotal', sign: '=' },
@@ -155,8 +157,8 @@
       
       <div class="summary-rows">
         <div class="row base"><span>Base Salary</span><span>{fmt(selectedResult.baseSalary)}</span></div>
-        {#if selectedResult.attendanceAdjustment !== 0}
-          <div class="row attendance"><span>Overtime / Undertime</span><span>{selectedResult.attendanceAdjustment > 0 ? '+' : '-'}{fmt(Math.abs(selectedResult.attendanceAdjustment))}</span></div>
+        {#if hasAttendanceHours(selectedResult)}
+          <div class="row attendance"><span>Overtime / Undertime</span><span>{selectedResult.attendanceAdjustment >= 0 ? '+' : '-'}{fmt(Math.abs(selectedResult.attendanceAdjustment))}</span></div>
         {/if}
         {#each getAppliedRules(selectedResult).bonuses as bonus}
           <div class="row bonus"><span>{bonus.label}</span><span>+{fmt(bonus.value)}</span></div>
