@@ -4,7 +4,7 @@
  */
 
 import { calculateDailyRate, calculateHourlyRate } from './core.js'
-import { applyRules, RULE_TYPES } from './rules.js'
+import { applyRules, RULE_TYPES, bonusProrationRatio, FULL_BONUS_DAYS_THRESHOLD } from './rules.js'
 import {
   getProbationLabel,
   getActiveProbationRules,
@@ -119,16 +119,20 @@ const createFixedRuleStep = (ruleData, _result, type) => ({
 const createHourlyProratedStep = (ruleData, result, type) => {
   const monthDays = result.configSnapshot?.monthDays ?? 30
   const effectiveDays = result.ruleResults?.effectiveDays ?? monthDays
-  const cappedEffectiveDays = Math.min(effectiveDays, monthDays)
+  const ratio = bonusProrationRatio(effectiveDays, monthDays)
   const fullValue = ruleData.rule.value
-  const formulaWithValues = `(${fullValue.toLocaleString()} × min(${effectiveDays}, ${monthDays})) ÷ ${monthDays} = ${ruleData.value.toLocaleString()}`
+  const formulaWithValues = ratio >= 1
+    ? `${fullValue.toLocaleString()} = ${ruleData.value.toLocaleString()}`
+    : `(${fullValue.toLocaleString()} × ${effectiveDays}) ÷ ${monthDays} = ${ruleData.value.toLocaleString()}`
   return {
     label: ruleData.rule.label,
-    formula: '(Value × Effective days) ÷ Month days',
+    formula: ratio >= 1 ? `Full bonus (≥ ${FULL_BONUS_DAYS_THRESHOLD} effective days)` : '(Value × Effective days) ÷ Month days',
     formulaWithValues,
     result: ruleData.value,
-    explanation: `${type.charAt(0).toUpperCase() + type.slice(1)} uses absent days from attendance, capped at month days.`,
-    inputs: { fullValue, effectiveDays, cappedEffectiveDays, monthDays },
+    explanation: ratio >= 1
+      ? `${type.charAt(0).toUpperCase() + type.slice(1)} is paid in full because effective work days (${effectiveDays}) are at least ${FULL_BONUS_DAYS_THRESHOLD}.`
+      : `${type.charAt(0).toUpperCase() + type.slice(1)} is prorated by effective work days when below ${FULL_BONUS_DAYS_THRESHOLD}.`,
+    inputs: { fullValue, effectiveDays, monthDays, ratio },
     type
   }
 }
@@ -136,14 +140,19 @@ const createHourlyProratedStep = (ruleData, result, type) => {
 const createFixedDailyProratedStep = (ruleData, result, type) => {
   const monthDays = result.configSnapshot?.monthDays ?? 30
   const effectiveDays = result.ruleResults?.effectiveDays ?? monthDays
-  const cappedEffectiveDays = Math.min(effectiveDays, monthDays)
+  const ratio = bonusProrationRatio(effectiveDays, monthDays)
+  const formulaWithValues = ratio >= 1
+    ? `${ruleData.rule.value.toLocaleString()} = ${ruleData.value.toLocaleString()}`
+    : `(${ruleData.rule.value.toLocaleString()} × ${effectiveDays}) ÷ ${monthDays} = ${ruleData.value.toLocaleString()}`
   return {
     label: ruleData.rule.label,
-    formula: '(Fixed amount × Effective days) ÷ Month days',
-    formulaWithValues: `(${ruleData.rule.value.toLocaleString()} × min(${effectiveDays}, ${monthDays})) ÷ ${monthDays} = ${ruleData.value.toLocaleString()}`,
+    formula: ratio >= 1 ? `Full bonus (≥ ${FULL_BONUS_DAYS_THRESHOLD} effective days)` : '(Fixed amount × Effective days) ÷ Month days',
+    formulaWithValues,
     result: ruleData.value,
-    explanation: `${type.charAt(0).toUpperCase() + type.slice(1)} uses day blocks from attendance and is capped at 100% of the fixed amount.`,
-    inputs: { amount: ruleData.rule.value, effectiveDays, cappedEffectiveDays, monthDays },
+    explanation: ratio >= 1
+      ? `${type.charAt(0).toUpperCase() + type.slice(1)} is paid in full because effective work days (${effectiveDays}) are at least ${FULL_BONUS_DAYS_THRESHOLD}.`
+      : `${type.charAt(0).toUpperCase() + type.slice(1)} is prorated by effective work days when below ${FULL_BONUS_DAYS_THRESHOLD}.`,
+    inputs: { amount: ruleData.rule.value, effectiveDays, monthDays, ratio },
     type
   }
 }
@@ -157,15 +166,19 @@ const createDaysMultiplierStep = (ruleData, result, type) => {
   const fullMonthValue = ruleData.rule.value * dailyRate
   const fmt = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   const deltaStr = attendanceDelta >= 0 ? `+${attendanceDelta}` : `${attendanceDelta}`
-  const ratio = monthDays > 0 ? effectiveDays / monthDays : 0
-  const formulaWithValues = `(${ruleData.rule.value} × ${fmt(dailyRate)}) × (${effectiveDays} ÷ ${monthDays}) = ${fmt(fullMonthValue)} × ${ratio.toFixed(4)} = ${ruleData.value.toLocaleString()}`
+  const ratio = bonusProrationRatio(effectiveDays, monthDays)
+  const formulaWithValues = ratio >= 1
+    ? `${ruleData.rule.value} × ${fmt(dailyRate)} = ${ruleData.value.toLocaleString()}`
+    : `(${ruleData.rule.value} × ${fmt(dailyRate)}) × (${effectiveDays} ÷ ${monthDays}) = ${fmt(fullMonthValue)} × ${ratio.toFixed(4)} = ${ruleData.value.toLocaleString()}`
   return {
     label: ruleData.rule.label,
-    formula: '(Multiplier × Daily salary) × (Effective days ÷ Month days)',
+    formula: ratio >= 1 ? '(Multiplier × Daily salary) — full bonus' : '(Multiplier × Daily salary) × (Effective days ÷ Month days)',
     formulaWithValues,
     result: ruleData.value,
-    explanation: `${type.charAt(0).toUpperCase() + type.slice(1)} uses effective days (${effectiveDays}) from absent days entered on the attendance page (month baseline ${monthDays}, attendance delta ${deltaStr}).`,
-    inputs: { fullMonthValue, totalDaysWorked, effectiveDays, monthDays, dailyRate, multiplier: ruleData.rule.value },
+    explanation: ratio >= 1
+      ? `${type.charAt(0).toUpperCase() + type.slice(1)} is paid in full because effective work days (${effectiveDays}) are at least ${FULL_BONUS_DAYS_THRESHOLD}.`
+      : `${type.charAt(0).toUpperCase() + type.slice(1)} uses effective days (${effectiveDays}) from absent days on the attendance page (month baseline ${monthDays}, attendance delta ${deltaStr}).`,
+    inputs: { fullMonthValue, totalDaysWorked, effectiveDays, monthDays, dailyRate, multiplier: ruleData.rule.value, ratio },
     type
   }
 }
