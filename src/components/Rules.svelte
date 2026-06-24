@@ -1,6 +1,6 @@
 <script>
   import Icon from '@iconify/svelte/dist/OfflineIcon.svelte'
-  import { rules, basicConfig, addRule, updateRule, removeRule, toggleRule, reorderRules, resetRules, updateBasicConfig } from '../stores.js'
+  import { rules, basicConfig, addRule, updateRule, removeRule, toggleRule, reorderRules, resetRules, updateBasicConfig, PRINT_LABEL_FIELDS } from '../stores.js'
   import { RULE_TYPES, RULE_CATEGORIES, CRITERIA_TYPES } from '../rules.js'
   import { ICONS } from '../lib/icons.js'
   import { toasts } from '../lib/toast.js'
@@ -63,6 +63,12 @@
   const updateBasicConfigField = (field, value) => {
     basicConfigData = { ...basicConfigData, [field]: value }
     updateBasicConfig({ [field]: value })
+  }
+
+  const updatePrintLabel = (key, fallback, value) => {
+    const printLabels = { ...basicConfigData.printLabels, [key]: value || fallback }
+    basicConfigData = { ...basicConfigData, printLabels }
+    updateBasicConfig({ printLabels })
   }
 
   // Storage reset
@@ -147,6 +153,18 @@
                 updateBasicConfigField(f.key, val)
               }} />
           {/if}
+          <small>{f.key}</small>
+        </label>
+      {/each}
+    </div>
+    <h4 class="config-subhead">Print labels</h4>
+    <div class="config-grid">
+      {#each PRINT_LABEL_FIELDS as f}
+        <label class="field">
+          <span>{f.label}</span>
+          <input type="text"
+            value={basicConfigData.printLabels?.[f.key] ?? f.fallback}
+            oninput={(e) => updatePrintLabel(f.key, f.fallback, e.target.value)} />
           <small>{f.key}</small>
         </label>
       {/each}
@@ -294,6 +312,11 @@
       margin-bottom: 1rem
       font-size: 1.5rem
       color: var(--primary)
+
+  .config-subhead
+    margin: 1rem 0 0.75rem
+    font-size: 1.1rem
+    color: var(--fg)
 
   .config-grid
     @include auto-grid(200px)

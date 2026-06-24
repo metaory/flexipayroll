@@ -5,6 +5,7 @@
 
 import { formatCurrency } from '../core.js'
 import { getProbationLabel } from '../payroll.js'
+import { resolvePrintLabels } from '../stores.js'
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
@@ -29,9 +30,11 @@ const styles = `
   @media print { body { padding: 0.5rem; } }
 `
 
-const row = (label, value, cls = '') => `<div class="row ${cls}"><span class="label">${esc(label)}</span><span class="value">${esc(value)}</span></div>`
+export const row = (label, value, cls = '') => `<div class="row ${cls}"><span class="label">${esc(label)}</span><span class="value">${esc(value)}</span></div>`
 
 const section = (title, content) => `<div class="section"><div class="section-title">${esc(title)}</div>${content}</div>`
+
+const signedFmt = (value, fmt) => `${value >= 0 ? '+' : '-'}${fmt(Math.abs(value || 0))}`
 
 const getAppliedRules = (result) => {
   const applied = { bonuses: [], deductions: [] }
@@ -51,32 +54,51 @@ const getAppliedRules = (result) => {
   return applied
 }
 
-const getAdjustmentRows = (result, fmt) =>
+export const getAdjustmentRows = (result, labels, fmt) =>
   (result.adjustments || [])
     .map((item) => {
       const amount = Number(item?.amount) || 0
       if (amount === 0) return ''
-      const label = item?.label ? `${item.label}` : 'Adjustment'
-      const sign = amount > 0 ? '+' : '-'
-      return row(label, `${sign}${fmt(Math.abs(amount))}`)
+      const label = item?.label ? `${item.label}` : labels.adjustment
+      return row(label, signedFmt(amount, fmt))
     })
     .filter(Boolean)
 
-export const printEmployeeReport = (result, period, currencySymbol = '$', organizationName = '') => {
-  const fmt = (v) => formatCurrency(v, 'id-ID', 'IDR', currencySymbol)
+export const buildAdjustmentSection = (result, labels, fmt) => {
+  const totalAdjustments = result.adjustmentTotal || 0
+  const itemRows = getAdjustmentRows(result, labels, fmt)
+  return [
+    ...(itemRows.length ? itemRows : [row(labels.adjustment, '-')]),
+    row(labels.totalAdjustments, signedFmt(totalAdjustments, fmt), 'subtotal')
+  ].join('')
+}
+
+export const buildEarningsSection = (result, labels, fmt) => {
   const hasAttendanceHours = (result.ruleResults?.rawOvertimeHours ?? 0) > 0 || (result.ruleResults?.rawUndertimeHours ?? 0) > 0
   const applied = getAppliedRules(result)
-  const expectedMonthBase = result.baseSalary
   const grossBeforeAdjustments = result.grossSalary - (result.adjustmentTotal || 0)
-  const totalAdjustments = result.adjustmentTotal || 0
-  
+  return [
+    row(labels.monthSalary, fmt(result.baseSalary)),
+    row(labels.dailySalary, fmt(result.dailyRate)),
+    ...applied.bonuses.map(b => row(b.label, '+' + fmt(b.value))),
+    ...applied.deductions.map(d => row(d.label, '-' + fmt(d.value))),
+    ...(hasAttendanceHours ? [row(labels.attendance, signedFmt(result.attendanceAdjustment || 0, fmt))] : []),
+    row('Gross', fmt(grossBeforeAdjustments), 'subtotal')
+  ].filter(Boolean).join('')
+}
+
+export const buildPrintHtml = (result, period, config = {}) => {
+  const currencySymbol = config.currencySymbol ?? '$'
+  const organizationName = config.organizationName ?? ''
+  const labels = resolvePrintLabels(config)
+  const fmt = (v) => formatCurrency(v, 'id-ID', 'IDR', currencySymbol)
   const probationLabel = getProbationLabel(result.employee)
   const headerLine = `${esc(result.employee.name)} · ${esc(period)}`
   const probationLine = probationLabel
     ? `<p class="probation">${esc(probationLabel)}</p>`
     : ''
-  
-  const html = `<!DOCTYPE html>
+
+  return `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -96,25 +118,19 @@ export const printEmployeeReport = (result, period, currencySymbol = '$', organi
     <span><b>Hourly:</b> ${fmt(result.hourlyRate)}</span>
   </div>
   
-  ${section('Earnings', [
-    row('Expected month base', fmt(expectedMonthBase)),
-    ...applied.bonuses.map(b => row(b.label, '+' + fmt(b.value))),
-    ...applied.deductions.map(d => row(d.label, '-' + fmt(d.value))),
-    ...(hasAttendanceHours ? [row(`Attendance (OT ${Number(result.ruleResults?.rawOvertimeHours || 0).toFixed(2)}h, UT ${Number(result.ruleResults?.rawUndertimeHours || 0).toFixed(2)}h)`, `${result.attendanceAdjustment >= 0 ? '+' : '-'}${fmt(Math.abs(result.attendanceAdjustment || 0))}`)] : []),
-    row('Gross', fmt(grossBeforeAdjustments), 'subtotal')
-  ].filter(Boolean).join(''))}
+  ${section('Earnings', buildEarningsSection(result, labels, fmt))}
 
-  ${section('Adjustments', [
-    ...getAdjustmentRows(result, fmt),
-    row('Total adjustments', `${totalAdjustments >= 0 ? '+' : '-'}${fmt(Math.abs(totalAdjustments))}`, 'subtotal')
-  ].join('') || row('None', '-'))}
+  ${section('Adjustments', buildAdjustmentSection(result, labels, fmt))}
   
   ${section('Summary', row('Net', fmt(result.finalSalary), 'total'))}
 
   <div class="footer">Generated ${new Date().toLocaleDateString()} · XPayroll</div>
 </body>
 </html>`
+}
 
+export const printEmployeeReport = (result, period, config = {}) => {
+  const html = buildPrintHtml(result, period, config)
   const printUrl = `${window.location.origin}${window.location.pathname}#print`
   const win = window.open(printUrl, '_blank', 'width=800,height=600')
   if (!win) return

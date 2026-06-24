@@ -112,7 +112,7 @@
           <b>{fmt(result.finalSalary || 0)}</b>
         </div>
         {#if !isExpanded}
-          <button class="quick-print" onclick={(e) => { e.stopPropagation(); printEmployeeReport(result, period, $basicConfig.currencySymbol, $basicConfig.organizationName) }} title="Print">
+          <button class="quick-print" onclick={(e) => { e.stopPropagation(); printEmployeeReport(result, period, $basicConfig) }} title="Print">
             <Icon icon="tabler:printer" width="1.4rem" height="1.2rem" />
           </button>
         {/if}
@@ -130,7 +130,7 @@
               <Icon icon="tabler:calculator" width="1.1rem" height="1.1rem" />
               View Details
             </button>
-            <button class="btn print" onclick={(e) => { e.stopPropagation(); printEmployeeReport(result, period, $basicConfig.currencySymbol, $basicConfig.organizationName) }}>
+            <button class="btn print" onclick={(e) => { e.stopPropagation(); printEmployeeReport(result, period, $basicConfig) }}>
               <Icon icon="tabler:printer" width="1.1rem" height="1.1rem" />
               Print
             </button>

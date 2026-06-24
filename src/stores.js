@@ -29,6 +29,27 @@ const KEYS = {
 // DEFAULT DATA
 // ============================================================================
 
+export const DEFAULT_PRINT_LABELS = {
+  monthSalary: 'Month salary',
+  dailySalary: 'Daily salary',
+  adjustment: 'ADJUSTMENT',
+  totalAdjustments: 'Total adjustments',
+  attendance: 'Attendance'
+}
+
+export const PRINT_LABEL_FIELDS = [
+  { key: 'monthSalary', label: 'Month salary', fallback: DEFAULT_PRINT_LABELS.monthSalary },
+  { key: 'dailySalary', label: 'Daily salary', fallback: DEFAULT_PRINT_LABELS.dailySalary },
+  { key: 'adjustment', label: 'Adjustment', fallback: DEFAULT_PRINT_LABELS.adjustment },
+  { key: 'totalAdjustments', label: 'Total adjustments', fallback: DEFAULT_PRINT_LABELS.totalAdjustments },
+  { key: 'attendance', label: 'Attendance', fallback: DEFAULT_PRINT_LABELS.attendance }
+]
+
+export const resolvePrintLabels = (config = {}) => ({
+  ...DEFAULT_PRINT_LABELS,
+  ...config?.printLabels
+})
+
 const DEFAULT_BASIC_CONFIG = {
   organizationName: 'XPayroll',
   workdayHours: 8,
@@ -37,7 +58,8 @@ const DEFAULT_BASIC_CONFIG = {
   monthDays: 30,
   firstDayWeekday: 'Saturday',
   overtimeRate: 1.5,
-  undertimeRate: 0.5
+  undertimeRate: 0.5,
+  printLabels: { ...DEFAULT_PRINT_LABELS }
 }
 
 const DEFAULT_THEME = {
@@ -95,6 +117,7 @@ const toNum = (v, fallback) => (Number.isFinite(Number(v)) ? Number(v) : fallbac
 const normalizeBasicConfig = (c) => ({
   ...DEFAULT_BASIC_CONFIG,
   ...c,
+  printLabels: { ...DEFAULT_PRINT_LABELS, ...c?.printLabels },
   overtimeRate: toNum(c?.overtimeRate, DEFAULT_BASIC_CONFIG.overtimeRate),
   undertimeRate: toNum(c?.undertimeRate ?? c?.undertimeDeductionRate, DEFAULT_BASIC_CONFIG.undertimeRate)
 })
