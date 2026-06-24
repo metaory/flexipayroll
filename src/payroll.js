@@ -283,8 +283,8 @@ export const buildCalculationSteps = (result) => {
   
   steps.push({
     label: 'Input Summary',
-    formula: 'Base = Month days × Daily salary',
-    formulaWithValues: 'Base salary is the full month amount. Overtime and undertime are applied separately.',
+    formula: 'Base = Effective work days × Daily salary',
+    formulaWithValues: 'Effective work days = working days per month minus undertime day blocks (floor(undertime hours ÷ workday hours)).',
     result: result.employee.dailySalary,
     explanation: 'Employee daily salary and config. Overtime and undertime are calculated directly from attendance hours (including minute fractions).',
     inputs: { dailySalary: result.employee.dailySalary, workdayHours: result.configSnapshot.workdayHours, workDays: result.configSnapshot.workingDaysPerMonth ?? 22 },
@@ -336,7 +336,7 @@ export const buildCalculationSteps = (result) => {
     ? `${[otTerm, utTerm].filter(Boolean).join(' − ')} = ${attendanceEffect >= 0 ? '+' : ''}${fmtAmt(attendanceEffect)}`
     : null
   const dailyRate = result.employee.dailySalary
-  const monthDays = result.configSnapshot?.monthDays ?? 30
+  const effectiveDays = result.ruleResults?.effectiveDays ?? workDays
   steps.push(hasAttendanceHours
     ? {
         label: 'Overtime / Undertime',
@@ -358,14 +358,14 @@ export const buildCalculationSteps = (result) => {
         type: 'attendance',
         section: 'attendance'
       })
-  const baseFormulaValues = `${monthDays} days × ${dailyRate.toLocaleString()}/day = ${result.baseSalary.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+  const baseFormulaValues = `${effectiveDays} days × ${dailyRate.toLocaleString()}/day = ${result.baseSalary.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
   steps.push({
     label: 'Base Salary',
-    formula: 'Month days × Daily salary',
+    formula: 'Effective work days × Daily salary',
     formulaWithValues: baseFormulaValues,
     result: result.baseSalary,
-    explanation: 'Base salary is the full month amount. Overtime and undertime are handled in the attendance section.',
-    inputs: { monthDays, dailyRate, result: result.baseSalary },
+    explanation: `Effective work days (${effectiveDays}) = working days per month (${workDays}) minus undertime day blocks. Overtime and undertime pay are handled in the attendance section.`,
+    inputs: { workDays, effectiveDays, dailyRate, result: result.baseSalary },
     type: 'base',
     section: 'base'
   })

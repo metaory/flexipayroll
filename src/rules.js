@@ -153,9 +153,9 @@ const normalizeRuleType = (type) =>
 const toDayBlocks = (hours, workdayHours) =>
   Math.floor(Math.abs(hours) / workdayHours)
 
-const resolveEffectiveDays = (monthDays, undertimeHours, workdayHours) => {
+const resolveEffectiveDays = (workDays, undertimeHours, workdayHours) => {
   const absentDayBlocks = toDayBlocks(undertimeHours, workdayHours)
-  return Math.max(0, Math.min(monthDays, monthDays - absentDayBlocks))
+  return Math.max(0, workDays - absentDayBlocks)
 }
 
 const prorationRatio = (effectiveDays, monthDays) =>
@@ -178,7 +178,7 @@ const buildAttendanceMetrics = (attendanceItems, config) => {
   const hourEquivalentDays = rawHours / workdayHours
   const monthHourEquivalentDays = Math.max(0, workDays + hourEquivalentDays)
   const dayEquivalent = Math.max(0, workDays + hourEquivalentDays)
-  const effectiveDays = resolveEffectiveDays(monthDays, rawUndertimeHours, workdayHours)
+  const effectiveDays = resolveEffectiveDays(workDays, rawUndertimeHours, workdayHours)
 
   return {
     workDays,
@@ -270,12 +270,13 @@ export const applyRules = (employee, attendanceItems, rules, config) => {
   const attendanceDays = hoursDeltaToDays(rawHours, workdayHours)
   const overtimePay = attendancePay(rawOvertimeHours, otRate, employee.dailySalary, workdayHours)
   const undertimePay = attendancePay(rawUndertimeHours, utRate, employee.dailySalary, workdayHours)
-  const expectedBaseFull = employee.dailySalary * monthDays
-  const cappedEffectiveDays = monthDays > 0 ? Math.min(attendanceMetrics.effectiveDays, monthDays) : 0
+  const expectedBaseFull = employee.dailySalary * workDays
+  const effectiveDays = attendanceMetrics.effectiveDays
+  const cappedEffectiveDays = workDays > 0 ? Math.min(effectiveDays, workDays) : 0
   const attendancePayAdjustment = overtimePay - undertimePay
   const attendanceAdjustment = attendancePayAdjustment
-  const baseSalary = expectedBaseFull
-  const baseFromDays = expectedBaseFull
+  const baseSalary = employee.dailySalary * effectiveDays
+  const baseFromDays = baseSalary
   const totalHours = expectedHours + hoursAdjustment
   const actualDays = attendanceMetrics.effectiveDays
 
