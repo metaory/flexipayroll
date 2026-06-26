@@ -176,6 +176,13 @@
         </label>
       {/each}
     </div>
+    <label class="field footer-label-field">
+      <span>Footer label</span>
+      <input type="text"
+        value={basicConfigData.footerLabel ?? ''}
+        oninput={(e) => updateBasicConfigField('footerLabel', e.target.value)} />
+      <small>footerLabel</small>
+    </label>
     <div class="config-actions">
       <button class="danger" onclick={resetAllStorage}>
         <Icon icon={ICONS.warning} width="1.4rem" height="1.4rem" />
@@ -324,6 +331,9 @@
     margin: 1rem 0 0.75rem
     font-size: 1.1rem
     color: var(--fg)
+
+  .footer-label-field
+    margin-top: 1rem
 
   .config-grid
     @include auto-grid(200px)

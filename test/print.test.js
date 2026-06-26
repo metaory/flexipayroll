@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import pkg from '../package.json' with { type: 'json' }
 import { resolvePrintLabels, DEFAULT_PRINT_LABELS } from '../src/stores.js'
 import { formatLocalizedDate, formatLocalizedPeriod } from '../src/core.js'
 import {
@@ -107,7 +108,14 @@ const run = () => {
     })
     assert.match(html, /۱۴۰۵\/۰۳/)
     assert.doesNotMatch(html, /2026-06/)
-    assert.match(html, /Generated [\d۰-۹\/\-.]+ · XPayroll/)
+    assert.match(html, new RegExp(`Generated [\\d۰-۹\\/\\-.]+ · ${pkg.name}`))
+  }
+
+  {
+    const html = buildPrintHtml(baseResult, '2026-01', { footerLabel: 'Confidential — internal use only' })
+    assert.match(html, /footer-sep/)
+    assert.match(html, /Confidential — internal use only/)
+    assert.doesNotMatch(buildPrintHtml(baseResult, '2026-01', {}), /<hr class="footer-sep">/)
   }
 
   {

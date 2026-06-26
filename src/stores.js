@@ -95,6 +95,7 @@ const DEFAULT_BASIC_CONFIG = {
   firstDayWeekday: 'Saturday',
   overtimeRate: 1.5,
   undertimeRate: 0.5,
+  footerLabel: '',
   printLabels: { ...DEFAULT_PRINT_LABELS }
 }
 

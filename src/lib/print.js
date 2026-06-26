@@ -6,6 +6,7 @@
 import { formatCurrency, formatLocalizedDate, formatLocalizedPeriod } from '../core.js'
 import { getProbationLabel } from '../payroll.js'
 import { resolvePrintLabels, resolveLocale } from '../stores.js'
+import pkg from '../../package.json' with { type: 'json' }
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
@@ -26,6 +27,8 @@ const styles = `
   .value { font-weight: 900; text-align: right; font-family: 'Courier New', monospace; }
   .stats { display: flex; justify-content: center; gap: 1rem; margin-bottom: 0.5rem; font-size: 10pt; color: #111; font-weight: 800; }
   .stats b { font-weight: 900; }
+  .footer-sep { border: none; border-top: 1px solid #000; margin: 0.75rem 0 0.5rem; }
+  .footer-label { text-align: center; font-size: 9pt; font-weight: 800; margin-bottom: 0.5rem; }
   .footer { margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px solid #000; font-size: 8.5pt; color: #111; text-align: center; font-weight: 800; }
   @media print { body { padding: 0.5rem; } }
 `
@@ -90,6 +93,7 @@ export const buildEarningsSection = (result, labels, fmt) => {
 export const buildPrintHtml = (result, period, config = {}) => {
   const currencySymbol = config.currencySymbol ?? '$'
   const organizationName = config.organizationName ?? ''
+  const footerLabel = String(config.footerLabel ?? '').trim()
   const labels = resolvePrintLabels(config)
   const locale = resolveLocale(config.locale)
   const fmt = (v) => formatCurrency(v, locale, 'IDR', currencySymbol)
@@ -126,7 +130,8 @@ export const buildPrintHtml = (result, period, config = {}) => {
   
   ${section('Summary', row(labels.net, fmt(result.finalSalary), 'total'))}
 
-  <div class="footer">Generated ${formatLocalizedDate(new Date(), locale)} · XPayroll</div>
+  ${footerLabel ? `<hr class="footer-sep"><div class="footer-label">${esc(footerLabel)}</div>` : ''}
+  <div class="footer">Generated ${formatLocalizedDate(new Date(), locale)} · ${esc(pkg.name)}</div>
 </body>
 </html>`
 }
