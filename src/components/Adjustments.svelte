@@ -42,6 +42,12 @@
     adjustmentsData = loadAdjustments()
   })
 
+  const toDeductionAmount = (value) => {
+    const amount = parseFloat(value)
+    if (isNaN(amount) || amount === 0) return NaN
+    return -Math.abs(amount)
+  }
+
   // Form handlers
   const handleAddAdjustment = (employeeId) => {
     const form = adjustmentForms[employeeId]
@@ -50,7 +56,7 @@
       return
     }
 
-    const amount = parseFloat(form.amount)
+    const amount = toDeductionAmount(form.amount)
     if (isNaN(amount)) {
       toasts.error('Invalid amount')
       return
@@ -58,7 +64,7 @@
 
     addAdjustment(period, employeeId, {
       label: form.label,
-      amount: amount
+      amount
     })
 
     toasts.success('Adjustment added')
@@ -68,7 +74,7 @@
 
   const handleEditAdjustment = (employeeId, adjustment) => {
     editingAdjustments[employeeId] = adjustment
-    adjustmentForms[employeeId] = { label: adjustment.label, amount: adjustment.amount.toString() }
+    adjustmentForms[employeeId] = { label: adjustment.label, amount: Math.abs(adjustment.amount).toString() }
   }
 
   const handleUpdateAdjustment = (employeeId) => {
@@ -80,7 +86,7 @@
       return
     }
 
-    const amount = parseFloat(form.amount)
+    const amount = toDeductionAmount(form.amount)
     if (isNaN(amount)) {
       toasts.error('Invalid amount')
       return
@@ -88,7 +94,7 @@
 
     updateAdjustment(period, employeeId, editing.id, {
       label: form.label,
-      amount: amount
+      amount
     })
 
     toasts.success('Adjustment updated')
@@ -111,6 +117,11 @@
 
   const getTotalAdjustments = (employeeId) =>
     round2((adjustmentsData[employeeId] || []).reduce((sum, adj) => sum + adj.amount, 0))
+
+  const submitAdjustment = (employeeId) =>
+    editingAdjustments[employeeId]
+      ? handleUpdateAdjustment(employeeId)
+      : handleAddAdjustment(employeeId)
 </script>
 
 <div class="adjustments-container">
@@ -125,7 +136,7 @@
       <h3>Manual Adjustments - {period}</h3>
       <div class="adjustments-summary">
         <span>{employees.length} employees</span>
-        <span>Add positive/negative amounts</span>
+        <span>All amounts are deductions</span>
       </div>
     </div>
 
@@ -151,11 +162,11 @@
               </div>
             {:else}
               {#each (adjustmentsData[employee.id] || []) as adjustment}
-                <div class="adjustment-item" data-positive={adjustment.amount > 0}>
+                <div class="adjustment-item">
                   <div class="adjustment-info">
                     <span class="adjustment-label">{adjustment.label}</span>
-                    <span class="adjustment-amount" class:positive={adjustment.amount > 0} class:negative={adjustment.amount < 0}>
-                      {adjustment.amount > 0 ? '+' : ''}{formatCurrency(adjustment.amount, 'id-ID', 'IDR', $basicConfig.currencySymbol)}
+                    <span class="adjustment-amount negative">
+                      -{formatCurrency(Math.abs(adjustment.amount), 'id-ID', 'IDR', $basicConfig.currencySymbol)}
                     </span>
                   </div>
                   <div class="adjustment-actions">
@@ -181,10 +192,12 @@
               <input
                 type="number"
                 lang="en"
-                placeholder="Amount (positive/negative)"
+                placeholder="Amount"
+                min="0"
                 step="0.01"
                 value={adjustmentForms[employee.id]?.amount || ''}
                 oninput={(e) => adjustmentForms[employee.id] = { ...adjustmentForms[employee.id], amount: e.currentTarget.value }}
+                onkeydown={(e) => e.key === 'Enter' && submitAdjustment(employee.id)}
               />
             </div>
             <div class="form-actions">
@@ -293,26 +306,14 @@
   .adjustment-item
     @extend %flex-between
     padding: 0.4rem
-    background: var(--surface-secondary)
     border-radius: 0.5rem
     border: 2px solid transparent
+    background: color-mix(in oklab, var(--error) 12%, transparent)
     @extend %transition
 
     &:hover
-      border-color: var(--primary)
+      border-color: var(--error)
       transform: translateY(-2px)
-
-    &[data-positive="true"]
-      background: var(--surface-success)
-
-      &:hover
-        border-color: var(--success)
-
-    &[data-positive="false"]
-      background: color-mix(in oklab, var(--error) 12%, transparent)
-
-      &:hover
-        border-color: var(--error)
 
   .adjustment-info
     @extend %flex
@@ -327,12 +328,7 @@
     .adjustment-amount
       font-weight: 600
       font-size: 1rem
-
-      &.positive
-        color: var(--success)
-
-      &.negative
-        color: var(--error)
+      color: var(--error)
 
   .adjustment-actions
     @extend %flex
