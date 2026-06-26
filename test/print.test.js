@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict'
-import pkg from '../package.json' with { type: 'json' }
 import { resolvePrintLabels, DEFAULT_PRINT_LABELS } from '../src/stores.js'
 import { formatLocalizedDate, formatLocalizedPeriod } from '../src/core.js'
 import {
@@ -108,7 +107,7 @@ const run = () => {
     })
     assert.match(html, /۱۴۰۵\/۰۳/)
     assert.doesNotMatch(html, /2026-06/)
-    assert.match(html, new RegExp(`Generated [\\d۰-۹\\/\\-.]+ · ${pkg.name}`))
+    assert.doesNotMatch(html, /Generated/)
   }
 
   {

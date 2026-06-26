@@ -3,10 +3,9 @@
  * Single-page summary for PDF export
  */
 
-import { formatCurrency, formatLocalizedDate, formatLocalizedPeriod } from '../core.js'
+import { formatCurrency, formatLocalizedPeriod } from '../core.js'
 import { getProbationLabel } from '../payroll.js'
 import { resolvePrintLabels, resolveLocale } from '../stores.js'
-import pkg from '../../package.json' with { type: 'json' }
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
@@ -29,7 +28,6 @@ const styles = `
   .stats b { font-weight: 900; }
   .footer-sep { border: none; border-top: 1px solid #000; margin: 0.75rem 0 0.5rem; }
   .footer-label { text-align: center; font-size: 9pt; font-weight: 800; margin-bottom: 0.5rem; }
-  .footer { margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px solid #000; font-size: 8.5pt; color: #111; text-align: center; font-weight: 800; }
   @media print { body { padding: 0.5rem; } }
 `
 
@@ -131,7 +129,6 @@ export const buildPrintHtml = (result, period, config = {}) => {
   ${section('Summary', row(labels.net, fmt(result.finalSalary), 'total'))}
 
   ${footerLabel ? `<hr class="footer-sep"><div class="footer-label">${esc(footerLabel)}</div>` : ''}
-  <div class="footer">Generated ${formatLocalizedDate(new Date(), locale)} · ${esc(pkg.name)}</div>
 </body>
 </html>`
 }
