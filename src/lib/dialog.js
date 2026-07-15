@@ -9,7 +9,7 @@
  * @param {string} title - The dialog title (default: 'Confirm')
  * @returns {Promise<boolean>} - true if confirmed, false if cancelled
  */
-export const isWordSuffix = (value) => /^[a-zA-Z0-9]+$/.test(value)
+export const isWordSuffix = (value) => /^[\p{L}\p{N}_-]*$/u.test(value)
 
 export const isValidSessionName = (value, prefix) => {
   const trimmed = String(value ?? '').trim()
@@ -20,7 +20,7 @@ export const isValidSessionName = (value, prefix) => {
 export async function filenamePromptDialog(
   defaultValue = '',
   prefix = '',
-  message = 'Add a label after the dash (letters and numbers only)',
+  message = 'Optional label after the dash (letters, numbers, dash, underscore)',
   title = 'Save session'
 ) {
   return new Promise((resolve) => {
@@ -157,7 +157,7 @@ export async function filenamePromptDialog(
       const filename = input.value.trim()
       if (!filename) return showError('Enter a filename to continue')
       if (!isValidSessionName(filename, prefix)) {
-        return showError('Use letters and numbers only, no spaces or special characters')
+        return showError('Use letters, numbers, dash, or underscore only')
       }
       finish(filename)
     }

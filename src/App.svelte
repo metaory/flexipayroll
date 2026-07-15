@@ -83,7 +83,7 @@
     </button>
   {/if}
 </div>
-<input type="file" accept=".zip,.ziip,.txt" bind:this={fileInput} onchange={handleLoad} hidden />
+<input type="file" accept=".json,.zip,.ziip,.txt" bind:this={fileInput} onchange={handleLoad} hidden />
 
 <main class="app-content">
   <Payroll />

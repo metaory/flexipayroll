@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict'
 import { storage } from '../src/core.js'
 import {
+  APP_VERSION,
   BACKUP_DEFAULTS,
+  BACKUP_VERSION,
   buildBackupPayload,
   normalizeAdjustmentsStore,
   normalizeAttendanceStore,
@@ -13,7 +15,12 @@ import {
 import { calculateEmployeePayroll } from '../src/payroll.js'
 import { RULE_TYPES, RULE_CATEGORIES, CRITERIA_TYPES } from '../src/rules.js'
 
+const encodeUtf8Base64 = (text) =>
+  btoa(Array.from(new TextEncoder().encode(text), (b) => String.fromCharCode(b)).join(''))
+
 const near = (a, b, eps = 1e-9) => Math.abs(a - b) <= eps
+
+const CANONICAL_KEYS = Object.keys(BACKUP_DEFAULTS)
 
 const mockStorage = () => {
   const data = {}
@@ -118,12 +125,21 @@ const fixture = () => {
         items: [{ id: 'att_2', label: 'UT', hours: -2 }],
         absent: 0
       }
+    },
+    '2026-06': {
+      emp_a: {
+        items: [{ id: 'att_old', label: 'Lembur', hours: 3 }],
+        absent: 1
+      }
     }
   }
   const adjustments = {
     [period]: {
       emp_a: [{ id: 'adj_1', label: 'Fine', amount: -50000 }],
       emp_b: []
+    },
+    '2026-06': {
+      emp_a: [{ id: 'adj_old', label: 'Denda', amount: -25000 }]
     }
   }
   return { period, employees, rules, basicConfig, attendanceItems, adjustments }
@@ -169,17 +185,28 @@ const run = () => {
       xpayroll_wizard_step: 3
     })
     const payload = buildBackupPayload(ls)
-    assert.equal(payload.version, 1)
-    assert.ok('xpayroll_theme' in payload.data, 'theme should be exported')
-    assert.ok('xpayroll_wizard_step' in payload.data, 'wizard step should be exported')
+    assert.equal(payload.version, BACKUP_VERSION)
+    assert.equal(payload.appVersion, APP_VERSION)
+    CANONICAL_KEYS.forEach((key) => {
+      assert.ok(key in payload.data, `${key} should be exported`)
+    })
     assert.equal(payload.data.xpayroll_employees.length, 2)
     assert.equal(payload.data.xpayroll_theme.mode, 'dark')
+    assert.equal(payload.data.xpayroll_wizard_step, 3)
+    assert.equal(payload.data.xpayroll_attendance_items['2026-06'].emp_a.absent, 1)
+    assert.equal(payload.data.xpayroll_adjustments['2026-06'].emp_a[0].label, 'Denda')
   }
 
   {
     const ls = mockStorage()
     const payload = buildBackupPayload(ls)
-    assert.equal(Object.keys(payload.data).length, 0)
+    assert.equal(payload.version, BACKUP_VERSION)
+    CANONICAL_KEYS.forEach((key) => {
+      assert.ok(key in payload.data, `${key} should exist in empty export`)
+    })
+    assert.deepEqual(payload.data.xpayroll_employees, [])
+    assert.deepEqual(payload.data.xpayroll_attendance_items, {})
+    assert.deepEqual(payload.data.xpayroll_adjustments, {})
   }
 
   {
@@ -194,13 +221,15 @@ const run = () => {
         xpayroll_attendance_items: fx.attendanceItems,
         xpayroll_adjustments: fx.adjustments,
         xpayroll_settings: BACKUP_DEFAULTS.xpayroll_settings,
-        xpayroll_theme: { mode: 'light' }
+        xpayroll_theme: { mode: 'light' },
+        xpayroll_wizard_step: 2
       })
 
       const before = payrollSnapshot({ ...fx })
-      const encoded = storage.exportSession()
+      const exported = storage.exportSession()
+      assert.ok(exported.trim().startsWith('{'), 'export should be plain JSON')
       ls.data = {}
-      const imported = storage.importSession(encoded, { reload: false })
+      const imported = storage.importSession(exported, { reload: false })
       assert.equal(imported.ok, true, imported.error || 'import failed')
       const restored = readAllSessionData(ls)
       const after = payrollSnapshot({
@@ -221,9 +250,13 @@ const run = () => {
           xpayroll_attendance_items: fx.attendanceItems,
           xpayroll_adjustments: fx.adjustments,
           xpayroll_settings: BACKUP_DEFAULTS.xpayroll_settings,
-          xpayroll_theme: { mode: 'light' }
+          xpayroll_theme: { mode: 'light' },
+          xpayroll_wizard_step: 2
         })
       )
+
+      assert.equal(restored.xpayroll_attendance_items['2026-06'].emp_a.items[0].hours, 3)
+      assert.equal(restored.xpayroll_adjustments['2026-06'].emp_a[0].amount, -25000)
 
       before.forEach((row, i) => {
         assert.ok(near(row.finalSalary, after[i].finalSalary), `finalSalary mismatch for ${row.id}`)
@@ -231,6 +264,106 @@ const run = () => {
         assert.ok(near(row.attendanceAdjustment, after[i].attendanceAdjustment), `attendanceAdjustment mismatch for ${row.id}`)
         assert.ok(near(row.adjustmentTotal, after[i].adjustmentTotal), `adjustmentTotal mismatch for ${row.id}`)
       })
+    } finally {
+      globalThis.localStorage = previous
+    }
+  }
+
+  {
+    const ls = mockStorage()
+    const previous = globalThis.localStorage
+    globalThis.localStorage = ls
+    try {
+      seedLocalStorage(ls, {
+        xpayroll_employees: fx.employees,
+        xpayroll_attendance_items: fx.attendanceItems,
+        xpayroll_adjustments: fx.adjustments,
+        xpayroll_theme: { mode: 'dark' }
+      })
+      const partial = {
+        version: 1,
+        data: {
+          xpayroll_employees: fx.employees,
+          xpayroll_rules: fx.rules,
+          xpayroll_basic_config: fx.basicConfig
+        }
+      }
+      const imported = storage.importSession(JSON.stringify(partial), { reload: false })
+      assert.equal(imported.ok, true, imported.error || 'partial import failed')
+      const restored = readAllSessionData(ls)
+      assert.deepEqual(restored.xpayroll_attendance_items, {})
+      assert.deepEqual(restored.xpayroll_adjustments, {})
+      assert.equal(restored.xpayroll_theme.mode, 'light')
+      assert.equal(restored.xpayroll_employees.length, 2)
+      CANONICAL_KEYS.forEach((key) => {
+        assert.ok(key in restored, `${key} should be filled after partial import`)
+      })
+    } finally {
+      globalThis.localStorage = previous
+    }
+  }
+
+  {
+    const ls = mockStorage()
+    const previous = globalThis.localStorage
+    globalThis.localStorage = ls
+    try {
+      const v1 = {
+        version: 1,
+        exportedAt: '2026-01-01T00:00:00.000Z',
+        data: {
+          xpayroll_employees: fx.employees,
+          xpayroll_rules: fx.rules,
+          xpayroll_basic_config: fx.basicConfig,
+          xpayroll_attendance_items: fx.attendanceItems,
+          xpayroll_adjustments: fx.adjustments,
+          xpayroll_settings: BACKUP_DEFAULTS.xpayroll_settings,
+          xpayroll_theme: { mode: 'dark' }
+        }
+      }
+      const encoded = encodeUtf8Base64(JSON.stringify(v1))
+      const imported = storage.importSession(encoded, { reload: false })
+      assert.equal(imported.ok, true, imported.error || 'legacy base64 import failed')
+      const restored = readAllSessionData(ls)
+      assert.equal(restored.xpayroll_theme.mode, 'dark')
+      assert.equal(restored.xpayroll_attendance_items['2026-07'].emp_a.absent, 2)
+    } finally {
+      globalThis.localStorage = previous
+    }
+  }
+
+  {
+    const unicodeAttendance = {
+      '2026-07': {
+        emp_a: {
+          items: [{ id: 'u1', label: 'اضافه\u200cکاری / Lembur', hours: 2 }],
+          absent: 0
+        }
+      }
+    }
+    const unicodeAdjustments = {
+      '2026-07': {
+        emp_a: [{ id: 'u2', label: 'جریمه / Denda', amount: -10000 }]
+      }
+    }
+    const ls = mockStorage()
+    const previous = globalThis.localStorage
+    globalThis.localStorage = ls
+    try {
+      seedLocalStorage(ls, {
+        xpayroll_employees: fx.employees,
+        xpayroll_rules: fx.rules,
+        xpayroll_basic_config: fx.basicConfig,
+        xpayroll_attendance_items: unicodeAttendance,
+        xpayroll_adjustments: unicodeAdjustments
+      })
+      const exported = storage.exportSession()
+      ls.data = {}
+      const imported = storage.importSession(exported, { reload: false })
+      assert.equal(imported.ok, true)
+      const restored = readAllSessionData(ls)
+      assert.equal(restored.xpayroll_attendance_items['2026-07'].emp_a.items[0].label, 'اضافه\u200cکاری / Lembur')
+      assert.equal(restored.xpayroll_adjustments['2026-07'].emp_a[0].label, 'جریمه / Denda')
     } finally {
       globalThis.localStorage = previous
     }
@@ -249,6 +382,9 @@ const run = () => {
     assert.equal(validateBackupData(normalized).ok, true)
     assert.equal(normalized.xpayroll_employees[0].name, 'Alice')
     assert.equal(normalized.xpayroll_attendance_items['2026-07'].emp_a.absent, 2)
+    CANONICAL_KEYS.forEach((key) => {
+      assert.ok(key in normalized, `${key} should exist after legacy normalize`)
+    })
   }
 
   {
@@ -279,12 +415,15 @@ const run = () => {
     const att = normalizeAttendanceStore({
       '2026-07': {
         emp_a: [{ id: 'x', label: 'OT', hours: 3 }],
-        emp_b: { items: [{ id: 'y', label: 'UT', hours: -8 }], absent: 1.9 }
+        emp_b: { items: [{ id: 'y', label: 'UT', hours: -8 }], absent: 1.9 },
+        emp_c: { items: [null, { label: 'Zero', hours: 0 }], absent: 0 }
       }
     })
     assert.deepEqual(att['2026-07'].emp_a, { items: [{ id: 'x', label: 'OT', hours: 3 }], absent: 0 })
     assert.equal(att['2026-07'].emp_b.absent, 1)
     assert.equal(att['2026-07'].emp_b.items[0].hours, -8)
+    assert.equal(att['2026-07'].emp_c.items.length, 1)
+    assert.equal(att['2026-07'].emp_c.items[0].hours, 0)
   }
 
   {

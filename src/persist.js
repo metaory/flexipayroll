@@ -4,40 +4,11 @@
 
 import { ensureRuleId } from './rules.js'
 import { normalizeProbationFields } from './probation.js'
+import pkg from '../package.json' with { type: 'json' }
 
-const normalizeAttendanceRecord = (data) => {
-  if (Array.isArray(data)) return { items: data, absent: 0 }
-  if (!data || typeof data !== 'object') return { items: [], absent: 0 }
-  return {
-    items: Array.isArray(data.items) ? data.items : [],
-    absent: Math.max(0, Math.floor(Number(data.absent) || 0))
-  }
-}
-
+export const BACKUP_VERSION = 2
+export const APP_VERSION = pkg.version
 export const SESSION_PREFIX = 'xpayroll_'
-
-export const listSessionKeys = (ls) => {
-  const keys = []
-  for (let i = 0; i < ls.length; i++) {
-    const key = ls.key(i)
-    if (key?.startsWith(SESSION_PREFIX)) keys.push(key)
-  }
-  return keys
-}
-
-export const readAllSessionData = (ls) => {
-  const data = {}
-  listSessionKeys(ls).forEach((key) => {
-    const raw = ls.getItem(key)
-    if (raw === null) return
-    try {
-      data[key] = JSON.parse(raw)
-    } catch {
-      data[key] = raw
-    }
-  })
-  return data
-}
 
 export const DEFAULT_PRINT_LABELS = {
   monthSalary: 'Month salary',
@@ -78,6 +49,8 @@ export const DEFAULT_SETTINGS = {
   numberFormat: { decimal: ',', thousands: '.' }
 }
 
+export const DEFAULT_THEME = { mode: 'light' }
+
 export const BACKUP_DEFAULTS = {
   xpayroll_basic_config: DEFAULT_BASIC_CONFIG,
   xpayroll_rules: [],
@@ -85,10 +58,32 @@ export const BACKUP_DEFAULTS = {
   xpayroll_employees: [],
   xpayroll_attendance: {},
   xpayroll_attendance_items: {},
-  xpayroll_adjustments: {}
+  xpayroll_adjustments: {},
+  xpayroll_theme: DEFAULT_THEME,
+  xpayroll_wizard_step: 0,
+  xpayroll_payroll: {},
+  xpayroll_salary_records: {}
 }
 
+const isObject = (v) => v && typeof v === 'object' && !Array.isArray(v)
 const toNum = (v, fallback) => (Number.isFinite(Number(v)) ? Number(v) : fallback)
+const finite = (v) => Number.isFinite(Number(v))
+
+const parseJsonOrRaw = (raw) => {
+  try { return JSON.parse(raw) } catch { return raw }
+}
+
+export const listSessionKeys = (ls) =>
+  Array.from({ length: ls.length }, (_, i) => ls.key(i))
+    .filter((key) => key?.startsWith(SESSION_PREFIX))
+
+export const readAllSessionData = (ls) =>
+  Object.fromEntries(
+    listSessionKeys(ls)
+      .map((key) => [key, ls.getItem(key)])
+      .filter(([, raw]) => raw !== null)
+      .map(([key, raw]) => [key, parseJsonOrRaw(raw)])
+  )
 
 export const resolveLocale = (locale) => {
   const trimmed = String(locale ?? '').trim()
@@ -106,8 +101,46 @@ const uniqId = (id, used) => {
   const base = String(id)
   if (!used.has(base)) return base
   const next = (n) => `${base}_${n}`
-  const n = Array.from({ length: 999 }, (_, i) => i + 2).find(i => !used.has(next(i)))
+  const n = Array.from({ length: 999 }, (_, i) => i + 2).find((i) => !used.has(next(i)))
   return n ? next(n) : `${base}_${Date.now().toString(36)}`
+}
+
+const mapByPeriod = (store, mapEmployee) =>
+  Object.fromEntries(
+    Object.entries(store || {}).map(([period, employees]) => [
+      period,
+      Object.fromEntries(
+        Object.entries(employees || {}).map(([empId, value]) => [empId, mapEmployee(value)])
+      )
+    ])
+  )
+
+const normalizeAttendanceItem = (item) =>
+  item && typeof item === 'object'
+    ? {
+        id: String(item.id || `att_${Date.now().toString(36)}`),
+        label: String(item.label || 'Attendance'),
+        hours: finite(item.hours) ? Number(item.hours) : 0
+      }
+    : null
+
+export const normalizeAttendance = (data) => {
+  const source = Array.isArray(data) ? data : (Array.isArray(data?.items) ? data.items : [])
+  return {
+    items: source.map(normalizeAttendanceItem).filter(Boolean),
+    absent: Array.isArray(data) ? 0 : Math.max(0, Math.floor(Number(data?.absent) || 0))
+  }
+}
+
+const normalizeAdjustment = (adj) => {
+  if (!adj || typeof adj !== 'object') return null
+  const amount = Number(adj.amount)
+  if (!finite(amount) || amount === 0) return null
+  return {
+    id: String(adj.id || `adj_${Date.now().toString(36)}`),
+    label: String(adj.label || 'Adjustment'),
+    amount: -Math.abs(amount)
+  }
 }
 
 export const normalizeBasicConfig = (c) => ({
@@ -122,7 +155,7 @@ export const normalizeBasicConfig = (c) => ({
 export const normalizeRules = (list) => {
   const used = new Set()
   return (Array.isArray(list) ? list : [])
-    .map((r, i) => ({ ...r, order: Number.isFinite(Number(r?.order)) ? Number(r.order) : i + 1 }))
+    .map((r, i) => ({ ...r, order: finite(r?.order) ? Number(r.order) : i + 1 }))
     .map((r) => {
       const id = uniqId(ensureRuleId(r), used)
       used.add(id)
@@ -133,123 +166,106 @@ export const normalizeRules = (list) => {
 export const normalizeEmployee = (emp) => normalizeProbationFields(emp)
 
 export const normalizeAttendanceStore = (store) =>
-  Object.fromEntries(
-    Object.entries(store || {}).map(([period, employees]) => [
-      period,
-      Object.fromEntries(
-        Object.entries(employees || {}).map(([empId, record]) => [
-          empId,
-          normalizeAttendanceRecord(record)
-        ])
-      )
-    ])
-  )
-
-const normalizeAdjustment = (adj) => {
-  if (!adj || typeof adj !== 'object') return null
-  const amount = Number(adj.amount)
-  if (!Number.isFinite(amount) || amount === 0) return null
-  return {
-    id: String(adj.id || `adj_${Date.now().toString(36)}`),
-    label: String(adj.label || 'Adjustment'),
-    amount: -Math.abs(amount)
-  }
-}
+  mapByPeriod(store, normalizeAttendance)
 
 export const normalizeAdjustmentsStore = (store) =>
-  Object.fromEntries(
-    Object.entries(store || {}).map(([period, employees]) => [
-      period,
-      Object.fromEntries(
-        Object.entries(employees || {}).map(([empId, list]) => [
-          empId,
-          (Array.isArray(list) ? list : []).map(normalizeAdjustment).filter(Boolean)
-        ])
-      )
-    ])
-  )
+  mapByPeriod(store, (list) => (Array.isArray(list) ? list : []).map(normalizeAdjustment).filter(Boolean))
+
+const normalizeObjectStore = (v) => (isObject(v) ? v : {})
 
 const NORMALIZERS = {
   xpayroll_basic_config: normalizeBasicConfig,
   xpayroll_rules: normalizeRules,
   xpayroll_settings: (v) => ({ ...DEFAULT_SETTINGS, ...v }),
   xpayroll_employees: (list) => (Array.isArray(list) ? list : []).map(normalizeEmployee),
-  xpayroll_attendance: (v) => (v && typeof v === 'object' ? v : {}),
+  xpayroll_attendance: normalizeObjectStore,
   xpayroll_attendance_items: normalizeAttendanceStore,
-  xpayroll_adjustments: normalizeAdjustmentsStore
+  xpayroll_adjustments: normalizeAdjustmentsStore,
+  xpayroll_theme: (v) => ({ mode: v?.mode === 'dark' ? 'dark' : 'light' }),
+  xpayroll_wizard_step: (v) => (finite(v) ? Number(v) : 0),
+  xpayroll_payroll: normalizeObjectStore,
+  xpayroll_salary_records: normalizeObjectStore
 }
 
-export const normalizeBackupEntry = (key, value) => {
-  const normalizer = NORMALIZERS[key]
-  if (normalizer) return normalizer(value ?? BACKUP_DEFAULTS[key])
-  return value
-}
+export const normalizeBackupEntry = (key, value) =>
+  (NORMALIZERS[key] ?? ((v) => v))(value ?? BACKUP_DEFAULTS[key])
 
 export const normalizeBackupData = (data) =>
   Object.fromEntries(
-    Object.entries(data || {})
-      .filter(([key]) => key.startsWith(SESSION_PREFIX))
-      .map(([key, value]) => [key, normalizeBackupEntry(key, value)])
+    Object.entries({
+      ...BACKUP_DEFAULTS,
+      ...Object.fromEntries(
+        Object.entries(data || {}).filter(([key]) => key.startsWith(SESSION_PREFIX))
+      )
+    }).map(([key, value]) => [key, normalizeBackupEntry(key, value)])
   )
 
-const isObject = (v) => v && typeof v === 'object' && !Array.isArray(v)
+const VALIDATORS = [
+  {
+    applies: (d) => 'xpayroll_employees' in d,
+    check: (d) =>
+      !Array.isArray(d.xpayroll_employees)
+        ? 'Employees must be an array'
+        : d.xpayroll_employees.find((e) => !e?.id || !e?.name || !finite(e?.dailySalary))
+          ? 'Employee records must include id, name, and dailySalary'
+          : null
+  },
+  {
+    applies: (d) => 'xpayroll_rules' in d,
+    check: (d) =>
+      !Array.isArray(d.xpayroll_rules)
+        ? 'Rules must be an array'
+        : d.xpayroll_rules.find((r) =>
+            !r?.id || !r?.type || !finite(r?.value) || !r?.category || !finite(r?.order)
+          )
+          ? 'Rule records must include id, type, value, category, and order'
+          : null
+  },
+  {
+    applies: (d) => 'xpayroll_basic_config' in d,
+    check: (d) => {
+      const c = d.xpayroll_basic_config
+      if (!isObject(c)) return 'Basic config must be an object'
+      if (!finite(c.workdayHours)) return 'Basic config workdayHours must be numeric'
+      if (!finite(c.overtimeRate)) return 'Basic config overtimeRate must be numeric'
+      if (!finite(c.undertimeRate)) return 'Basic config undertimeRate must be numeric'
+      return null
+    }
+  },
+  {
+    applies: (d) => 'xpayroll_attendance_items' in d,
+    check: (d) => (isObject(d.xpayroll_attendance_items) ? null : 'Attendance items must be an object')
+  },
+  {
+    applies: (d) => 'xpayroll_adjustments' in d,
+    check: (d) => (isObject(d.xpayroll_adjustments) ? null : 'Adjustments must be an object')
+  }
+]
 
 export const validateBackupData = (data) => {
   if (!isObject(data)) return { ok: false, error: 'Backup payload is not an object' }
-
-  const keys = Object.keys(data).filter((key) => key.startsWith(SESSION_PREFIX))
-  if (!keys.length) return { ok: false, error: 'Backup contains no session data' }
-
-  if ('xpayroll_employees' in data) {
-    const employees = data.xpayroll_employees
-    if (!Array.isArray(employees)) return { ok: false, error: 'Employees must be an array' }
-    const badEmployee = employees.find((e) => !e?.id || !e?.name || !Number.isFinite(Number(e?.dailySalary)))
-    if (badEmployee) return { ok: false, error: 'Employee records must include id, name, and dailySalary' }
+  if (!Object.keys(data).some((key) => key.startsWith(SESSION_PREFIX))) {
+    return { ok: false, error: 'Backup contains no session data' }
   }
-
-  if ('xpayroll_rules' in data) {
-    const rules = data.xpayroll_rules
-    if (!Array.isArray(rules)) return { ok: false, error: 'Rules must be an array' }
-    const badRule = rules.find((r) =>
-      !r?.id || !r?.type || !Number.isFinite(Number(r?.value)) || !r?.category || !Number.isFinite(Number(r?.order))
-    )
-    if (badRule) return { ok: false, error: 'Rule records must include id, type, value, category, and order' }
-  }
-
-  if ('xpayroll_basic_config' in data) {
-    const config = data.xpayroll_basic_config
-    if (!isObject(config)) return { ok: false, error: 'Basic config must be an object' }
-    if (!Number.isFinite(Number(config.workdayHours))) return { ok: false, error: 'Basic config workdayHours must be numeric' }
-    if (!Number.isFinite(Number(config.overtimeRate))) return { ok: false, error: 'Basic config overtimeRate must be numeric' }
-    if (!Number.isFinite(Number(config.undertimeRate))) return { ok: false, error: 'Basic config undertimeRate must be numeric' }
-  }
-
-  if ('xpayroll_attendance_items' in data && !isObject(data.xpayroll_attendance_items)) {
-    return { ok: false, error: 'Attendance items must be an object' }
-  }
-  if ('xpayroll_adjustments' in data && !isObject(data.xpayroll_adjustments)) {
-    return { ok: false, error: 'Adjustments must be an object' }
-  }
-
-  return { ok: true }
+  const error = VALIDATORS.map(({ applies, check }) => (applies(data) ? check(data) : null)).find(Boolean)
+  return error ? { ok: false, error } : { ok: true }
 }
 
-export const buildBackupPayload = (ls) => {
-  const data = normalizeBackupData(readAllSessionData(ls))
-  return { version: 1, exportedAt: new Date().toISOString(), data }
-}
+export const buildBackupPayload = (ls) => ({
+  version: BACKUP_VERSION,
+  appVersion: APP_VERSION,
+  exportedAt: new Date().toISOString(),
+  data: normalizeBackupData(readAllSessionData(ls))
+})
 
-const parseStoredValue = (value) => {
-  if (typeof value === 'string') {
-    try { return JSON.parse(value) } catch { return value }
-  }
-  return value
-}
+const parseStoredValue = (value) =>
+  typeof value === 'string' ? parseJsonOrRaw(value) : value
 
 export const parseLegacyPayload = (payload) => {
-  if (payload?.version === 1 && payload?.data) return payload.data
+  if ((payload?.version === 1 || payload?.version === 2) && payload?.data) return payload.data
   if (!payload || typeof payload !== 'object') return null
-  const entries = Object.entries(payload).filter(([key]) => key.startsWith(SESSION_PREFIX))
-  if (!entries.length) return null
-  return Object.fromEntries(entries.map(([key, value]) => [key, parseStoredValue(value)]))
+  const entries = Object.entries(payload)
+    .filter(([key]) => key.startsWith(SESSION_PREFIX))
+    .map(([key, value]) => [key, parseStoredValue(value)])
+  return entries.length ? Object.fromEntries(entries) : null
 }

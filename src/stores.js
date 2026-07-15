@@ -3,21 +3,23 @@
  * Clean, functional stores with minimal complexity
  */
 
-import { writable, derived, get } from 'svelte/store'
-import { storage, normalizeAttendance } from './core.js'
+import { writable, derived } from 'svelte/store'
+import { storage } from './core.js'
 import { DEFAULT_RULES, createRule, validateRule, getNextOrder, ensureRuleId } from './rules.js'
 import {
   DEFAULT_PRINT_LABELS,
+  DEFAULT_THEME,
   normalizeBasicConfig,
   normalizeRules,
   normalizeEmployee,
   normalizeAttendanceStore,
   normalizeAdjustmentsStore,
+  normalizeAttendance,
   DEFAULT_BASIC_CONFIG,
   DEFAULT_SETTINGS
 } from './persist.js'
 
-export { SESSION_PREFIX, DEFAULT_PRINT_LABELS } from './persist.js'
+export { DEFAULT_PRINT_LABELS, DEFAULT_SETTINGS, DEFAULT_THEME, resolveLocale } from './persist.js'
 
 // ============================================================================
 // STORAGE KEYS
@@ -71,26 +73,6 @@ export const LOCALE_OPTIONS = [
   { value: 'zh-CN', label: 'Chinese (Simplified)' },
   { value: 'hi-IN', label: 'Hindi' }
 ]
-
-const LOCALE_VALUES = new Set(LOCALE_OPTIONS.map((o) => o.value))
-
-export const resolveLocale = (locale) => {
-  const trimmed = String(locale ?? '').trim()
-  if (LOCALE_VALUES.has(trimmed)) return trimmed
-  if (!trimmed) return DEFAULT_BASIC_CONFIG.locale
-  try {
-    new Intl.DateTimeFormat(trimmed)
-    return trimmed
-  } catch {
-    return DEFAULT_BASIC_CONFIG.locale
-  }
-}
-
-const DEFAULT_THEME = {
-  mode: 'light'
-}
-
-export { DEFAULT_SETTINGS } from './persist.js'
 
 // ============================================================================
 // STORES
@@ -160,17 +142,6 @@ salaryRecords.subscribe(value => storage.set('xpayroll_salary_records', value))
 // DERIVED STORES
 // ============================================================================
 
-// Employee statistics
-export const employeeStats = derived(employees, ($employees) => {
-  const total = $employees.length
-  const married = $employees.filter(emp => emp.maritalStatus === 'married').length
-  const totalPayroll = $employees.reduce((sum, emp) => sum + ((emp.dailySalary || 0) * 30), 0)
-  const averageSalary = total > 0 ? totalPayroll / total : 0
-  
-  return { total, married, totalPayroll, averageSalary }
-})
-
-// Current period
 export const currentPeriod = derived([], () => {
   const now = new Date()
   const year = now.getFullYear()
@@ -202,43 +173,15 @@ export const updateEmployee = (id, updates) => {
 }
 
 export const removeEmployee = (id) => {
-  employees.update(current => current.filter(emp => emp.id !== id))
-  
-  // Clean up related data - remove employee from all periods
-  const cleanupPeriods = (data) => 
+  employees.update((current) => current.filter((emp) => emp.id !== id))
+  const cleanupPeriods = (data) =>
     Object.fromEntries(
       Object.entries(data).map(([period, periodData]) => [
         period,
         Object.fromEntries(Object.entries(periodData).filter(([empId]) => empId !== id))
       ])
     )
-  
-  attendance.update(cleanupPeriods)
-  payroll.update(cleanupPeriods)
-}
-
-// Attendance actions
-export const setAttendance = (period, employeeId, date, data) => {
-  attendance.update(current => ({
-    ...current,
-    [period]: {
-      ...current[period],
-      [employeeId]: {
-        ...current[period]?.[employeeId],
-        [date]: data
-      }
-    }
-  }))
-}
-
-export const removeAttendance = (period, employeeId, date) => {
-  attendance.update(current => {
-    const updated = { ...current }
-    if (updated[period]?.[employeeId]) {
-      delete updated[period][employeeId][date]
-    }
-    return updated
-  })
+  ;[attendance, attendanceItems, adjustments, payroll].map((store) => store.update(cleanupPeriods))
 }
 
 // Adjustment actions
@@ -289,9 +232,6 @@ export const removeAdjustment = (period, employeeId, adjustmentId) => {
     }
   }))
 }
-
-export const getAdjustments = (period, employeeId) =>
-  get(adjustments)[period]?.[employeeId] || []
 
 // Attendance items actions
 const attendanceRecord = (period, employeeId, current) =>
@@ -366,36 +306,6 @@ export const setAbsentDays = (period, employeeId, absent) => {
   })
 }
 
-export const getAttendanceItems = (period, employeeId) =>
-  attendanceRecord(period, employeeId, get(attendanceItems)).items
-
-export const getAbsentDays = (period, employeeId) =>
-  attendanceRecord(period, employeeId, get(attendanceItems)).absent
-
-export const getAttendanceRecord = (period, employeeId) =>
-  attendanceRecord(period, employeeId, get(attendanceItems))
-
-// Payroll actions
-export const setPayroll = (period, employeeId, data) => {
-  payroll.update(current => ({
-    ...current,
-    [period]: {
-      ...current[period],
-      [employeeId]: data
-    }
-  }))
-}
-
-export const removePayroll = (period, employeeId) => {
-  payroll.update(current => {
-    const updated = { ...current }
-    if (updated[period]) {
-      delete updated[period][employeeId]
-    }
-    return updated
-  })
-}
-
 // Rules actions
 export const addRule = (ruleData) => {
   const rule = createRule(ruleData)
@@ -467,54 +377,3 @@ export const updateBasicConfig = (updates) => {
   if (updates.undertimeRate !== undefined) normalized.undertimeRate = toNum(updates.undertimeRate, DEFAULT_BASIC_CONFIG.undertimeRate)
   basicConfig.update(current => ({ ...current, ...normalized }))
 }
-
-export const resetBasicConfig = () => {
-  basicConfig.set(DEFAULT_BASIC_CONFIG)
-}
-
-// Settings actions
-export const updateSettings = (updates) => {
-  settings.update(current => ({ ...current, ...updates }))
-}
-
-export const resetSettings = () => {
-  settings.set(DEFAULT_SETTINGS)
-}
-
-// Salary record actions
-export const storeSalaryRecord = (period, employeeId, record) => {
-  salaryRecords.update(current => ({
-    ...current,
-    [period]: {
-      ...current[period],
-      [employeeId]: record
-    }
-  }))
-}
-
-export const getSalaryRecord = (period, employeeId) => 
-  get(salaryRecords)[period]?.[employeeId] || null
-
-export const getPeriodSalaryRecords = (period) => 
-  get(salaryRecords)[period] || {}
-
-export const clearPeriodSalaryRecords = (period) => {
-  salaryRecords.update(current => {
-    const updated = { ...current }
-    delete updated[period]
-    return updated
-  })
-}
-
-// ============================================================================
-// GETTERS
-// ============================================================================
-
-export const getEmployee = (id) => 
-  get(employees).find(emp => emp.id === id) || null
-
-export const getAttendance = (period, employeeId) => 
-  get(attendance)[period]?.[employeeId] || {}
-
-export const getPayroll = (period, employeeId) => 
-  get(payroll)[period]?.[employeeId] || null
