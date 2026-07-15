@@ -121,6 +121,18 @@ const createFixedRuleStep = (ruleData, _result, type) => ({
 const employeeEffectiveDays = (result) =>
   result.ruleResults?.effectiveDays ?? result.configSnapshot?.workingDaysPerMonth ?? 22
 
+const bonusDaysExplain = (result, effectiveDays) => {
+  const workDays = result.configSnapshot?.workingDaysPerMonth ?? 22
+  const absentDays = result.ruleResults?.absentDays ?? 0
+  const undertimeDayBlocks = result.ruleResults?.undertimeDayBlocks ?? 0
+  const parts = [`${workDays} working days`]
+  if (absentDays > 0) parts.push(`${absentDays} absent`)
+  if (undertimeDayBlocks > 0) parts.push(`${undertimeDayBlocks} net undertime days`)
+  return parts.length === 1
+    ? `effective work days (${effectiveDays})`
+    : `${parts.join(' − ')} = ${effectiveDays}`
+}
+
 const createHourlyProratedStep = (ruleData, result, type) => {
   const effectiveDays = employeeEffectiveDays(result)
   const workDays = result.configSnapshot?.workingDaysPerMonth ?? 22
@@ -138,7 +150,7 @@ const createHourlyProratedStep = (ruleData, result, type) => {
     result: ruleData.value,
     explanation: ratio >= 1
       ? `${type.charAt(0).toUpperCase() + type.slice(1)} is paid in full because effective work days (${effectiveDays}) are at least ${FULL_BONUS_DAYS_THRESHOLD}.`
-      : `${type.charAt(0).toUpperCase() + type.slice(1)} uses the same effective work days as base salary (${workDays} − ${absentDays} absent − ${undertimeDayBlocks} undertime days = ${effectiveDays}), divided by ${FULL_BONUS_DAYS_THRESHOLD}.`,
+      : `${type.charAt(0).toUpperCase() + type.slice(1)} uses ${bonusDaysExplain(result, effectiveDays)}, divided by ${FULL_BONUS_DAYS_THRESHOLD}.`,
     inputs: { fullValue, effectiveDays, workDays, ratio, absentDays, undertimeDayBlocks },
     type
   }
@@ -160,7 +172,7 @@ const createFixedDailyProratedStep = (ruleData, result, type) => {
     result: ruleData.value,
     explanation: ratio >= 1
       ? `${type.charAt(0).toUpperCase() + type.slice(1)} is paid in full because effective work days (${effectiveDays}) are at least ${FULL_BONUS_DAYS_THRESHOLD}.`
-      : `${type.charAt(0).toUpperCase() + type.slice(1)} uses the same effective work days as base salary (${workDays} − ${absentDays} absent − ${undertimeDayBlocks} undertime days = ${effectiveDays}), divided by ${FULL_BONUS_DAYS_THRESHOLD}.`,
+      : `${type.charAt(0).toUpperCase() + type.slice(1)} uses ${bonusDaysExplain(result, effectiveDays)}, divided by ${FULL_BONUS_DAYS_THRESHOLD}.`,
     inputs: { amount: ruleData.rule.value, effectiveDays, workDays, ratio, absentDays, undertimeDayBlocks },
     type
   }
@@ -185,7 +197,7 @@ const createDaysMultiplierStep = (ruleData, result, type) => {
     result: ruleData.value,
     explanation: ratio >= 1
       ? `${type.charAt(0).toUpperCase() + type.slice(1)} is paid in full because effective work days (${effectiveDays}) are at least ${FULL_BONUS_DAYS_THRESHOLD}.`
-      : `${type.charAt(0).toUpperCase() + type.slice(1)} uses the same effective work days as base salary (${workDays} − ${absentDays} absent − ${undertimeDayBlocks} undertime days = ${effectiveDays}), divided by ${FULL_BONUS_DAYS_THRESHOLD}.`,
+      : `${type.charAt(0).toUpperCase() + type.slice(1)} uses ${bonusDaysExplain(result, effectiveDays)}, divided by ${FULL_BONUS_DAYS_THRESHOLD}.`,
     inputs: { fullMonthValue, effectiveDays, workDays, dailyRate, multiplier: ruleData.rule.value, ratio, absentDays, undertimeDayBlocks },
     type
   }
@@ -365,18 +377,26 @@ export const buildCalculationSteps = (result) => {
   const otUtFormula = hasAttendanceHours
     ? `${[otTerm, utTerm].filter(Boolean).join(' − ')} = ${attendanceEffect >= 0 ? '+' : ''}${fmtAmt(attendanceEffect)}`
     : null
+  const otUtFormulaLabel = rawOvertimeHours > 0 && rawUndertimeHours > 0
+    ? '(Daily salary ÷ Overtime rate × Overtime hours) − (Daily salary ÷ Undertime rate × Undertime hours)'
+    : rawOvertimeHours > 0
+      ? 'Daily salary ÷ Overtime rate × Overtime hours'
+      : 'Daily salary ÷ Undertime rate × Undertime hours'
   const dailyRate = result.employee.dailySalary
   const effectiveDays = result.ruleResults?.effectiveDays ?? workDays
   const absentDays = result.ruleResults?.absentDays ?? 0
   const undertimeDayBlocks = result.ruleResults?.undertimeDayBlocks ?? 0
   const workdayHoursLabel = result.configSnapshot.workdayHours
+  const dayParts = [`working days per month (${workDays})`]
+  if (absentDays > 0) dayParts.push(`absent (${absentDays})`)
+  if (undertimeDayBlocks > 0) dayParts.push(`net undertime days (${undertimeDayBlocks}, from net undertime hours ÷ ${workdayHoursLabel}h/day)`)
   steps.push(hasAttendanceHours
     ? {
         label: 'Overtime / Undertime',
-        formula: '(Daily salary ÷ Overtime rate × Overtime hours) − (Daily salary ÷ Undertime rate × Undertime hours)',
+        formula: otUtFormulaLabel,
         formulaWithValues: otUtFormula,
         result: attendanceEffect,
-        explanation: 'Overtime: (daily salary ÷ overtimeRate from config) × overtime hours. Undertime: (daily salary ÷ undertimeRate from config) × undertime hours. Net is overtime minus undertime.',
+        explanation: 'Overtime and undertime pay are calculated separately from attendance hour items. Net undertime (after OT offsets UT) can also reduce effective work days.',
         inputs: { expectedHours, dailySalary: result.employee.dailySalary, rawOvertimeHours, rawUndertimeHours, overtimePay, undertimePay },
         type: 'attendance',
         section: 'attendance'
@@ -397,7 +417,7 @@ export const buildCalculationSteps = (result) => {
     formula: 'Effective work days × Daily salary',
     formulaWithValues: baseFormulaValues,
     result: result.baseSalary,
-    explanation: `Effective work days (${effectiveDays}) = working days per month (${workDays}) minus absent (${absentDays}) minus full undertime days (${undertimeDayBlocks}, from undertime hours ÷ ${workdayHoursLabel}h/day). Overtime and undertime pay are separate.`,
+    explanation: `Effective work days (${effectiveDays}) = ${dayParts.join(' minus ')}. Overtime and undertime pay are separate.`,
     inputs: { workDays, absentDays, undertimeDayBlocks, effectiveDays, dailyRate, result: result.baseSalary },
     type: 'base',
     section: 'base'
