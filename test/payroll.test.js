@@ -29,10 +29,17 @@ const run = () => {
   {
     const attendanceItems = [{ hours: -6.5 }]
     const r = applyRules(employee, attendanceItems, [], baseConfig)
-    const expected = employee.dailySalary * baseConfig.workingDaysPerMonth
-    assert.ok(near(r.baseFromDays, expected), `expected baseFromDays ${expected}, got ${r.baseFromDays}`)
-    assert.ok(near(r.baseSalary, expected), `expected baseSalary ${expected}, got ${r.baseSalary}`)
-    assert.ok(near(r.effectiveDays, 22), `undertime should not reduce effectiveDays, got ${r.effectiveDays}`)
+    assert.ok(near(r.effectiveDays, 21), `1 undertime day block should reduce effectiveDays to 21, got ${r.effectiveDays}`)
+    assert.ok(near(r.actualDays, 21), `actualDays should match effectiveDays, got ${r.actualDays}`)
+    assert.ok(near(r.baseSalary, employee.dailySalary * 21), `expected baseSalary ${employee.dailySalary * 21}, got ${r.baseSalary}`)
+  }
+
+  {
+    const attendanceItems = [{ hours: -22 }]
+    const r = applyRules(employee, attendanceItems, [], { ...baseConfig, workdayHours: 8, workingDaysPerMonth: 31 })
+    assert.ok(near(r.undertimeDayBlocks, 2), `22h / 8h should be 2 day blocks, got ${r.undertimeDayBlocks}`)
+    assert.ok(near(r.effectiveDays, 29), `expected effectiveDays 29 (31 - 2), got ${r.effectiveDays}`)
+    assert.ok(near(r.actualDays, 29), `report days should be 29, got ${r.actualDays}`)
   }
 
   {
@@ -47,18 +54,16 @@ const run = () => {
   {
     const attendanceItems = { items: [{ hours: -6.5 * 3 }], absent: 3 }
     const r = applyRules(employee, attendanceItems, [fixedDailyRule], baseConfig)
-    assert.ok(near(r.effectiveDays, 19), `expected effectiveDays 19, got ${r.effectiveDays}`)
-    assert.ok(near(r.bonusEffectiveDays, 27), `expected bonusEffectiveDays 27, got ${r.bonusEffectiveDays}`)
-    const expectedRuleValue = (fixedDailyRule.value * 27) / 30
-    assert.ok(near(r.bonuses.fdp.value, expectedRuleValue), `expected fixed_daily_prorated ${expectedRuleValue}, got ${r.bonuses.fdp.value}`)
+    assert.ok(near(r.undertimeDayBlocks, 3), `expected 3 undertime day blocks, got ${r.undertimeDayBlocks}`)
+    assert.ok(near(r.effectiveDays, 16), `expected effectiveDays 16 (22 - 3 absent - 3 UT), got ${r.effectiveDays}`)
+    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 16) / 30), `bonus should use same 16 days, got ${r.bonuses.fdp.value}`)
   }
 
   {
     const attendanceItems = [{ hours: 6.5 * 40 }]
     const r = applyRules(employee, attendanceItems, [fixedDailyRule], baseConfig)
     assert.ok(near(r.effectiveDays, 22), `expected effectiveDays 22, got ${r.effectiveDays}`)
-    assert.ok(near(r.bonusEffectiveDays, 30), `expected bonusEffectiveDays 30, got ${r.bonusEffectiveDays}`)
-    assert.ok(near(r.bonuses.fdp.value, fixedDailyRule.value), `expected full bonus at 30 bonus effective days, got ${r.bonuses.fdp.value}`)
+    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 22) / 30), `bonus should use 22/30, got ${r.bonuses.fdp.value}`)
   }
 
   {
@@ -71,8 +76,7 @@ const run = () => {
     const config28 = { ...baseConfig, workingDaysPerMonth: 28, monthDays: 30 }
     const r = applyRules(employee, { items: [], absent: 0 }, [fixedDailyRule], config28)
     assert.ok(near(r.effectiveDays, 28), `expected effectiveDays 28 from config, got ${r.effectiveDays}`)
-    assert.ok(near(r.bonusEffectiveDays, 30), `expected bonusEffectiveDays 30, got ${r.bonusEffectiveDays}`)
-    assert.ok(near(r.bonuses.fdp.value, fixedDailyRule.value), `expected full bonus at 30 bonus effective days, got ${r.bonuses.fdp.value}`)
+    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 28) / 30), `bonus should use 28/30, got ${r.bonuses.fdp.value}`)
   }
 
   {
@@ -80,8 +84,7 @@ const run = () => {
     const r = applyRules(employee, { items: [], absent: 3 }, [fixedDailyRule], config28)
     assert.ok(near(r.effectiveDays, 25), `base effectiveDays should be 28 - 3 from config, got ${r.effectiveDays}`)
     assert.ok(near(r.baseSalary, employee.dailySalary * 25), `base salary should use config days, got ${r.baseSalary}`)
-    assert.ok(near(r.bonusEffectiveDays, 27), `bonus effectiveDays should be 30 - 3, got ${r.bonusEffectiveDays}`)
-    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 27) / 30), `bonus should prorate from fixed 30, got ${r.bonuses.fdp.value}`)
+    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 25) / 30), `bonus should use same 25 days ÷ 30, got ${r.bonuses.fdp.value}`)
   }
 
   const hourlyProratedRule = {
@@ -112,14 +115,21 @@ const run = () => {
 
   {
     const r = applyRules(employee, { items: [], absent: 3 }, rules31, config31)
-    assert.ok(near(r.effectiveDays, 28), `base effectiveDays should be 31 - 3 from config, got ${r.effectiveDays}`)
-    assert.ok(near(r.bonusEffectiveDays, 27), `bonus effectiveDays should be 30 - 3, got ${r.bonusEffectiveDays}`)
-    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 27) / 30), `bonus should divide by 30 not monthDays, got ${r.bonuses.fdp.value}`)
+    assert.ok(near(r.effectiveDays, 28), `effectiveDays should be 31 - 3, got ${r.effectiveDays}`)
+    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 28) / 30), `bonus should use 28/30, got ${r.bonuses.fdp.value}`)
+    assert.ok(near(r.bonuses.hp.value, (hourlyProratedRule.value * 28) / 30), `hourly bonus should use 28/30, got ${r.bonuses.hp.value}`)
+  }
+
+  {
+    const r = applyRules(employee, { items: [], absent: 5 }, rules31, config31)
+    assert.ok(near(r.effectiveDays, 26), `effectiveDays should be 31 - 5, got ${r.effectiveDays}`)
+    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 26) / 30), `bonus should use 26/30, got ${r.bonuses.fdp.value}`)
   }
 
   {
     const attendanceItems = [{ hours: -5 }, { hours: 9 }]
     const r = applyRules(employee, attendanceItems, rules31, config31)
+    assert.ok(near(r.undertimeDayBlocks, 0), `5h undertime is less than 1 day, got ${r.undertimeDayBlocks}`)
     assert.ok(near(r.effectiveDays, 31), `expected effectiveDays 31, got ${r.effectiveDays}`)
     assert.ok(near(r.bonuses.fdp.value, fixedDailyRule.value), `expected fixed_daily_prorated ${fixedDailyRule.value}, got ${r.bonuses.fdp.value}`)
     assert.ok(near(r.bonuses.hp.value, hourlyProratedRule.value), `expected hourly_prorated ${hourlyProratedRule.value}, got ${r.bonuses.hp.value}`)
@@ -128,17 +138,28 @@ const run = () => {
   {
     const attendanceItems = [{ hours: -8 }]
     const r = applyRules(employee, attendanceItems, rules31, config31)
-    assert.ok(near(r.effectiveDays, 31), `expected effectiveDays 31, got ${r.effectiveDays}`)
-    assert.ok(near(r.baseSalary, employee.dailySalary * 31), `expected baseSalary ${employee.dailySalary * 31}, got ${r.baseSalary}`)
-    assert.ok(near(r.bonuses.fdp.value, fixedDailyRule.value), `expected fixed_daily_prorated ${fixedDailyRule.value}, got ${r.bonuses.fdp.value}`)
+    assert.ok(near(r.undertimeDayBlocks, 1), `8h / 8h = 1 day block, got ${r.undertimeDayBlocks}`)
+    assert.ok(near(r.effectiveDays, 30), `expected effectiveDays 30, got ${r.effectiveDays}`)
+    assert.ok(near(r.actualDays, 30), `report days should be 30, got ${r.actualDays}`)
+    assert.ok(near(r.baseSalary, employee.dailySalary * 30), `expected baseSalary ${employee.dailySalary * 30}, got ${r.baseSalary}`)
+    assert.ok(near(r.bonuses.fdp.value, fixedDailyRule.value), `bonus at 30 effective days is full, got ${r.bonuses.fdp.value}`)
     assert.ok(near(r.bonuses.hp.value, hourlyProratedRule.value), `expected hourly_prorated ${hourlyProratedRule.value}, got ${r.bonuses.hp.value}`)
+  }
+
+  {
+    const attendanceItems = [{ hours: -16 }]
+    const r = applyRules(employee, attendanceItems, rules31, config31)
+    assert.ok(near(r.undertimeDayBlocks, 2), `16h / 8h = 2 day blocks, got ${r.undertimeDayBlocks}`)
+    assert.ok(near(r.effectiveDays, 29), `expected effectiveDays 29, got ${r.effectiveDays}`)
+    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 29) / 30), `bonus must match employee days 29 not 30, got ${r.bonuses.fdp.value}`)
   }
 
   {
     const attendanceItems = [{ hours: -8 }, { hours: 9 }]
     const r = applyRules(employee, attendanceItems, rules31, config31)
-    assert.ok(near(r.effectiveDays, 31), `expected effectiveDays 31, got ${r.effectiveDays}`)
-    assert.ok(near(r.baseSalary, employee.dailySalary * 31), `expected baseSalary ${employee.dailySalary * 31}, got ${r.baseSalary}`)
+    assert.ok(near(r.undertimeDayBlocks, 1), `undertime day blocks ignore OT, got ${r.undertimeDayBlocks}`)
+    assert.ok(near(r.effectiveDays, 30), `expected effectiveDays 30, got ${r.effectiveDays}`)
+    assert.ok(near(r.baseSalary, employee.dailySalary * 30), `expected baseSalary ${employee.dailySalary * 30}, got ${r.baseSalary}`)
     assert.ok(near(r.bonuses.fdp.value, fixedDailyRule.value), `expected fixed_daily_prorated ${fixedDailyRule.value}, got ${r.bonuses.fdp.value}`)
     assert.ok(near(r.bonuses.hp.value, hourlyProratedRule.value), `expected hourly_prorated ${hourlyProratedRule.value}, got ${r.bonuses.hp.value}`)
   }
@@ -146,8 +167,9 @@ const run = () => {
   {
     const attendanceItems = { items: [{ hours: -21 }], absent: 2 }
     const r = applyRules(employee, attendanceItems, [], { ...config31, workdayHours: 8, workingDaysPerMonth: 22, monthDays: 30 })
-    assert.ok(near(r.effectiveDays, 20), `expected effectiveDays 20 (22 - 2 absent), got ${r.effectiveDays}`)
-    assert.ok(near(r.baseSalary, employee.dailySalary * 20), `expected baseSalary ${employee.dailySalary * 20}, got ${r.baseSalary}`)
+    assert.ok(near(r.undertimeDayBlocks, 2), `floor(21/8)=2, got ${r.undertimeDayBlocks}`)
+    assert.ok(near(r.effectiveDays, 18), `expected effectiveDays 18 (22 - 2 absent - 2 UT), got ${r.effectiveDays}`)
+    assert.ok(near(r.baseSalary, employee.dailySalary * 18), `expected baseSalary ${employee.dailySalary * 18}, got ${r.baseSalary}`)
   }
 
   {

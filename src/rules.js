@@ -153,13 +153,15 @@ const normalizeRuleType = (type) =>
 const toDayBlocks = (hours, workdayHours) =>
   Math.floor(Math.abs(hours) / workdayHours)
 
-const resolveEffectiveDays = (workDays, absentDays) =>
-  Math.max(0, workDays - Math.max(0, Math.floor(Number(absentDays) || 0)))
+const resolveEffectiveDays = (workDays, absentDays, undertimeDayBlocks = 0) =>
+  Math.max(
+    0,
+    workDays
+      - Math.max(0, Math.floor(Number(absentDays) || 0))
+      - Math.max(0, Math.floor(Number(undertimeDayBlocks) || 0))
+  )
 
 export const FULL_BONUS_DAYS_THRESHOLD = 30
-
-const resolveBonusEffectiveDays = (absentDays) =>
-  Math.max(0, FULL_BONUS_DAYS_THRESHOLD - Math.max(0, Math.floor(Number(absentDays) || 0)))
 
 export const bonusProrationRatio = (effectiveDays) =>
   effectiveDays >= FULL_BONUS_DAYS_THRESHOLD ? 1
@@ -182,8 +184,7 @@ const buildAttendanceMetrics = (attendanceData, config) => {
   const hourEquivalentDays = rawHours / workdayHours
   const monthHourEquivalentDays = Math.max(0, workDays + hourEquivalentDays)
   const dayEquivalent = Math.max(0, workDays + hourEquivalentDays)
-  const effectiveDays = resolveEffectiveDays(workDays, absent)
-  const bonusEffectiveDays = resolveBonusEffectiveDays(absent)
+  const effectiveDays = resolveEffectiveDays(workDays, absent, undertimeDayBlocks)
 
   return {
     workDays,
@@ -196,8 +197,7 @@ const buildAttendanceMetrics = (attendanceData, config) => {
     absentDays: absent,
     monthHourEquivalentDays,
     dayEquivalent,
-    effectiveDays,
-    bonusEffectiveDays
+    effectiveDays
   }
 }
 
@@ -205,17 +205,17 @@ const RULE_CALCULATORS = {
   [RULE_TYPES.FIXED]: (rule) => rule.value,
 
   [RULE_TYPES.HOURLY_PRORATED]: (rule, _, __, ___, ____, _____, metrics) =>
-    rule.value * bonusProrationRatio(metrics.bonusEffectiveDays),
+    rule.value * bonusProrationRatio(metrics.effectiveDays),
 
   [LEGACY_RULE_TYPES.PRORATED]: (rule, employee, attendanceItems, hourlyRate, config, totalDaysWorked, metrics) =>
     RULE_CALCULATORS[RULE_TYPES.HOURLY_PRORATED](rule, employee, attendanceItems, hourlyRate, config, totalDaysWorked, metrics),
 
   [RULE_TYPES.FIXED_DAILY_PRORATED]: (rule, _, __, ___, ____, _____, metrics) =>
-    rule.value * bonusProrationRatio(metrics.bonusEffectiveDays),
+    rule.value * bonusProrationRatio(metrics.effectiveDays),
 
   [RULE_TYPES.DAYS_MULTIPLIER]: (rule, employee, _, __, ___, ____, metrics) => {
     const fullMonthValue = rule.value * employee.dailySalary
-    return fullMonthValue * bonusProrationRatio(metrics.bonusEffectiveDays)
+    return fullMonthValue * bonusProrationRatio(metrics.effectiveDays)
   },
 
   [RULE_TYPES.PERCENTAGE_MONTHLY]: (rule) => normalizePercentage(rule.value),
@@ -335,8 +335,9 @@ export const applyRules = (employee, attendanceData, rules, config) => {
     totalDaysWorked,
     workedDayEquivalent: attendanceMetrics.dayEquivalent,
     effectiveDays: attendanceMetrics.effectiveDays,
-    bonusEffectiveDays: attendanceMetrics.bonusEffectiveDays,
     absentDays: attendanceMetrics.absentDays,
+    undertimeDayBlocks: attendanceMetrics.undertimeDayBlocks,
+    overtimeDayBlocks: attendanceMetrics.overtimeDayBlocks,
     monthHourEquivalentDays: attendanceMetrics.monthHourEquivalentDays,
     proratedWorkDays: workDays,
     daysNotWorked,
