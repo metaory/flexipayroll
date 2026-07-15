@@ -67,6 +67,10 @@ export const BACKUP_DEFAULTS = {
 
 const isObject = (v) => v && typeof v === 'object' && !Array.isArray(v)
 const toNum = (v, fallback) => (Number.isFinite(Number(v)) ? Number(v) : fallback)
+const toPositiveNum = (v, fallback) => {
+  const n = Number(v)
+  return Number.isFinite(n) && n > 0 ? n : fallback
+}
 const finite = (v) => Number.isFinite(Number(v))
 
 const parseJsonOrRaw = (raw) => {
@@ -148,8 +152,18 @@ export const normalizeBasicConfig = (c) => ({
   ...c,
   printLabels: { ...DEFAULT_PRINT_LABELS, ...c?.printLabels },
   locale: resolveLocale(c?.locale),
+  workdayHours: toPositiveNum(c?.workdayHours, DEFAULT_BASIC_CONFIG.workdayHours),
+  workingDaysPerMonth: toPositiveNum(c?.workingDaysPerMonth, DEFAULT_BASIC_CONFIG.workingDaysPerMonth),
+  monthDays: toPositiveNum(c?.monthDays, DEFAULT_BASIC_CONFIG.monthDays),
   overtimeRate: toNum(c?.overtimeRate, DEFAULT_BASIC_CONFIG.overtimeRate),
-  undertimeRate: toNum(c?.undertimeRate ?? c?.undertimeDeductionRate, DEFAULT_BASIC_CONFIG.undertimeRate)
+  undertimeRate: toNum(
+    c?.undertimeRate ?? c?.undertimeDeductionRate,
+    DEFAULT_BASIC_CONFIG.undertimeRate
+  ),
+  organizationName: String(c?.organizationName ?? DEFAULT_BASIC_CONFIG.organizationName),
+  currencySymbol: String(c?.currencySymbol ?? DEFAULT_BASIC_CONFIG.currencySymbol),
+  footerLabel: String(c?.footerLabel ?? ''),
+  firstDayWeekday: String(c?.firstDayWeekday || DEFAULT_BASIC_CONFIG.firstDayWeekday)
 })
 
 export const normalizeRules = (list) => {

@@ -141,11 +141,20 @@ const rawHoursDelta = (items) =>
 const hoursDeltaToDays = (rawHours, workdayHours) =>
   rawHours >= 0 ? Math.floor(rawHours / workdayHours) : -Math.floor(Math.abs(rawHours) / workdayHours)
 
-const resolveWorkdayHours = (config) => (config.workdayHours > 0 ? config.workdayHours : 8)
+const resolveWorkdayHours = (config) => {
+  const n = Number(config?.workdayHours)
+  return Number.isFinite(n) && n > 0 ? n : 8
+}
 
-const resolveWorkingDays = (config) => (config.workingDaysPerMonth ?? 22)
+const resolveWorkingDays = (config) => {
+  const n = Number(config?.workingDaysPerMonth)
+  return Number.isFinite(n) && n > 0 ? n : 22
+}
 
-const resolveMonthDays = (config) => (config.monthDays ?? 30)
+const resolveMonthDays = (config) => {
+  const n = Number(config?.monthDays)
+  return Number.isFinite(n) && n > 0 ? n : 30
+}
 
 const normalizeRuleType = (type) =>
   type === LEGACY_RULE_TYPES.PRORATED ? RULE_TYPES.HOURLY_PRORATED : type

@@ -15,7 +15,6 @@ import {
   normalizeAttendanceStore,
   normalizeAdjustmentsStore,
   normalizeAttendance,
-  DEFAULT_BASIC_CONFIG,
   DEFAULT_SETTINGS
 } from './persist.js'
 
@@ -97,8 +96,6 @@ const uniqId = (id, used) => {
 
 export const rules = writable(normalizeRules(storage.get(KEYS.RULES, DEFAULT_RULES)))
 rules.subscribe(value => storage.set(KEYS.RULES, value))
-
-const toNum = (v, fallback) => (Number.isFinite(Number(v)) ? Number(v) : fallback)
 
 // Basic config store
 export const basicConfig = writable(normalizeBasicConfig(storage.get(KEYS.BASIC_CONFIG, {})))
@@ -372,8 +369,5 @@ export const resetRules = () => {
 
 // Basic config actions
 export const updateBasicConfig = (updates) => {
-  const normalized = { ...updates }
-  if (updates.overtimeRate !== undefined) normalized.overtimeRate = toNum(updates.overtimeRate, DEFAULT_BASIC_CONFIG.overtimeRate)
-  if (updates.undertimeRate !== undefined) normalized.undertimeRate = toNum(updates.undertimeRate, DEFAULT_BASIC_CONFIG.undertimeRate)
-  basicConfig.update(current => ({ ...current, ...normalized }))
+  basicConfig.update((current) => normalizeBasicConfig({ ...current, ...updates }))
 }
