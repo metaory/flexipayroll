@@ -48,7 +48,8 @@ const run = () => {
     const attendanceItems = { items: [{ hours: -6.5 * 3 }], absent: 3 }
     const r = applyRules(employee, attendanceItems, [fixedDailyRule], baseConfig)
     assert.ok(near(r.effectiveDays, 19), `expected effectiveDays 19, got ${r.effectiveDays}`)
-    const expectedRuleValue = (fixedDailyRule.value * 19) / 30
+    assert.ok(near(r.bonusEffectiveDays, 27), `expected bonusEffectiveDays 27, got ${r.bonusEffectiveDays}`)
+    const expectedRuleValue = (fixedDailyRule.value * 27) / 30
     assert.ok(near(r.bonuses.fdp.value, expectedRuleValue), `expected fixed_daily_prorated ${expectedRuleValue}, got ${r.bonuses.fdp.value}`)
   }
 
@@ -56,7 +57,8 @@ const run = () => {
     const attendanceItems = [{ hours: 6.5 * 40 }]
     const r = applyRules(employee, attendanceItems, [fixedDailyRule], baseConfig)
     assert.ok(near(r.effectiveDays, 22), `expected effectiveDays 22, got ${r.effectiveDays}`)
-    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 22) / 30), `expected fixed_daily_prorated ${(fixedDailyRule.value * 22) / 30}, got ${r.bonuses.fdp.value}`)
+    assert.ok(near(r.bonusEffectiveDays, 30), `expected bonusEffectiveDays 30, got ${r.bonusEffectiveDays}`)
+    assert.ok(near(r.bonuses.fdp.value, fixedDailyRule.value), `expected full bonus at 30 bonus effective days, got ${r.bonuses.fdp.value}`)
   }
 
   {
@@ -68,7 +70,18 @@ const run = () => {
   {
     const config28 = { ...baseConfig, workingDaysPerMonth: 28, monthDays: 30 }
     const r = applyRules(employee, { items: [], absent: 0 }, [fixedDailyRule], config28)
-    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 28) / 30), `expected prorated bonus at 28 effective days, got ${r.bonuses.fdp.value}`)
+    assert.ok(near(r.effectiveDays, 28), `expected effectiveDays 28 from config, got ${r.effectiveDays}`)
+    assert.ok(near(r.bonusEffectiveDays, 30), `expected bonusEffectiveDays 30, got ${r.bonusEffectiveDays}`)
+    assert.ok(near(r.bonuses.fdp.value, fixedDailyRule.value), `expected full bonus at 30 bonus effective days, got ${r.bonuses.fdp.value}`)
+  }
+
+  {
+    const config28 = { ...baseConfig, workingDaysPerMonth: 28, monthDays: 30 }
+    const r = applyRules(employee, { items: [], absent: 3 }, [fixedDailyRule], config28)
+    assert.ok(near(r.effectiveDays, 25), `base effectiveDays should be 28 - 3 from config, got ${r.effectiveDays}`)
+    assert.ok(near(r.baseSalary, employee.dailySalary * 25), `base salary should use config days, got ${r.baseSalary}`)
+    assert.ok(near(r.bonusEffectiveDays, 27), `bonus effectiveDays should be 30 - 3, got ${r.bonusEffectiveDays}`)
+    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 27) / 30), `bonus should prorate from fixed 30, got ${r.bonuses.fdp.value}`)
   }
 
   const hourlyProratedRule = {

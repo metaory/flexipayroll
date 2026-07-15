@@ -118,9 +118,17 @@ const createFixedRuleStep = (ruleData, _result, type) => ({
   type
 })
 
+const bonusEffectiveDays = (result) => {
+  const stored = result.ruleResults?.bonusEffectiveDays
+  if (stored != null) return stored
+  const absent = result.ruleResults?.absentDays ?? 0
+  return Math.max(0, FULL_BONUS_DAYS_THRESHOLD - absent)
+}
+
 const createHourlyProratedStep = (ruleData, result, type) => {
   const monthDays = result.configSnapshot?.monthDays ?? 30
-  const effectiveDays = result.ruleResults?.effectiveDays ?? monthDays
+  const effectiveDays = bonusEffectiveDays(result)
+  const absentDays = result.ruleResults?.absentDays ?? 0
   const ratio = bonusProrationRatio(effectiveDays, monthDays)
   const fullValue = ruleData.rule.value
   const formulaWithValues = ratio >= 1
@@ -132,16 +140,17 @@ const createHourlyProratedStep = (ruleData, result, type) => {
     formulaWithValues,
     result: ruleData.value,
     explanation: ratio >= 1
-      ? `${type.charAt(0).toUpperCase() + type.slice(1)} is paid in full because effective work days (${effectiveDays}) are at least ${FULL_BONUS_DAYS_THRESHOLD}.`
-      : `${type.charAt(0).toUpperCase() + type.slice(1)} is prorated by effective work days when below ${FULL_BONUS_DAYS_THRESHOLD}.`,
-    inputs: { fullValue, effectiveDays, monthDays, ratio },
+      ? `${type.charAt(0).toUpperCase() + type.slice(1)} is paid in full because bonus effective days (${effectiveDays}) are at least ${FULL_BONUS_DAYS_THRESHOLD}.`
+      : `${type.charAt(0).toUpperCase() + type.slice(1)} is prorated by bonus effective days (${FULL_BONUS_DAYS_THRESHOLD} minus ${absentDays} absent days).`,
+    inputs: { fullValue, effectiveDays, monthDays, ratio, absentDays },
     type
   }
 }
 
 const createFixedDailyProratedStep = (ruleData, result, type) => {
   const monthDays = result.configSnapshot?.monthDays ?? 30
-  const effectiveDays = result.ruleResults?.effectiveDays ?? monthDays
+  const effectiveDays = bonusEffectiveDays(result)
+  const absentDays = result.ruleResults?.absentDays ?? 0
   const ratio = bonusProrationRatio(effectiveDays, monthDays)
   const formulaWithValues = ratio >= 1
     ? `${ruleData.rule.value.toLocaleString()} = ${ruleData.value.toLocaleString()}`
@@ -152,22 +161,20 @@ const createFixedDailyProratedStep = (ruleData, result, type) => {
     formulaWithValues,
     result: ruleData.value,
     explanation: ratio >= 1
-      ? `${type.charAt(0).toUpperCase() + type.slice(1)} is paid in full because effective work days (${effectiveDays}) are at least ${FULL_BONUS_DAYS_THRESHOLD}.`
-      : `${type.charAt(0).toUpperCase() + type.slice(1)} is prorated by effective work days when below ${FULL_BONUS_DAYS_THRESHOLD}.`,
-    inputs: { amount: ruleData.rule.value, effectiveDays, monthDays, ratio },
+      ? `${type.charAt(0).toUpperCase() + type.slice(1)} is paid in full because bonus effective days (${effectiveDays}) are at least ${FULL_BONUS_DAYS_THRESHOLD}.`
+      : `${type.charAt(0).toUpperCase() + type.slice(1)} is prorated by bonus effective days (${FULL_BONUS_DAYS_THRESHOLD} minus ${absentDays} absent days).`,
+    inputs: { amount: ruleData.rule.value, effectiveDays, monthDays, ratio, absentDays },
     type
   }
 }
 
 const createDaysMultiplierStep = (ruleData, result, type) => {
   const monthDays = result.configSnapshot?.monthDays ?? 30
-  const attendanceDelta = result.ruleResults?.attendanceDays ?? 0
-  const effectiveDays = result.ruleResults?.effectiveDays ?? monthDays
-  const totalDaysWorked = result.ruleResults?.totalDaysWorked ?? monthDays
+  const effectiveDays = bonusEffectiveDays(result)
+  const absentDays = result.ruleResults?.absentDays ?? 0
   const dailyRate = result.employee.dailySalary
   const fullMonthValue = ruleData.rule.value * dailyRate
   const fmt = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  const deltaStr = attendanceDelta >= 0 ? `+${attendanceDelta}` : `${attendanceDelta}`
   const ratio = bonusProrationRatio(effectiveDays, monthDays)
   const formulaWithValues = ratio >= 1
     ? `${ruleData.rule.value} × ${fmt(dailyRate)} = ${ruleData.value.toLocaleString()}`
@@ -178,9 +185,9 @@ const createDaysMultiplierStep = (ruleData, result, type) => {
     formulaWithValues,
     result: ruleData.value,
     explanation: ratio >= 1
-      ? `${type.charAt(0).toUpperCase() + type.slice(1)} is paid in full because effective work days (${effectiveDays}) are at least ${FULL_BONUS_DAYS_THRESHOLD}.`
-      : `${type.charAt(0).toUpperCase() + type.slice(1)} uses effective days (${effectiveDays}) from absent days on the attendance page (month baseline ${monthDays}, attendance delta ${deltaStr}).`,
-    inputs: { fullMonthValue, totalDaysWorked, effectiveDays, monthDays, dailyRate, multiplier: ruleData.rule.value, ratio },
+      ? `${type.charAt(0).toUpperCase() + type.slice(1)} is paid in full because bonus effective days (${effectiveDays}) are at least ${FULL_BONUS_DAYS_THRESHOLD}.`
+      : `${type.charAt(0).toUpperCase() + type.slice(1)} uses bonus effective days (${FULL_BONUS_DAYS_THRESHOLD} minus ${absentDays} absent days = ${effectiveDays}).`,
+    inputs: { fullMonthValue, effectiveDays, monthDays, dailyRate, multiplier: ruleData.rule.value, ratio, absentDays },
     type
   }
 }
@@ -309,9 +316,9 @@ export const buildCalculationSteps = (result) => {
   steps.push({
     label: 'Input Summary',
     formula: 'Base = Effective work days × Daily salary',
-    formulaWithValues: 'Effective work days = working days per month minus absent days from attendance.',
+    formulaWithValues: 'Base salary days = working days per month (config) minus absent days. Bonus proration only uses a fixed 30-day baseline minus absent days.',
     result: result.employee.dailySalary,
-    explanation: 'Employee daily salary and config. Overtime and undertime are calculated directly from attendance hours (including minute fractions).',
+    explanation: 'Employee daily salary and config. Base salary and attendance use working days per month from configuration. Only prorated bonuses deduct absent days from the fixed 30-day baseline.',
     inputs: { dailySalary: result.employee.dailySalary, workdayHours: result.configSnapshot.workdayHours, workDays: result.configSnapshot.workingDaysPerMonth ?? 22 },
     type: 'base',
     section: 'inputs'
