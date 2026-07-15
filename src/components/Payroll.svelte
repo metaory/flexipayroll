@@ -7,7 +7,7 @@
   import Report from './Report.svelte'
   import Icon from '@iconify/svelte/dist/OfflineIcon.svelte'
   
-  import { employees, rules, basicConfig, currentPeriod, attendanceItems, adjustments, wizardStep } from '../stores.js'
+  import { employees, rules, basicConfig, currentPeriod, adjustments, wizardStep, getAttendanceRecord, getAdjustments } from '../stores.js'
   import { STEPS, calculateEmployeePayroll } from '../payroll.js'
   
   // Keep config values as-is: workingDaysPerMonth and monthDays are independent user settings.
@@ -16,8 +16,8 @@
   
   const results = $derived($employees.map(emp => calculateEmployeePayroll(
     emp,
-    $attendanceItems[$currentPeriod]?.[emp.id] || [],
-    $adjustments[$currentPeriod]?.[emp.id] || [],
+    getAttendanceRecord($currentPeriod, emp.id),
+    getAdjustments($currentPeriod, emp.id),
     $rules,
     payrollConfig
   )))

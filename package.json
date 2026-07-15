@@ -2,7 +2,7 @@
   "name": "flexipayroll",
   "description": "A lightweight, browser-based payroll management system for SMEs",
   "private": true,
-  "version": "7.9.0",
+  "version": "7.10.0",
   "type": "module",
   "license": "AGPL-3.0",
   "scripts": {
@@ -10,7 +10,7 @@
     "build": "vite build",
     "build:offline": "BASE=./ vite build",
     "preview": "vite preview",
-    "test": "node test/payroll.test.js && node test/print.test.js",
+    "test": "node test/payroll.test.js && node test/print.test.js && node test/backup.test.js",
     "serve": "npm run build:offline && npx serve dist -l 3000",
     "serve:pages": "npm run build && rm -rf .tmp-serve && mkdir -p .tmp-serve/flexipayroll && cp -r dist/* .tmp-serve/flexipayroll/ && npx serve .tmp-serve -l 3000"
   },

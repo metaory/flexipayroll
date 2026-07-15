@@ -3,7 +3,9 @@
   import Icon from '@iconify/svelte/dist/OfflineIcon.svelte'
   import { ICONS } from './lib/icons.js'
   import { theme, toggleTheme } from './stores.js'
-  import { storage } from './core.js'
+  import { storage, defaultSessionBasename } from './core.js'
+  import { filenamePromptDialog } from './lib/dialog.js'
+  import { toasts } from './lib/toast.js'
   import pkg from '../package.json'
 
   let fileInput = $state()
@@ -38,7 +40,23 @@
     }
   })
 
-  const handleLoad = (e) => storage.loadSessionFile(e.target.files[0])
+  const handleLoad = async (e) => {
+    const file = e.target.files?.[0]
+    const result = await storage.loadSessionFile(file)
+    if (result?.ok) {
+      toasts.success('Session restored')
+      return
+    }
+    toasts.error(result?.error || 'Invalid or incompatible backup file')
+    e.target.value = ''
+  }
+  const handleSave = async () => {
+    const locale = storage.get('xpayroll_basic_config', {})?.locale
+    const prefix = defaultSessionBasename(locale)
+    const filename = await filenamePromptDialog(`${prefix}-`, prefix)
+    if (!filename) return
+    storage.downloadSession(filename)
+  }
   const handleInstall = async () => {
     if (!installEvent) return
     await installEvent.prompt()
@@ -50,7 +68,7 @@
 </script>
 
 <div class="toolbar">
-  <button class="toolbar-btn" onclick={() => storage.downloadSession()} aria-label="Save session">
+  <button class="toolbar-btn" onclick={handleSave} aria-label="Save session">
     <Icon icon={ICONS.save} width="1.5rem" height="1.5rem" />
   </button>
   <button class="toolbar-btn" onclick={() => fileInput.click()} aria-label="Load session">
@@ -65,7 +83,7 @@
     </button>
   {/if}
 </div>
-<input type="file" accept=".txt" bind:this={fileInput} onchange={handleLoad} hidden />
+<input type="file" accept=".zip,.ziip,.txt" bind:this={fileInput} onchange={handleLoad} hidden />
 
 <main class="app-content">
   <Payroll />

@@ -6,7 +6,17 @@
 import { writable, derived, get } from 'svelte/store'
 import { storage, normalizeAttendance } from './core.js'
 import { DEFAULT_RULES, createRule, validateRule, getNextOrder, ensureRuleId } from './rules.js'
-import { normalizeProbationFields } from './probation.js'
+import {
+  DEFAULT_PRINT_LABELS,
+  normalizeBasicConfig,
+  normalizeRules,
+  normalizeEmployee,
+  normalizeAttendanceStore,
+  DEFAULT_BASIC_CONFIG,
+  DEFAULT_SETTINGS
+} from './persist.js'
+
+export { SESSION_PREFIX, DEFAULT_PRINT_LABELS } from './persist.js'
 
 // ============================================================================
 // STORAGE KEYS
@@ -26,18 +36,8 @@ const KEYS = {
 }
 
 // ============================================================================
-// DEFAULT DATA
+// DEFAULT DATA (re-exported from persist for consumers)
 // ============================================================================
-
-export const DEFAULT_PRINT_LABELS = {
-  monthSalary: 'Month salary',
-  dailySalary: 'Daily salary',
-  adjustments: 'Adjustments',
-  adjustment: 'ADJUSTMENT',
-  totalAdjustments: 'Total adjustments',
-  attendance: 'Attendance',
-  net: 'Net'
-}
 
 export const PRINT_LABEL_FIELDS = [
   { key: 'monthSalary', label: 'Month salary', fallback: DEFAULT_PRINT_LABELS.monthSalary },
@@ -85,34 +85,11 @@ export const resolveLocale = (locale) => {
   }
 }
 
-const DEFAULT_BASIC_CONFIG = {
-  organizationName: 'XPayroll',
-  workdayHours: 8,
-  workingDaysPerMonth: 22,
-  currencySymbol: '$',
-  locale: 'id-ID',
-  monthDays: 30,
-  firstDayWeekday: 'Saturday',
-  overtimeRate: 1.5,
-  undertimeRate: 0.5,
-  footerLabel: '',
-  printLabels: { ...DEFAULT_PRINT_LABELS }
-}
-
 const DEFAULT_THEME = {
   mode: 'light'
 }
 
-export const DEFAULT_SETTINGS = {
-  currency: 'IDR',
-  locale: 'id-ID',
-  dateFormat: 'dd/MM/yyyy',
-  timeFormat: '24h',
-  numberFormat: {
-    decimal: ',',
-    thousands: '.'
-  }
-}
+export { DEFAULT_SETTINGS } from './persist.js'
 
 // ============================================================================
 // STORES
@@ -135,36 +112,14 @@ const uniqId = (id, used) => {
   return n ? next(n) : `${base}_${Date.now().toString(36)}`
 }
 
-const normalizeRules = (list) => {
-  const used = new Set()
-  return (Array.isArray(list) ? list : [])
-    .map((r, i) => ({ ...r, order: Number.isFinite(Number(r?.order)) ? Number(r.order) : i + 1 }))
-    .map((r) => {
-      const id = uniqId(ensureRuleId(r), used)
-      used.add(id)
-      return { ...r, id }
-    })
-}
-
 export const rules = writable(normalizeRules(storage.get(KEYS.RULES, DEFAULT_RULES)))
 rules.subscribe(value => storage.set(KEYS.RULES, value))
 
 const toNum = (v, fallback) => (Number.isFinite(Number(v)) ? Number(v) : fallback)
-// Normalize numeric config so OT/UT decimals from settings are always numbers
-const normalizeBasicConfig = (c) => ({
-  ...DEFAULT_BASIC_CONFIG,
-  ...c,
-  printLabels: { ...DEFAULT_PRINT_LABELS, ...c?.printLabels },
-  locale: resolveLocale(c?.locale),
-  overtimeRate: toNum(c?.overtimeRate, DEFAULT_BASIC_CONFIG.overtimeRate),
-  undertimeRate: toNum(c?.undertimeRate ?? c?.undertimeDeductionRate, DEFAULT_BASIC_CONFIG.undertimeRate)
-})
 
 // Basic config store
 export const basicConfig = writable(normalizeBasicConfig(storage.get(KEYS.BASIC_CONFIG, {})))
 basicConfig.subscribe(value => storage.set(KEYS.BASIC_CONFIG, value))
-
-const normalizeEmployee = (emp) => normalizeProbationFields(emp)
 
 // Employees store
 export const employees = writable(
@@ -181,7 +136,9 @@ export const adjustments = writable(storage.get(KEYS.ADJUSTMENTS, {}))
 adjustments.subscribe(value => storage.set(KEYS.ADJUSTMENTS, value))
 
 // Attendance items store (hours adjustment per employee)
-export const attendanceItems = writable(storage.get(KEYS.ATTENDANCE_ITEMS, {}))
+export const attendanceItems = writable(
+  normalizeAttendanceStore(storage.get(KEYS.ATTENDANCE_ITEMS, {}))
+)
 attendanceItems.subscribe(value => storage.set(KEYS.ATTENDANCE_ITEMS, value))
 
 // Payroll store
@@ -398,6 +355,9 @@ export const getAttendanceItems = (period, employeeId) =>
 
 export const getAbsentDays = (period, employeeId) =>
   attendanceRecord(period, employeeId, get(attendanceItems)).absent
+
+export const getAttendanceRecord = (period, employeeId) =>
+  attendanceRecord(period, employeeId, get(attendanceItems))
 
 // Payroll actions
 export const setPayroll = (period, employeeId, data) => {

@@ -81,6 +81,8 @@ export const normalizeAttendance = (data) => {
   }
 }
 
+export { normalizeAttendanceStore, SESSION_PREFIX } from './persist.js'
+
 /** (dailySalary ÷ rate) × hours */
 export const attendancePay = (hours, rate, dailySalary) => {
   const h = Number(hours)
@@ -302,17 +304,15 @@ export const filterEmployees = (employees, query) => {
 // STORAGE UTILITIES
 // ============================================================================
 
-const SESSION_PREFIX = 'xpayroll_'
-const DATA_KEYS = [
-  'xpayroll_basic_config',
-  'xpayroll_rules',
-  'xpayroll_settings',
-  'xpayroll_employees',
-  'xpayroll_attendance',
-  'xpayroll_attendance_items',
-  'xpayroll_adjustments'
-]
-const SESSION_RESET_KEYS = [...DATA_KEYS, 'xpayroll_payroll', 'xpayroll_salary_records']
+import {
+  buildBackupPayload,
+  normalizeBackupData,
+  validateBackupData,
+  parseLegacyPayload,
+  readAllSessionData,
+  listSessionKeys,
+  resolveLocale
+} from './persist.js'
 const bytesToBase64 = (bytes) => btoa(Array.from(bytes, (byte) => String.fromCharCode(byte)).join(''))
 const base64ToBytes = (base64) => Uint8Array.from(atob(base64), (char) => char.charCodeAt(0))
 const encodeUtf8Base64 = (text) => bytesToBase64(new TextEncoder().encode(text))
@@ -322,6 +322,27 @@ const parseSessionPayload = (encoded) => {
   const utf8Decoded = decodeUtf8Base64(payload)
   if (utf8Decoded.startsWith('{')) return JSON.parse(utf8Decoded)
   return JSON.parse(atob(payload))
+}
+
+const fileToken = (value) =>
+  String(value ?? '').trim().toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '')
+
+export const SESSION_EXT = '.zip'
+
+export const defaultSessionBasename = (locale = 'id-ID', date = new Date()) => {
+  const resolved = resolveLocale(locale)
+  const d = new Date(date)
+  const parts = new Intl.DateTimeFormat(resolved, localizedDateOptions(resolved, { day: false }))
+    .formatToParts(d)
+  const year = parts.find((p) => p.type === 'year')?.value ?? ''
+  const monthNumber = parts.find((p) => p.type === 'month')?.value ?? ''
+  const monthName = fileToken(
+    new Intl.DateTimeFormat(resolved, {
+      month: 'long',
+      ...(String(resolved).startsWith('fa') ? { calendar: 'persian' } : {})
+    }).format(d)
+  )
+  return `xpay-${year}-${monthNumber}-${monthName}`
 }
 
 export const storage = {
@@ -352,46 +373,63 @@ export const storage = {
     }
   },
 
-  exportSession: () => encodeUtf8Base64(JSON.stringify(
-    Object.fromEntries(
-      DATA_KEYS
-        .map((key) => [key, localStorage.getItem(key)])
-        .filter(([, value]) => value !== null)
-    )
-  )),
+  exportSession: () => encodeUtf8Base64(JSON.stringify(buildBackupPayload(localStorage))),
 
-  importSession: (encoded) => {
+  importSession: (encoded, { reload = true } = {}) => {
     try {
-      const payload = parseSessionPayload(encoded)
-      const entries = Object.entries(payload).filter(([key]) => key.startsWith(SESSION_PREFIX))
-      const hasDataKey = entries.some(([key]) => DATA_KEYS.includes(key))
-      if (!hasDataKey) return false
-      SESSION_RESET_KEYS.map((key) => localStorage.removeItem(key))
-      entries
-        .filter(([key]) => DATA_KEYS.includes(key))
-        .map(([key, value]) => localStorage.setItem(key, value))
-      location.reload()
-      return true
+      const raw = parseSessionPayload(encoded)
+      const legacy = parseLegacyPayload(raw)
+      if (!legacy) return { ok: false, error: 'Invalid or incompatible backup file' }
+
+      const normalized = normalizeBackupData(legacy)
+      const validation = validateBackupData(normalized)
+      if (!validation.ok) return validation
+
+      const existingKeys = listSessionKeys(localStorage)
+      const snapshot = Object.fromEntries(
+        existingKeys.map((key) => [key, localStorage.getItem(key)])
+      )
+      const keysToClear = new Set([...existingKeys, ...Object.keys(normalized)])
+
+      keysToClear.forEach((key) => { localStorage.removeItem(key) })
+      Object.entries(normalized).forEach(([key, value]) => { storage.set(key, value) })
+
+      const verify = validateBackupData(normalizeBackupData(readAllSessionData(localStorage)))
+      if (!verify.ok) {
+        keysToClear.forEach((key) => { localStorage.removeItem(key) })
+        Object.entries(snapshot).forEach(([key, value]) => {
+          if (value !== null) localStorage.setItem(key, value)
+        })
+        return verify
+      }
+
+      if (reload) location.reload()
+      return { ok: true }
     } catch {
-      return false
+      return { ok: false, error: 'Invalid or incompatible backup file' }
     }
   },
 
-  downloadSession: () => {
+  downloadSession: (basename) => {
+    const locale = storage.get('xpayroll_basic_config', {})?.locale
+    const name = `${String(basename ?? '').trim() || defaultSessionBasename(locale)}${SESSION_EXT}`
     const blob = new Blob([storage.exportSession()], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `xpayroll-session-${new Date().toISOString().slice(0, 10)}.txt`
+    a.download = name
     a.click()
     URL.revokeObjectURL(url)
   },
 
-  loadSessionFile: (file) => {
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = (e) => storage.importSession(e.target.result)
-    reader.readAsText(file)
+  loadSessionFile: (file, options) => {
+    if (!file) return Promise.resolve({ ok: false, error: 'No file selected' })
+    return new Promise((resolve) => {
+      const reader = new FileReader()
+      reader.onload = (e) => resolve(storage.importSession(e.target.result, options))
+      reader.onerror = () => resolve({ ok: false, error: 'Could not read backup file' })
+      reader.readAsText(file)
+    })
   }
 }
 
