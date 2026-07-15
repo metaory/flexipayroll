@@ -171,7 +171,8 @@ const run = () => {
     }
     const excludeFixed = { dailySalary: 100, probation: 'b', probationRulesB: ['fixed_bonus'] }
     const r = applyRules(excludeFixed, [], [fixedDailyRule, hourlyProratedRule, fixedBonus], config31)
-    assert.equal(r.bonuses.fixed_bonus, undefined, 'excluded fixed rule should not apply')
+    assert.equal(r.bonuses.fixed_bonus.value, 0, 'excluded fixed rule should appear as zero')
+    assert.ok(r.bonuses.fixed_bonus.probationExcluded, 'excluded fixed rule should be marked')
     assert.ok(r.bonuses.fdp, 'non-excluded rule should apply')
     assert.ok(r.bonuses.hp, 'non-excluded rule should apply')
   }
@@ -179,7 +180,7 @@ const run = () => {
   {
     const probationExcludeFdp = { dailySalary: 100, probation: 'b', probationRulesB: ['fdp'] }
     const r = applyRules(probationExcludeFdp, [], [fixedDailyRule, hourlyProratedRule], config31)
-    assert.equal(r.bonuses.fdp, undefined, 'excluded rule should not apply')
+    assert.equal(r.bonuses.fdp.value, 0, 'excluded rule should appear as zero')
     assert.ok(r.bonuses.hp, 'non-excluded rule should apply')
   }
 
@@ -201,7 +202,7 @@ const run = () => {
       probationRulesB: []
     }
     const r = applyRules(excludeMaleOnly, [], [fixedDailyRule, maleBonus], config31)
-    assert.equal(r.bonuses.male_bonus, undefined, 'excluded male bonus should not apply')
+    assert.equal(r.bonuses.male_bonus.value, 0, 'excluded male bonus should appear as zero')
     assert.ok(r.bonuses.fdp, 'non-excluded rule should apply')
   }
 
@@ -220,8 +221,8 @@ const run = () => {
       probationRulesB: []
     })
     const result = calculateEmployeePayroll(employeeData, [], [], allBonuses, config31)
-    assert.equal(result.ruleResults.bonuses.bonus_e, undefined, 'excluded bonus_e should not apply')
-    assert.equal(result.ruleResults.bonuses.marital_bonus, undefined, 'excluded fixed marital_bonus should not apply')
+    assert.equal(result.ruleResults.bonuses.bonus_e.value, 0, 'excluded bonus_e should appear as zero')
+    assert.equal(result.ruleResults.bonuses.marital_bonus.value, 0, 'excluded marital_bonus should appear as zero')
     assert.ok(result.ruleResults.bonuses.extra, 'non-excluded bonus should apply')
   }
 

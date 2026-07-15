@@ -40,6 +40,7 @@ export const calculateEmployeePayroll = (employee, attendanceItems, adjustments,
 
   // Apply monthly percentage bonuses last on the monthly base salary.
   const monthlyBonusTotal = Object.values(ruleResults.bonuses || {}).reduce((sum, item) => {
+    if (item?.probationExcluded) return sum
     if (item?.rule?.type !== RULE_TYPES.PERCENTAGE_MONTHLY) return sum
     const bonusValue = monthlyBaseSalary * item.value
     item.finalValue = bonusValue
@@ -53,6 +54,7 @@ export const calculateEmployeePayroll = (employee, attendanceItems, adjustments,
   // Other deductions use their stored values
   const totalDeductions = Object.values(ruleResults.deductions || {}).reduce((sum, item) => {
     if (!item?.rule) return sum
+    if (item.probationExcluded) return sum
     
     // PERCENTAGE_MONTHLY deductions are applied last on the same monthly base.
     if (item.rule.type === RULE_TYPES.PERCENTAGE_MONTHLY || item.rule.type === 'percentage_monthly') {
@@ -238,8 +240,18 @@ const RULE_STEP_BUILDERS = {
 }
 
 const createRuleStep = (ruleData, result, type) => {
-  const builder = RULE_STEP_BUILDERS[ruleData.rule.type]
   const ruleTypeLabel = RULE_TYPE_LABELS[ruleData.rule.type] || ruleData.rule.type
+  if (ruleData.probationExcluded) {
+    return {
+      label: `${ruleData.rule.label} [${ruleTypeLabel}]`,
+      formula: 'Not applicable',
+      formulaWithValues: 'Excluded during probation',
+      result: 0,
+      explanation: 'This item is not provided during the probation period.',
+      type
+    }
+  }
+  const builder = RULE_STEP_BUILDERS[ruleData.rule.type]
   if (!builder) {
     return {
       label: `${ruleData.rule.label} [${ruleTypeLabel}]`,

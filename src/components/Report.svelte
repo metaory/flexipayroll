@@ -50,12 +50,10 @@
       if (category !== 'bonuses' && category !== 'deductions') return null
       Object.entries(rules).map(([ruleId, ruleData]) => {
         const value = ruleData.finalValue !== undefined ? ruleData.finalValue : ruleData.value
-        if (value > 0) {
-          const rule = ruleData.rule
-          const pct = rule.type === 'percentage_monthly' || rule.type === 'percentage_base'
-            ? ` (${(rule.value * 100).toFixed(1)}%)` : ''
-          applied[category].push({ id: ruleId, label: rule.label + pct, value, type: rule.type })
-        }
+        const rule = ruleData.rule
+        const pct = rule.type === 'percentage_monthly' || rule.type === 'percentage_base'
+          ? ` (${(rule.value * 100).toFixed(1)}%)` : ''
+        applied[category].push({ id: ruleId, label: rule.label + pct, value, type: rule.type })
         return null
       })
       return null

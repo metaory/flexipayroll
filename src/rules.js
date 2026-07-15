@@ -3,7 +3,7 @@
  * Flexible, user-configurable calculation rules system
  */
 
-import { filterRulesForEmployee } from './probation.js'
+import { getProbationExclusions, ruleMatchesProbationList } from './probation.js'
 import { attendancePay, normalizeAttendance } from './core.js'
 
 // ============================================================================
@@ -283,22 +283,29 @@ export const applyRules = (employee, attendanceData, rules, config) => {
   const totalHours = expectedHours + hoursAdjustment
   const actualDays = attendanceMetrics.effectiveDays
 
-  const eligibleRules = filterRulesForEmployee(employee, rules)
+  const probationExclusions = getProbationExclusions(employee)
 
-  // Process enabled rules (include value 0 so days_multiplier etc. appear in detailed steps)
-  const processedRules = [...eligibleRules]
+  const processedRules = [...rules]
     .sort((a, b) => a.order - b.order)
     .filter(r => r.enabled)
-    .map(rule => ({ rule, value: calculateRuleValue(rule, employee, attendanceData, config, totalDaysWorked) }))
+    .map(rule => {
+      const probationExcluded = probationExclusions !== null && ruleMatchesProbationList(rule, probationExclusions)
+      return {
+        rule,
+        value: probationExcluded ? 0 : calculateRuleValue(rule, employee, attendanceData, config, totalDaysWorked),
+        probationExcluded
+      }
+    })
 
   // Categorize rules
-  const categorized = processedRules.reduce((acc, { rule, value }) => {
+  const categorized = processedRules.reduce((acc, { rule, value, probationExcluded }) => {
     const normalizedType = normalizeRuleType(rule.type)
     const isPercentBase = normalizedType === RULE_TYPES.PERCENTAGE_BASE
     const isPercentMonthly = normalizedType === RULE_TYPES.PERCENTAGE_MONTHLY
     const entry = {
       rule: { ...rule, type: normalizedType },
       value,
+      probationExcluded,
       percentage: isPercentBase || isPercentMonthly,
       percentageType: isPercentBase ? 'base' : (isPercentMonthly ? 'monthly' : null)
     }
@@ -306,23 +313,20 @@ export const applyRules = (employee, attendanceData, rules, config) => {
     return acc
   }, { bonuses: {}, deductions: {} })
 
-  // Calculate gross with fixed bonuses
   const fixedBonusTotal = Object.values(categorized.bonuses)
-    .filter(i => !i.percentage)
+    .filter(i => !i.probationExcluded && !i.percentage)
     .reduce((sum, i) => sum + i.value, 0)
 
-  // Apply percentage-based bonuses
   Object.values(categorized.bonuses)
-    .filter(i => i.percentage && i.percentageType === 'base')
+    .filter(i => !i.probationExcluded && i.percentage && i.percentageType === 'base')
     .map(i => { i.finalValue = baseSalary * i.value; return i })
 
-  // Apply percentage-based deductions
   Object.values(categorized.deductions)
-    .filter(i => i.percentage && i.percentageType === 'base')
+    .filter(i => !i.probationExcluded && i.percentage && i.percentageType === 'base')
     .map(i => { i.finalValue = baseSalary * i.value; return i })
 
   const percentBonusTotal = Object.values(categorized.bonuses)
-    .filter(i => i.percentage)
+    .filter(i => !i.probationExcluded && i.percentage)
     .reduce((sum, i) => sum + (i.finalValue || 0), 0)
 
   return {
