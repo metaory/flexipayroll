@@ -111,6 +111,13 @@ const run = () => {
   }
 
   {
+    const r = applyRules(employee, { items: [], absent: 3 }, rules31, config31)
+    assert.ok(near(r.effectiveDays, 28), `base effectiveDays should be 31 - 3 from config, got ${r.effectiveDays}`)
+    assert.ok(near(r.bonusEffectiveDays, 27), `bonus effectiveDays should be 30 - 3, got ${r.bonusEffectiveDays}`)
+    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 27) / 30), `bonus should divide by 30 not monthDays, got ${r.bonuses.fdp.value}`)
+  }
+
+  {
     const attendanceItems = [{ hours: -5 }, { hours: 9 }]
     const r = applyRules(employee, attendanceItems, rules31, config31)
     assert.ok(near(r.effectiveDays, 31), `expected effectiveDays 31, got ${r.effectiveDays}`)

@@ -126,68 +126,65 @@ const bonusEffectiveDays = (result) => {
 }
 
 const createHourlyProratedStep = (ruleData, result, type) => {
-  const monthDays = result.configSnapshot?.monthDays ?? 30
   const effectiveDays = bonusEffectiveDays(result)
   const absentDays = result.ruleResults?.absentDays ?? 0
-  const ratio = bonusProrationRatio(effectiveDays, monthDays)
+  const ratio = bonusProrationRatio(effectiveDays)
   const fullValue = ruleData.rule.value
   const formulaWithValues = ratio >= 1
     ? `${fullValue.toLocaleString()} = ${ruleData.value.toLocaleString()}`
-    : `(${fullValue.toLocaleString()} × ${effectiveDays}) ÷ ${monthDays} = ${ruleData.value.toLocaleString()}`
+    : `(${fullValue.toLocaleString()} × ${effectiveDays}) ÷ ${FULL_BONUS_DAYS_THRESHOLD} = ${ruleData.value.toLocaleString()}`
   return {
     label: ruleData.rule.label,
-    formula: ratio >= 1 ? `Full bonus (≥ ${FULL_BONUS_DAYS_THRESHOLD} effective days)` : '(Value × Effective days) ÷ Month days',
+    formula: ratio >= 1 ? `Full bonus (≥ ${FULL_BONUS_DAYS_THRESHOLD} effective days)` : `(Value × Effective days) ÷ ${FULL_BONUS_DAYS_THRESHOLD}`,
     formulaWithValues,
     result: ruleData.value,
     explanation: ratio >= 1
       ? `${type.charAt(0).toUpperCase() + type.slice(1)} is paid in full because bonus effective days (${effectiveDays}) are at least ${FULL_BONUS_DAYS_THRESHOLD}.`
-      : `${type.charAt(0).toUpperCase() + type.slice(1)} is prorated by bonus effective days (${FULL_BONUS_DAYS_THRESHOLD} minus ${absentDays} absent days).`,
-    inputs: { fullValue, effectiveDays, monthDays, ratio, absentDays },
+      : `${type.charAt(0).toUpperCase() + type.slice(1)} is prorated by bonus effective days (${FULL_BONUS_DAYS_THRESHOLD} minus ${absentDays} absent days) divided by ${FULL_BONUS_DAYS_THRESHOLD}.`,
+    inputs: { fullValue, effectiveDays, ratio, absentDays },
     type
   }
 }
 
 const createFixedDailyProratedStep = (ruleData, result, type) => {
-  const monthDays = result.configSnapshot?.monthDays ?? 30
   const effectiveDays = bonusEffectiveDays(result)
   const absentDays = result.ruleResults?.absentDays ?? 0
-  const ratio = bonusProrationRatio(effectiveDays, monthDays)
+  const ratio = bonusProrationRatio(effectiveDays)
   const formulaWithValues = ratio >= 1
     ? `${ruleData.rule.value.toLocaleString()} = ${ruleData.value.toLocaleString()}`
-    : `(${ruleData.rule.value.toLocaleString()} × ${effectiveDays}) ÷ ${monthDays} = ${ruleData.value.toLocaleString()}`
+    : `(${ruleData.rule.value.toLocaleString()} × ${effectiveDays}) ÷ ${FULL_BONUS_DAYS_THRESHOLD} = ${ruleData.value.toLocaleString()}`
   return {
     label: ruleData.rule.label,
-    formula: ratio >= 1 ? `Full bonus (≥ ${FULL_BONUS_DAYS_THRESHOLD} effective days)` : '(Fixed amount × Effective days) ÷ Month days',
+    formula: ratio >= 1 ? `Full bonus (≥ ${FULL_BONUS_DAYS_THRESHOLD} effective days)` : `(Fixed amount × Effective days) ÷ ${FULL_BONUS_DAYS_THRESHOLD}`,
     formulaWithValues,
     result: ruleData.value,
     explanation: ratio >= 1
       ? `${type.charAt(0).toUpperCase() + type.slice(1)} is paid in full because bonus effective days (${effectiveDays}) are at least ${FULL_BONUS_DAYS_THRESHOLD}.`
-      : `${type.charAt(0).toUpperCase() + type.slice(1)} is prorated by bonus effective days (${FULL_BONUS_DAYS_THRESHOLD} minus ${absentDays} absent days).`,
-    inputs: { amount: ruleData.rule.value, effectiveDays, monthDays, ratio, absentDays },
+      : `${type.charAt(0).toUpperCase() + type.slice(1)} is prorated by bonus effective days (${FULL_BONUS_DAYS_THRESHOLD} minus ${absentDays} absent days) divided by ${FULL_BONUS_DAYS_THRESHOLD}.`,
+    inputs: { amount: ruleData.rule.value, effectiveDays, ratio, absentDays },
     type
   }
 }
 
 const createDaysMultiplierStep = (ruleData, result, type) => {
-  const monthDays = result.configSnapshot?.monthDays ?? 30
   const effectiveDays = bonusEffectiveDays(result)
   const absentDays = result.ruleResults?.absentDays ?? 0
   const dailyRate = result.employee.dailySalary
   const fullMonthValue = ruleData.rule.value * dailyRate
   const fmt = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  const ratio = bonusProrationRatio(effectiveDays, monthDays)
+  const ratio = bonusProrationRatio(effectiveDays)
   const formulaWithValues = ratio >= 1
     ? `${ruleData.rule.value} × ${fmt(dailyRate)} = ${ruleData.value.toLocaleString()}`
-    : `(${ruleData.rule.value} × ${fmt(dailyRate)}) × (${effectiveDays} ÷ ${monthDays}) = ${fmt(fullMonthValue)} × ${ratio.toFixed(4)} = ${ruleData.value.toLocaleString()}`
+    : `(${ruleData.rule.value} × ${fmt(dailyRate)}) × (${effectiveDays} ÷ ${FULL_BONUS_DAYS_THRESHOLD}) = ${fmt(fullMonthValue)} × ${ratio.toFixed(4)} = ${ruleData.value.toLocaleString()}`
   return {
     label: ruleData.rule.label,
-    formula: ratio >= 1 ? '(Multiplier × Daily salary) — full bonus' : '(Multiplier × Daily salary) × (Effective days ÷ Month days)',
+    formula: ratio >= 1 ? '(Multiplier × Daily salary) — full bonus' : `(Multiplier × Daily salary) × (Effective days ÷ ${FULL_BONUS_DAYS_THRESHOLD})`,
     formulaWithValues,
     result: ruleData.value,
     explanation: ratio >= 1
       ? `${type.charAt(0).toUpperCase() + type.slice(1)} is paid in full because bonus effective days (${effectiveDays}) are at least ${FULL_BONUS_DAYS_THRESHOLD}.`
-      : `${type.charAt(0).toUpperCase() + type.slice(1)} uses bonus effective days (${FULL_BONUS_DAYS_THRESHOLD} minus ${absentDays} absent days = ${effectiveDays}).`,
-    inputs: { fullMonthValue, effectiveDays, monthDays, dailyRate, multiplier: ruleData.rule.value, ratio, absentDays },
+      : `${type.charAt(0).toUpperCase() + type.slice(1)} uses bonus effective days (${FULL_BONUS_DAYS_THRESHOLD} minus ${absentDays} absent days = ${effectiveDays}) divided by ${FULL_BONUS_DAYS_THRESHOLD}.`,
+    inputs: { fullMonthValue, effectiveDays, dailyRate, multiplier: ruleData.rule.value, ratio, absentDays },
     type
   }
 }
