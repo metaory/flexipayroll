@@ -63,11 +63,17 @@
   
   const getCalculationBreakdown = (result) => {
     const applied = getAppliedRules(result)
+    const adjustmentRows = (result.adjustments || []).map(adj => ({
+      label: adj.label || 'Adjustment',
+      value: Math.abs(Number(adj.amount) || 0),
+      type: 'adjustment',
+      sign: '-'
+    }))
     return [
       { label: 'Base Salary', value: result.baseSalary, type: 'base', sign: '+' },
       ...(hasAttendanceHours(result) ? [{ label: 'Overtime / Undertime', value: result.attendanceAdjustment, type: 'attendance', sign: result.attendanceAdjustment >= 0 ? '+' : '-' }] : []),
       ...applied.bonuses.map(b => ({ label: b.label, value: b.value, type: 'bonus', sign: '+' })),
-      ...(result.adjustmentTotal !== 0 ? [{ label: 'Adjustments', value: result.adjustmentTotal, type: 'adjustment', sign: result.adjustmentTotal > 0 ? '+' : '-' }] : []),
+      ...adjustmentRows,
       { label: 'Gross Salary', value: result.grossSalary, type: 'subtotal', sign: '=' },
       ...applied.deductions.map(d => ({ label: d.label, value: d.value, type: 'deduction', sign: '-' })),
       { label: 'Take-Home', value: result.finalSalary || 0, type: 'final', sign: '=' }
@@ -161,9 +167,9 @@
         {#each getAppliedRules(selectedResult).bonuses as bonus}
           <div class="row bonus"><span>{bonus.label}</span><span>+{fmt(bonus.value)}</span></div>
         {/each}
-        {#if selectedResult.adjustmentTotal !== 0}
-          <div class="row adjustment"><span>Adjustments</span><span>{selectedResult.adjustmentTotal > 0 ? '+' : '-'}{fmt(Math.abs(selectedResult.adjustmentTotal))}</span></div>
-        {/if}
+        {#each (selectedResult.adjustments || []) as adj}
+          <div class="row adjustment"><span>{adj.label || 'Adjustment'}</span><span>-{fmt(Math.abs(adj.amount || 0))}</span></div>
+        {/each}
         <div class="row subtotal"><span>Gross Salary</span><span>{fmt(selectedResult.grossSalary)}</span></div>
         {#each getAppliedRules(selectedResult).deductions as ded}
           <div class="row deduction"><span>{ded.label}</span><span>-{fmt(ded.value)}</span></div>

@@ -68,18 +68,18 @@ const run = () => {
     const labels = resolvePrintLabels({})
     const html = buildAdjustmentSection({
       ...baseResult,
-      adjustments: [{ label: 'Gift', amount: 100 }],
-      adjustmentTotal: 100
+      adjustments: [{ label: 'Loan', amount: -100 }],
+      adjustmentTotal: -100
     }, labels, fmt)
-    assert.match(html, /Gift/)
+    assert.match(html, /Loan/)
     assert.doesNotMatch(html, /ADJUSTMENT.*>-<\/span>/)
   }
 
   {
     const labels = resolvePrintLabels({ printLabels: { adjustment: 'PENYESUAIAN' } })
-    const html = buildAdjustmentSection({ ...baseResult, adjustments: [{ amount: 50 }], adjustmentTotal: 50 }, labels, fmt)
+    const html = buildAdjustmentSection({ ...baseResult, adjustments: [{ amount: -50 }], adjustmentTotal: -50 }, labels, fmt)
     assert.match(html, /PENYESUAIAN/)
-    assert.match(html, /\+\$50/)
+    assert.match(html, /-\$50/)
   }
 
   {

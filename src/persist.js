@@ -145,6 +145,30 @@ export const normalizeAttendanceStore = (store) =>
     ])
   )
 
+const normalizeAdjustment = (adj) => {
+  if (!adj || typeof adj !== 'object') return null
+  const amount = Number(adj.amount)
+  if (!Number.isFinite(amount) || amount === 0) return null
+  return {
+    id: String(adj.id || `adj_${Date.now().toString(36)}`),
+    label: String(adj.label || 'Adjustment'),
+    amount: -Math.abs(amount)
+  }
+}
+
+export const normalizeAdjustmentsStore = (store) =>
+  Object.fromEntries(
+    Object.entries(store || {}).map(([period, employees]) => [
+      period,
+      Object.fromEntries(
+        Object.entries(employees || {}).map(([empId, list]) => [
+          empId,
+          (Array.isArray(list) ? list : []).map(normalizeAdjustment).filter(Boolean)
+        ])
+      )
+    ])
+  )
+
 const NORMALIZERS = {
   xpayroll_basic_config: normalizeBasicConfig,
   xpayroll_rules: normalizeRules,
@@ -152,7 +176,7 @@ const NORMALIZERS = {
   xpayroll_employees: (list) => (Array.isArray(list) ? list : []).map(normalizeEmployee),
   xpayroll_attendance: (v) => (v && typeof v === 'object' ? v : {}),
   xpayroll_attendance_items: normalizeAttendanceStore,
-  xpayroll_adjustments: (v) => (v && typeof v === 'object' ? v : {})
+  xpayroll_adjustments: normalizeAdjustmentsStore
 }
 
 export const normalizeBackupEntry = (key, value) => {

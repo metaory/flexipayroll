@@ -2,7 +2,7 @@
   import Icon from '@iconify/svelte/dist/OfflineIcon.svelte'
   import { formatCurrency, round2 } from '../core.js'
   import { ICONS } from '../lib/icons.js'
-  import { addAdjustment, updateAdjustment, removeAdjustment, getAdjustments, basicConfig } from '../stores.js'
+  import { addAdjustment, updateAdjustment, removeAdjustment, adjustments, basicConfig } from '../stores.js'
   import { toasts } from '../lib/toast.js'
   import { confirmDialog } from '../lib/dialog.js'
 
@@ -21,25 +21,12 @@
     return forms
   }
 
-  // Load adjustments for all employees
-  const loadAdjustments = () => {
-    const adjustmentsData = {}
-    employees.forEach(emp => {
-      adjustmentsData[emp.id] = getAdjustments(period, emp.id)
-    })
-    return adjustmentsData
-  }
-
-  let adjustmentsData = $state(loadAdjustments())
+  const listFor = (employeeId) =>
+    Array.isArray($adjustments?.[period]?.[employeeId]) ? $adjustments[period][employeeId] : []
   
   // Initialize forms when employees change
   $effect(() => {
     adjustmentForms = initializeForms()
-  })
-
-  // Reactive updates when employees or period change
-  $effect(() => {
-    adjustmentsData = loadAdjustments()
   })
 
   const toDeductionAmount = (value) => {
@@ -69,7 +56,6 @@
 
     toasts.success('Adjustment added')
     resetForm(employeeId)
-    adjustmentsData = loadAdjustments()
   }
 
   const handleEditAdjustment = (employeeId, adjustment) => {
@@ -99,14 +85,12 @@
 
     toasts.success('Adjustment updated')
     resetForm(employeeId)
-    adjustmentsData = loadAdjustments()
   }
 
   const handleDeleteAdjustment = async (employeeId, adjustmentId) => {
     if (await confirmDialog('Delete this adjustment?')) {
       removeAdjustment(period, employeeId, adjustmentId)
       toasts.success('Adjustment deleted')
-      adjustmentsData = loadAdjustments()
     }
   }
 
@@ -116,7 +100,7 @@
   }
 
   const getTotalAdjustments = (employeeId) =>
-    round2((adjustmentsData[employeeId] || []).reduce((sum, adj) => sum + adj.amount, 0))
+    round2(listFor(employeeId).reduce((sum, adj) => sum + adj.amount, 0))
 
   const submitAdjustment = (employeeId) =>
     editingAdjustments[employeeId]
@@ -155,13 +139,13 @@
 
           <!-- Current Adjustments -->
           <div class="current-adjustments">
-            {#if (adjustmentsData[employee.id] || []).length === 0}
+            {#if listFor(employee.id).length === 0}
               <div class="no-adjustments">
                 <Icon icon="tabler:circle-minus" width="1rem" height="1rem" />
                 <span>No adjustments</span>
               </div>
             {:else}
-              {#each (adjustmentsData[employee.id] || []) as adjustment}
+              {#each listFor(employee.id) as adjustment}
                 <div class="adjustment-item">
                   <div class="adjustment-info">
                     <span class="adjustment-label">{adjustment.label}</span>

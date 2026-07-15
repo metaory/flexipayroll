@@ -1,7 +1,7 @@
 <script>
   import Icon from '@iconify/svelte/dist/OfflineIcon.svelte'
-  import { addAttendanceItem, updateAttendanceItem, removeAttendanceItem, getAttendanceItems, getAbsentDays, setAbsentDays } from '../stores.js'
-  import { round2 } from '../core.js'
+  import { addAttendanceItem, updateAttendanceItem, removeAttendanceItem, setAbsentDays, attendanceItems } from '../stores.js'
+  import { normalizeAttendance } from '../core.js'
   import { ICONS } from '../lib/icons.js'
   import { toasts } from '../lib/toast.js'
   import { confirmDialog } from '../lib/dialog.js'
@@ -37,27 +37,16 @@
   const clampHour = (v) => Math.max(0, Math.min(99, parseInt(v) || 0))
   const clampMinute = (v) => Math.max(0, Math.min(60, parseInt(v) || 0))
 
-  // Load attendance items for all employees
-  const loadItems = () => employees.reduce((acc, emp) => {
-    acc[emp.id] = getAttendanceItems(period, emp.id)
-    return acc
-  }, {})
-
-  const loadAbsent = () => employees.reduce((acc, emp) => {
-    acc[emp.id] = getAbsentDays(period, emp.id)
-    return acc
-  }, {})
-
-  let itemsData = $state(loadItems())
-  let absentData = $state(loadAbsent())
+  const recordFor = (employeeId) =>
+    normalizeAttendance($attendanceItems?.[period]?.[employeeId])
+  const itemsFor = (employeeId) => recordFor(employeeId).items
+  const absentFor = (employeeId) => recordFor(employeeId).absent
   
   $effect(() => { forms = initForms() })
-  $effect(() => { itemsData = loadItems(); absentData = loadAbsent() })
 
   const handleAbsentChange = (employeeId, value) => {
     const absent = Math.max(0, Math.floor(Number(value) || 0))
     setAbsentDays(period, employeeId, absent)
-    absentData = { ...absentData, [employeeId]: absent }
   }
 
   const handleAdd = (employeeId) => {
@@ -72,7 +61,6 @@
     addAttendanceItem(period, employeeId, { label: form.label, hours })
     toasts.success('Attendance item added')
     resetForm(employeeId)
-    itemsData = loadItems()
   }
 
   const handleEdit = (employeeId, item) => {
@@ -95,14 +83,12 @@
     updateAttendanceItem(period, employeeId, item.id, { label: form.label, hours })
     toasts.success('Attendance item updated')
     resetForm(employeeId)
-    itemsData = loadItems()
   }
 
   const handleDelete = async (employeeId, itemId) => {
     if (await confirmDialog('Delete this attendance item?')) {
       removeAttendanceItem(period, employeeId, itemId)
       toasts.success('Attendance item deleted')
-      itemsData = loadItems()
     }
   }
 
@@ -111,8 +97,8 @@
     delete editing[employeeId]
   }
 
-  const getTotal = (employeeId) => 
-    (itemsData[employeeId] || []).reduce((sum, item) => sum + item.hours, 0)
+  const getTotal = (employeeId) =>
+    itemsFor(employeeId).reduce((sum, item) => sum + item.hours, 0)
 
   const formatHours = (hours) => {
     const sign = hours > 0 ? '+' : hours < 0 ? '-' : ''
@@ -154,7 +140,7 @@
                   min="0"
                   max="31"
                   step="1"
-                  value={absentData[employee.id] ?? 0}
+                  value={absentFor(employee.id)}
                   oninput={(e) => handleAbsentChange(employee.id, e.currentTarget.value)}
                 />
               </label>
@@ -165,13 +151,13 @@
           </div>
 
           <div class="current-items">
-            {#if (itemsData[employee.id] || []).length === 0}
+            {#if itemsFor(employee.id).length === 0}
               <div class="no-items">
                 <Icon icon="tabler:check" width="1rem" height="1rem" />
                 <span>Full attendance</span>
               </div>
             {:else}
-              {#each (itemsData[employee.id] || []) as item}
+              {#each itemsFor(employee.id) as item}
                 <div class="item" data-positive={item.hours > 0}>
                   <div class="item-info">
                     <span class="item-label">{item.label}</span>

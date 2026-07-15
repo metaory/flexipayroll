@@ -3,6 +3,8 @@ import { storage } from '../src/core.js'
 import {
   BACKUP_DEFAULTS,
   buildBackupPayload,
+  normalizeAdjustmentsStore,
+  normalizeAttendanceStore,
   normalizeBackupData,
   parseLegacyPayload,
   readAllSessionData,
@@ -252,6 +254,68 @@ const run = () => {
   {
     const bad = validateBackupData({ xpayroll_employees: [{}] })
     assert.equal(bad.ok, false)
+  }
+
+  {
+    const dirty = {
+      '2026-07': {
+        emp_a: [
+          { id: 'a1', label: 'Loan', amount: 250000 },
+          { id: 'a2', label: 'Advance', amount: -100000 },
+          { label: 'bad', amount: 0 },
+          null
+        ],
+        emp_b: 'not-an-array'
+      }
+    }
+    const fixed = normalizeAdjustmentsStore(dirty)
+    assert.equal(fixed['2026-07'].emp_a.length, 2)
+    assert.equal(fixed['2026-07'].emp_a[0].amount, -250000)
+    assert.equal(fixed['2026-07'].emp_a[1].amount, -100000)
+    assert.deepEqual(fixed['2026-07'].emp_b, [])
+  }
+
+  {
+    const att = normalizeAttendanceStore({
+      '2026-07': {
+        emp_a: [{ id: 'x', label: 'OT', hours: 3 }],
+        emp_b: { items: [{ id: 'y', label: 'UT', hours: -8 }], absent: 1.9 }
+      }
+    })
+    assert.deepEqual(att['2026-07'].emp_a, { items: [{ id: 'x', label: 'OT', hours: 3 }], absent: 0 })
+    assert.equal(att['2026-07'].emp_b.absent, 1)
+    assert.equal(att['2026-07'].emp_b.items[0].hours, -8)
+  }
+
+  {
+    const previous = globalThis.localStorage
+    const ls = mockStorage()
+    globalThis.localStorage = ls
+    try {
+      const period = '2026-07'
+      const attendance = {
+        [period]: {
+          emp_a: { items: [{ id: 'ot1', label: 'OT', hours: 4 }], absent: 2 }
+        }
+      }
+      const adjustments = {
+        [period]: {
+          emp_a: [{ id: 'loan', label: 'Loan', amount: 500000 }]
+        }
+      }
+      storage.set('xpayroll_attendance_items', normalizeAttendanceStore(attendance))
+      storage.set('xpayroll_adjustments', normalizeAdjustmentsStore(adjustments))
+
+      const loadedAtt = normalizeAttendanceStore(storage.get('xpayroll_attendance_items', {}))
+      const loadedAdj = normalizeAdjustmentsStore(storage.get('xpayroll_adjustments', {}))
+
+      assert.equal(loadedAtt[period].emp_a.absent, 2)
+      assert.equal(loadedAtt[period].emp_a.items[0].hours, 4)
+      assert.equal(loadedAdj[period].emp_a[0].amount, -500000)
+      assert.equal(loadedAdj[period].emp_a[0].label, 'Loan')
+    } finally {
+      globalThis.localStorage = previous
+    }
   }
 
   console.log('backup.test.js: all passed')

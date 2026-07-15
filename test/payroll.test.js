@@ -276,6 +276,20 @@ const run = () => {
     assert.ok(near(ut, (daily / 0.6) * 12.73), `expected ut ${(daily / 0.6) * 12.73}, got ${ut}`)
     assert.ok(near(ot - ut, ((daily / 0.6) * 47.92) - ((daily / 0.6) * 12.73)), `expected ot-ut, got ${ot - ut}`)
   }
+
+  {
+    const emp = { id: 'adj1', dailySalary: 100000 }
+    const config = { workdayHours: 8, workingDaysPerMonth: 22, monthDays: 30, overtimeRate: 0, undertimeRate: 0 }
+    const none = calculateEmployeePayroll(emp, { items: [], absent: 0 }, [], [], config)
+    const withAdj = calculateEmployeePayroll(emp, { items: [], absent: 0 }, [
+      { id: 'a1', label: 'Loan', amount: 500000 },
+      { id: 'a2', label: 'Advance', amount: -200000 }
+    ], [], config)
+    assert.ok(near(withAdj.adjustmentTotal, -700000), `adjustments must always deduct, got ${withAdj.adjustmentTotal}`)
+    assert.ok(near(withAdj.grossSalary, none.grossSalary - 700000), `gross should fall by 700000, got ${withAdj.grossSalary} vs ${none.grossSalary}`)
+    assert.ok(near(withAdj.finalSalary, none.finalSalary - 700000), `final should fall by 700000, got ${withAdj.finalSalary}`)
+    assert.ok(withAdj.adjustments.every(a => a.amount < 0), 'stored adjustment amounts should be negative')
+  }
 }
 
 run()

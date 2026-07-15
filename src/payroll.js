@@ -26,16 +26,25 @@ export const STEPS = [
 ]
 
 // Pure calculation functions using rules engine
+const asAdjustmentList = (adjustments) =>
+  Array.isArray(adjustments) ? adjustments : []
+
+/** Manual adjustments page is deduction-only; always reduce pay. */
+const sumAdjustmentDeductions = (adjustments) =>
+  asAdjustmentList(adjustments).reduce((sum, adj) => sum - Math.abs(Number(adj?.amount) || 0), 0)
+
 export const calculateEmployeePayroll = (employee, attendanceItems, adjustments, rules, basicConfig) => {
   const dailyRate = calculateDailyRate(employee.dailySalary)
   const hourlyRate = calculateHourlyRate(employee.dailySalary, basicConfig.workdayHours)
   const ruleResults = applyRules(employee, attendanceItems, rules, basicConfig)
   const baseSalary = ruleResults.baseSalary
+  const adjustmentList = asAdjustmentList(adjustments).map(adj => ({
+    ...adj,
+    amount: -Math.abs(Number(adj?.amount) || 0)
+  }))
+  const adjustmentTotal = sumAdjustmentDeductions(adjustmentList)
   
-  // Add manual adjustments
-  const adjustmentTotal = adjustments.reduce((sum, adj) => sum + (adj.amount || 0), 0)
-  
-  // Build salary before monthly percentage rules.
+  // Build salary before monthly percentage rules (adjustments reduce this base).
   const monthlyBaseSalary = ruleResults.grossSalary + adjustmentTotal
 
   // Apply monthly percentage bonuses last on the monthly base salary.
@@ -78,7 +87,7 @@ export const calculateEmployeePayroll = (employee, attendanceItems, adjustments,
   return {
     employee,
     attendanceItems: attendanceItems || [],
-    adjustments: adjustments || [],
+    adjustments: adjustmentList,
     dailyRate,
     hourlyRate,
     totalHours: ruleResults.totalHours,

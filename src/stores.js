@@ -12,6 +12,7 @@ import {
   normalizeRules,
   normalizeEmployee,
   normalizeAttendanceStore,
+  normalizeAdjustmentsStore,
   DEFAULT_BASIC_CONFIG,
   DEFAULT_SETTINGS
 } from './persist.js'
@@ -131,15 +132,17 @@ employees.subscribe(value => storage.set(KEYS.EMPLOYEES, value))
 export const attendance = writable(storage.get(KEYS.ATTENDANCE, {}))
 attendance.subscribe(value => storage.set(KEYS.ATTENDANCE, value))
 
-// Adjustments store
-export const adjustments = writable(storage.get(KEYS.ADJUSTMENTS, {}))
-adjustments.subscribe(value => storage.set(KEYS.ADJUSTMENTS, value))
+// Adjustments store (deduction-only lists per period/employee)
+export const adjustments = writable(
+  normalizeAdjustmentsStore(storage.get(KEYS.ADJUSTMENTS, {}))
+)
+adjustments.subscribe(value => storage.set(KEYS.ADJUSTMENTS, normalizeAdjustmentsStore(value)))
 
 // Attendance items store (hours adjustment per employee)
 export const attendanceItems = writable(
   normalizeAttendanceStore(storage.get(KEYS.ATTENDANCE_ITEMS, {}))
 )
-attendanceItems.subscribe(value => storage.set(KEYS.ATTENDANCE_ITEMS, value))
+attendanceItems.subscribe(value => storage.set(KEYS.ATTENDANCE_ITEMS, normalizeAttendanceStore(value)))
 
 // Payroll store
 export const payroll = writable(storage.get(KEYS.PAYROLL, {}))
@@ -240,26 +243,39 @@ export const removeAttendance = (period, employeeId, date) => {
 
 // Adjustment actions
 export const addAdjustment = (period, employeeId, adjustment) => {
+  const amount = -Math.abs(Number(adjustment?.amount) || 0)
+  if (!amount) return
   adjustments.update(current => ({
     ...current,
     [period]: {
       ...current[period],
       [employeeId]: [
         ...(current[period]?.[employeeId] || []),
-        { id: `adj_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`, ...adjustment }
+        {
+          id: `adj_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          label: String(adjustment?.label || 'Adjustment'),
+          amount
+        }
       ]
     }
   }))
 }
 
 export const updateAdjustment = (period, employeeId, adjustmentId, updates) => {
+  const amount = updates?.amount != null ? -Math.abs(Number(updates.amount) || 0) : null
   adjustments.update(current => ({
     ...current,
     [period]: {
       ...current[period],
-      [employeeId]: (current[period]?.[employeeId] || []).map(adj => 
-        adj.id === adjustmentId ? { ...adj, ...updates } : adj
-      )
+      [employeeId]: (current[period]?.[employeeId] || []).map(adj => {
+        if (adj.id !== adjustmentId) return adj
+        return {
+          ...adj,
+          ...updates,
+          ...(amount != null ? { amount } : {}),
+          label: String(updates?.label ?? adj.label)
+        }
+      }).filter(adj => adj.amount)
     }
   }))
 }
@@ -274,7 +290,7 @@ export const removeAdjustment = (period, employeeId, adjustmentId) => {
   }))
 }
 
-export const getAdjustments = (period, employeeId) => 
+export const getAdjustments = (period, employeeId) =>
   get(adjustments)[period]?.[employeeId] || []
 
 // Attendance items actions

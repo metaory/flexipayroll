@@ -15,13 +15,20 @@
   const currentStepData = $derived(STEPS[$wizardStep])
   const payrollConfig = $derived($basicConfig)
   
-  const results = $derived($employees.map(emp => calculateEmployeePayroll(
-    emp,
-    normalizeAttendance($attendanceItems[$currentPeriod]?.[emp.id]),
-    $adjustments[$currentPeriod]?.[emp.id] ?? [],
-    $rules,
-    payrollConfig
-  )))
+  const results = $derived.by(() => {
+    const period = $currentPeriod
+    const att = $attendanceItems
+    const adj = $adjustments
+    const emps = $employees
+    const ruleList = $rules
+    const cfg = payrollConfig
+    return emps.map(emp => {
+      const id = emp.id
+      const attendance = normalizeAttendance(att?.[period]?.[id])
+      const empAdjustments = Array.isArray(adj?.[period]?.[id]) ? adj[period][id] : []
+      return calculateEmployeePayroll(emp, attendance, empAdjustments, ruleList, cfg)
+    })
+  })
   
   // Wizard navigation
   const handleNext = () => {
