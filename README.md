@@ -1,86 +1,65 @@
 <div align="center">
-    <img src="public/logo.svg" height="128" />
-    <h1>FlexiPayroll</h1>
-    <img src=".github/assets/social.png" width="70%" />
-    <h5>A lightweight, browser-based payroll management system for small businesses</h5>
+  <img src="public/logo.svg" height="128" alt="FlexiPayroll logo">
+  <h1>FlexiPayroll</h1>
+  <p>Local-first payroll management for small businesses</p>
+  <img src=".github/assets/social.png" width="70%" alt="FlexiPayroll interface">
 </div>
 
 ---
 
-FlexiPayroll is a modern, client-side payroll management system designed for small businesses. It runs entirely in the browser with no backend required—all data is stored locally in your browser. The system automates monthly salary calculations based on attendance tracking, configurable business rules, and employee-specific adjustments.
+FlexiPayroll calculates monthly payroll from attendance, business rules, and employee adjustments. It runs entirely in the browser, stores data in `localStorage`, and needs no account or backend.
 
-### Key Features
+## Features
 
-- **Employee Management**: Add and manage employees with attributes like marital status, gender, and monthly salary
-- **Attendance Tracking**: Record daily attendance with entry/exit times using an interactive time grid
-- **Flexible Day Types**: Support for regular workdays, holidays, paid leave, and unpaid leave
-- **Configurable Rules**: Customizable bonus calculations (E, S, K, M, T) and deductions (insurance)
-- **Adjustments**: Add per-employee adjustments with optional comments
-- **Salary Reports**: Generate detailed salary breakdowns with all components
-- **Data Persistence**: All data stored locally in browser (localStorage)
-- **Dark Mode**: Built-in theme switching
-- **Zero Dependencies**: Minimal external dependencies, runs entirely client-side
+- Employee records, salaries, and probation status
+- Entry and exit time tracking
+- Workday, holiday, paid-leave, and unpaid-leave records
+- Configurable bonuses, deductions, and eligibility rules
+- Per-employee payroll adjustments
+- Detailed printable salary reports
+- JSON backup and restore
+- Light and dark themes
+- Installable PWA with offline support
 
 ## Quick Start
 
-### Prerequisites
-
-- Node.js 18+ or Bun
-- npm, yarn, pnpm, or bun
-
-### Installation
+Requires Node.js 18 or newer and npm.
 
 ```bash
-# Install dependencies
-npm install
-```
-
-### Development
-
-```bash
-# Start dev server
+npm ci
 npm run dev
 ```
 
 Open `http://localhost:5173` in your browser.
 
-### Build
+## Commands
 
-```bash
-# Build for production
-npm run build
-```
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the Vite development server |
+| `npm test` | Run payroll, print, backup, and dialog tests |
+| `npm run build` | Build for deployment under `/flexipayroll/` |
+| `npm run build:offline` | Build with relative asset paths |
+| `npm run preview` | Preview the production build |
 
-Output will be in the `dist/` directory.
+Vite writes build output to `dist/`.
 
-## Usage
+## Payroll Workflow
 
-### Workflow
+1. Configure the pay period, working days, and payroll rules.
+2. Add employees and monthly salaries.
+3. Record attendance and leave.
+4. Apply employee-specific adjustments.
+5. Review and print salary reports.
 
-1. **Configuration**: Set up working days, bonus amounts, and other business rules
-2. **Employees**: Add employees with their monthly salary and attributes
-3. **Attendance**: Record daily attendance for each employee (entry/exit times)
-4. **Adjustments**: Add any manual adjustments per employee if needed
-5. **Reports**: View and export salary breakdowns
+## Data Storage
 
-### Data Management
+The browser stores data under the current profile and site origin. Clearing site data removes it. Export a backup before clearing browser data or moving to another device.
 
-- All data is stored in browser localStorage
-- Data persists across browser sessions
-- Export/import functionality available for backups
-- No server or database required
+## Stack
 
-## Development
-
-The project follows functional programming principles:
-- Pure functions for calculations
-- Declarative, composable code
-- Minimal nesting and complexity
-- Rules-based configuration system
+Svelte 5, Vite 6, Sass, and `vite-plugin-pwa`.
 
 ## License
 
 [AGPL-3.0](LICENSE)
-
-1.22754
-1.22756
