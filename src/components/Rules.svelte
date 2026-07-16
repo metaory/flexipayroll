@@ -169,7 +169,8 @@
         <label class="field">
           <span>{f.key}</span>
           <input type="text"
-            value={basicConfigData.printLabels?.[f.key] ?? f.fallback}
+            placeholder={f.fallback}
+            value={basicConfigData.printLabels?.[f.key] === f.fallback ? '' : (basicConfigData.printLabels?.[f.key] ?? '')}
             oninput={(e) => updatePrintLabel(f.key, f.fallback, e.target.value)} />
         </label>
       {/each}
@@ -177,6 +178,7 @@
     <label class="field footer-label-field">
       <span>footerLabel</span>
       <input type="text"
+        placeholder="Footer note"
         value={basicConfigData.footerLabel ?? ''}
         oninput={(e) => updateBasicConfigField('footerLabel', e.target.value)} />
     </label>
