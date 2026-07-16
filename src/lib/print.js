@@ -15,24 +15,24 @@ const styles = `
   body { font-family: 'Courier New', monospace; font-size: 10.5pt; line-height: 1.35; padding: 1rem; color: #000; font-weight: 700; }
   .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 0.75rem; margin-bottom: 1rem; }
   .header h1 { font-size: 17pt; margin-bottom: 0.1rem; letter-spacing: 2px; font-weight: 900; }
-  .header p { font-size: 10pt; color: #111; font-weight: 800; }
-  .header .probation { font-size: 9pt; font-weight: 800; margin-top: 0.25rem; }
+  .header p { font-size: 10.5pt; color: #111; font-weight: 900; }
+  .header .probation { font-size: 10.5pt; font-weight: 900; margin-top: 0.25rem; }
   .section { margin-bottom: 0.75rem; }
-  .section-title { font-weight: 900; font-size: 12pt; border-bottom: 1px solid #000; padding-bottom: 0.15rem; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 1px; }
+  .section-title { font-weight: 900; font-size: 12pt; border-bottom: 1px solid #000; padding-bottom: 0.15rem; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 1px; text-align: right; }
   .row { display: flex; justify-content: space-between; padding: 0.15rem 0; border-bottom: 1px dotted #ccc; font-size: 10.5pt; }
   .row:last-child { border-bottom: none; }
-  .row.subtotal { border-top: 1px solid #000; border-bottom: 1px solid #000; font-weight: 900; margin-top: 0.35rem; padding: 0.35rem 0; font-size: 11.5pt; }
-  .row.total { border-top: 2px solid #000; font-weight: 900; font-size: 14pt; margin-top: 0.35rem; padding: 0.5rem 0; }
-  .label { color: #111; font-weight: 800; }
-  .value { font-weight: 900; text-align: right; font-family: 'Courier New', monospace; }
-  .stats { display: flex; justify-content: center; gap: 1rem; margin-bottom: 0.5rem; font-size: 10pt; color: #111; font-weight: 800; }
+  .row.subtotal { border-top: 1px solid #000; border-bottom: 1px solid #000; font-weight: 900; margin-top: 0.35rem; padding: 0.35rem 0; }
+  .row.total { border-top: 2px solid #000; font-weight: 900; margin-top: 0.35rem; padding: 0.5rem 0; }
+  .label { color: #111; font-weight: 900; text-align: right; }
+  .value { font-weight: 900; text-align: left; font-family: 'Courier New', monospace; font-size: 10.5pt; }
+  .stats { display: flex; justify-content: center; gap: 1rem; margin-bottom: 0.5rem; font-size: 10.5pt; color: #111; font-weight: 900; }
   .stats b { font-weight: 900; }
   .footer-sep { border: none; border-top: 1px solid #000; margin: 0.75rem 0 0.5rem; }
   .footer-label { text-align: center; font-size: 9pt; font-weight: 800; margin-bottom: 0.5rem; }
   @media print { body { padding: 0.5rem; } }
 `
 
-export const row = (label, value, cls = '') => `<div class="row ${cls}"><span class="label">${esc(label)}</span><span class="value">${esc(value)}</span></div>`
+export const row = (label, value, cls = '') => `<div class="row ${cls}"><span class="value">${esc(value)}</span><span class="label">${esc(label)}</span></div>`
 
 const section = (title, content) => `<div class="section"><div class="section-title">${esc(title)}</div>${content}</div>`
 
@@ -85,7 +85,7 @@ export const buildEarningsSection = (result, labels, fmt) => {
     ...applied.bonuses.map(b => row(b.label, '+' + fmt(b.value))),
     ...applied.deductions.map(d => row(d.label, '-' + fmt(d.value))),
     ...(hasAttendanceHours ? [row(labels.attendance, signedFmt(result.attendanceAdjustment || 0, fmt))] : []),
-    row('Gross', fmt(grossBeforeAdjustments), 'subtotal')
+    row('GROSS', fmt(grossBeforeAdjustments), 'subtotal')
   ].filter(Boolean).join('')
 }
 

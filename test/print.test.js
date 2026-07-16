@@ -43,6 +43,7 @@ const run = () => {
     assert.match(html, /Daily salary/)
     assert.ok(html.indexOf('Daily salary') < html.indexOf('Month salary'))
     assert.match(html, /\$100000/)
+    assert.match(html, /\$100000<\/span><span class="label">Daily salary/)
     assert.match(html, /Attendance/)
     assert.doesNotMatch(html, /OT \d/)
     assert.doesNotMatch(html, /UT \d/)
@@ -87,6 +88,7 @@ const run = () => {
     const html = buildPrintHtml(baseResult, '2026-01', { organizationName: 'Acme', currencySymbol: '$' })
     assert.match(html, /Acme/)
     assert.match(html, /Daily salary/)
+    assert.match(html, /\.section-title[^}]*text-align: right/)
     assert.match(html, /section-title">Adjustments</)
     assert.match(html, />Net<\/span>/)
   }
