@@ -9,13 +9,22 @@
  * @param {string} title - The dialog title (default: 'Confirm')
  * @returns {Promise<boolean>} - true if confirmed, false if cancelled
  */
-export const isWordSuffix = (value) => /^[\p{L}\p{N}_-]*$/u.test(value)
+export const isWordSuffix = (value) => /^[\p{L}\p{N}_-]*$/u.test(String(value ?? ''))
 
-export const isValidSessionName = (value, prefix) => {
+export const resolveSessionName = (value, prefix) => {
   const trimmed = String(value ?? '').trim()
-  if (!trimmed.startsWith(`${prefix}-`)) return false
-  return isWordSuffix(trimmed.slice(prefix.length + 1))
+  if (!trimmed || !prefix) return null
+  if (trimmed === prefix || trimmed === `${prefix}-`) return prefix
+  if (trimmed.startsWith(`${prefix}-`)) {
+    const suffix = trimmed.slice(prefix.length + 1)
+    if (!isWordSuffix(suffix)) return null
+    return suffix ? `${prefix}-${suffix}` : prefix
+  }
+  if (!isWordSuffix(trimmed)) return null
+  return `${prefix}-${trimmed}`
 }
+
+export const isValidSessionName = (value, prefix) => !!resolveSessionName(value, prefix)
 
 export async function filenamePromptDialog(
   defaultValue = '',
@@ -154,9 +163,8 @@ export async function filenamePromptDialog(
     }
 
     const submit = () => {
-      const filename = input.value.trim()
-      if (!filename) return showError('Enter a filename to continue')
-      if (!isValidSessionName(filename, prefix)) {
+      const filename = resolveSessionName(input.value, prefix)
+      if (!filename) {
         return showError('Use letters, numbers, dash, or underscore only')
       }
       finish(filename)

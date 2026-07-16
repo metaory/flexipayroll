@@ -44,6 +44,7 @@ const run = () => {
     assert.ok(html.indexOf('Daily salary') < html.indexOf('Month salary'))
     assert.match(html, /\$100000/)
     assert.match(html, /\$100000<\/span><span class="label">Daily salary/)
+    assert.match(html, /class="row subtotal heading".*GROSS/)
     assert.match(html, /Attendance/)
     assert.doesNotMatch(html, /OT \d/)
     assert.doesNotMatch(html, /UT \d/)
@@ -95,11 +96,25 @@ const run = () => {
 
   {
     const html = buildPrintHtml(baseResult, '2026-01', {
-      printLabels: { adjustments: 'Penyesuaian', net: 'Gaji bersih' }
+      printLabels: {
+        earnings: 'Pendapatan',
+        gross: 'BRUTO',
+        summary: 'Ringkasan',
+        adjustments: 'Penyesuaian',
+        net: 'Gaji bersih',
+        payslip: 'SLIP GAJI',
+        days: 'Hari'
+      }
     })
+    assert.match(html, /section-title">Pendapatan</)
+    assert.match(html, /class="row subtotal heading".*BRUTO/)
+    assert.match(html, /section-title">Ringkasan</)
     assert.match(html, /section-title">Penyesuaian</)
     assert.match(html, /Gaji bersih/)
+    assert.match(html, /SLIP GAJI/)
+    assert.match(html, /Hari:/)
     assert.doesNotMatch(html, /section-title">Adjustments</)
+    assert.doesNotMatch(html, /section-title">Earnings</)
   }
 
   {

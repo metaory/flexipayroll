@@ -11,12 +11,19 @@ export const APP_VERSION = pkg.version
 export const SESSION_PREFIX = 'xpayroll_'
 
 export const DEFAULT_PRINT_LABELS = {
+  payslip: 'PAYSLIP',
+  days: 'Days',
+  daily: 'Daily',
+  hourly: 'Hourly',
+  earnings: 'Earnings',
   monthSalary: 'Month salary',
   dailySalary: 'Daily salary',
+  gross: 'GROSS',
   adjustments: 'Adjustments',
   adjustment: 'ADJUSTMENT',
   totalAdjustments: 'Total adjustments',
   attendance: 'Attendance',
+  summary: 'Summary',
   net: 'Net'
 }
 

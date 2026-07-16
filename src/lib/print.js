@@ -22,6 +22,7 @@ const styles = `
   .row { display: flex; justify-content: space-between; padding: 0.15rem 0; border-bottom: 1px dotted #ccc; font-size: 10.5pt; }
   .row:last-child { border-bottom: none; }
   .row.subtotal { border-top: 1px solid #000; border-bottom: 1px solid #000; font-weight: 900; margin-top: 0.35rem; padding: 0.35rem 0; }
+  .row.heading .label { font-size: 12pt; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; }
   .row.total { border-top: 2px solid #000; font-weight: 900; margin-top: 0.35rem; padding: 0.5rem 0; }
   .label { color: #111; font-weight: 900; text-align: right; }
   .value { font-weight: 900; text-align: left; font-family: 'Courier New', monospace; font-size: 10.5pt; }
@@ -85,7 +86,7 @@ export const buildEarningsSection = (result, labels, fmt) => {
     ...applied.bonuses.map(b => row(b.label, '+' + fmt(b.value))),
     ...applied.deductions.map(d => row(d.label, '-' + fmt(d.value))),
     ...(hasAttendanceHours ? [row(labels.attendance, signedFmt(result.attendanceAdjustment || 0, fmt))] : []),
-    row('GROSS', fmt(grossBeforeAdjustments), 'subtotal')
+    row(labels.gross, fmt(grossBeforeAdjustments), 'subtotal heading')
   ].filter(Boolean).join('')
 }
 
@@ -112,22 +113,22 @@ export const buildPrintHtml = (result, period, config = {}) => {
 </head>
 <body>
   <div class="header">
-    ${organizationName ? `<h1>${esc(organizationName)}</h1><p style="font-size:12pt;font-weight:bold;margin:0.3rem 0">PAYSLIP</p>` : '<h1>PAYSLIP</h1>'}
+    ${organizationName ? `<h1>${esc(organizationName)}</h1><p style="font-size:12pt;font-weight:bold;margin:0.3rem 0">${esc(labels.payslip)}</p>` : `<h1>${esc(labels.payslip)}</h1>`}
     <p>${headerLine}</p>
     ${probationLine}
   </div>
   
   <div class="stats">
-    <span><b>Days:</b> ${result.actualDays}</span>
-    <span><b>Daily:</b> ${fmt(result.dailyRate)}</span>
-    <span><b>Hourly:</b> ${fmt(result.hourlyRate)}</span>
+    <span><b>${esc(labels.days)}:</b> ${result.actualDays}</span>
+    <span><b>${esc(labels.daily)}:</b> ${fmt(result.dailyRate)}</span>
+    <span><b>${esc(labels.hourly)}:</b> ${fmt(result.hourlyRate)}</span>
   </div>
   
-  ${section('Earnings', buildEarningsSection(result, labels, fmt))}
+  ${section(labels.earnings, buildEarningsSection(result, labels, fmt))}
 
   ${section(labels.adjustments, buildAdjustmentSection(result, labels, fmt))}
   
-  ${section('Summary', row(labels.net, fmt(result.finalSalary), 'total'))}
+  ${section(labels.summary, row(labels.net, fmt(result.finalSalary), 'total'))}
 
   ${footerLabel ? `<hr class="footer-sep"><div class="footer-label">${esc(footerLabel)}</div>` : ''}
 </body>
