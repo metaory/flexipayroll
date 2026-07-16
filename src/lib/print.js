@@ -111,7 +111,7 @@ export const buildPrintHtml = (result, period, config = {}) => {
 </head>
 <body>
   <div class="header">
-    ${organizationName ? `<h1>${esc(organizationName)}</h1><p style="font-size:12pt;font-weight:bold;margin:0.3rem 0">${esc(labels.payslip)}</p>` : `<h1>${esc(labels.payslip)}</h1>`}
+    ${organizationName ? `<h1>${esc(organizationName)}</h1>` : ''}
     <p>${headerLine}</p>
   </div>
   

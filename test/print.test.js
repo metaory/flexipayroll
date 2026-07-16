@@ -102,7 +102,6 @@ const run = () => {
         summary: 'Ringkasan',
         adjustments: 'Penyesuaian',
         net: 'Gaji bersih',
-        payslip: 'SLIP GAJI',
         days: 'Hari'
       }
     })
@@ -111,10 +110,10 @@ const run = () => {
     assert.match(html, /section-title">Ringkasan</)
     assert.match(html, /section-title">Penyesuaian</)
     assert.match(html, /Gaji bersih/)
-    assert.match(html, /SLIP GAJI/)
     assert.match(html, /Hari:/)
     assert.doesNotMatch(html, /section-title">Adjustments</)
     assert.doesNotMatch(html, /section-title">Earnings</)
+    assert.doesNotMatch(html, /PAYSLIP/)
   }
 
   {

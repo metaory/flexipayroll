@@ -18,15 +18,15 @@
     children: [{ value: CRITERIA_TYPES.HAS_CHILDREN, label: 'Has children' }, { value: CRITERIA_TYPES.HAS_NO_CHILDREN, label: 'No children' }]
   }
   const CONFIG_FIELDS = [
-    { key: 'organizationName', label: 'Organization', type: 'text', fallback: '' },
-    { key: 'workdayHours', label: 'Hours/Day', type: 'number', min: 1, max: 24, step: 0.5, fallback: 8 },
-    { key: 'overtimeRate', label: 'OT Rate', type: 'number', min: 0, max: 10, step: 'any', fallback: 1.5 },
-    { key: 'undertimeRate', label: 'UT Rate', type: 'number', min: 0, max: 1, step: 'any', fallback: 0.5 },
-    { key: 'workingDaysPerMonth', label: 'Days/Month', type: 'number', min: 1, max: 31, fallback: 22 },
-    { key: 'currencySymbol', label: 'Currency', type: 'text', fallback: '$' },
-    { key: 'locale', label: 'Locale', type: 'select', fallback: 'id-ID', options: LOCALE_OPTIONS },
-    { key: 'monthDays', label: 'Month Days', type: 'number', min: 28, max: 31, fallback: 30 },
-    { key: 'firstDayWeekday', label: 'Week Start', type: 'select', fallback: 'Saturday', options: ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] }
+    { key: 'organizationName', type: 'text', fallback: '' },
+    { key: 'workdayHours', type: 'number', min: 1, max: 24, step: 0.5, fallback: 8 },
+    { key: 'overtimeRate', type: 'number', min: 0, max: 10, step: 'any', fallback: 1.5 },
+    { key: 'undertimeRate', type: 'number', min: 0, max: 1, step: 'any', fallback: 0.5 },
+    { key: 'workingDaysPerMonth', type: 'number', min: 1, max: 31, fallback: 22 },
+    { key: 'currencySymbol', type: 'text', fallback: '$' },
+    { key: 'locale', type: 'select', fallback: 'id-ID', options: LOCALE_OPTIONS },
+    { key: 'monthDays', type: 'number', min: 28, max: 31, fallback: 30 },
+    { key: 'firstDayWeekday', type: 'select', fallback: 'Saturday', options: ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] }
   ]
   const RULE_TYPE_OPTIONS = [
     { value: RULE_TYPES.FIXED, label: 'Fixed' },
@@ -140,12 +140,12 @@
     <div class="config-grid">
       {#each CONFIG_FIELDS as f}
         <label class="field">
-          <span>{f.label}</span>
+          <span>{f.key}</span>
           {#if f.type === 'select'}
             <select value={basicConfigData[f.key] || f.fallback} onchange={(e) => updateBasicConfigField(f.key, e.target.value || f.fallback)}>
               {#each f.options as opt}
                 {#if typeof opt === 'object'}
-                  <option value={opt.value}>{opt.label} ({opt.value})</option>
+                  <option value={opt.value}>{opt.value}</option>
                 {:else}
                   <option value={opt}>{opt}</option>
                 {/if}
@@ -160,7 +160,6 @@
                 updateBasicConfigField(f.key, val)
               }} />
           {/if}
-          <small>{f.key}</small>
         </label>
       {/each}
     </div>
@@ -168,20 +167,18 @@
     <div class="config-grid">
       {#each PRINT_LABEL_FIELDS as f}
         <label class="field">
-          <span>{f.label}</span>
+          <span>{f.key}</span>
           <input type="text"
             value={basicConfigData.printLabels?.[f.key] ?? f.fallback}
             oninput={(e) => updatePrintLabel(f.key, f.fallback, e.target.value)} />
-          <small>{f.key}</small>
         </label>
       {/each}
     </div>
     <label class="field footer-label-field">
-      <span>Footer label</span>
+      <span>footerLabel</span>
       <input type="text"
         value={basicConfigData.footerLabel ?? ''}
         oninput={(e) => updateBasicConfigField('footerLabel', e.target.value)} />
-      <small>footerLabel</small>
     </label>
     <div class="config-actions">
       <button class="danger" onclick={resetAllStorage}>
@@ -338,12 +335,12 @@
   .config-grid
     display: grid
     grid-template-columns: repeat(3, 1fr)
-    gap: 1.5rem 2rem
+    gap: 1rem 1.25rem
     align-items: start
 
     @media (max-width: $mobile)
       grid-template-columns: 1fr
-      gap: 1rem
+      gap: 0.75rem
 
   .field
     @extend %grid

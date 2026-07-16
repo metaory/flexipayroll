@@ -41,24 +41,10 @@ const KEYS = {
 // DEFAULT DATA (re-exported from persist for consumers)
 // ============================================================================
 
-export const PRINT_LABEL_FIELDS = [
-  { key: 'payslip', label: 'Payslip title', fallback: DEFAULT_PRINT_LABELS.payslip },
-  { key: 'days', label: 'Days', fallback: DEFAULT_PRINT_LABELS.days },
-  { key: 'daily', label: 'Daily', fallback: DEFAULT_PRINT_LABELS.daily },
-  { key: 'hourly', label: 'Hourly', fallback: DEFAULT_PRINT_LABELS.hourly },
-  { key: 'earnings', label: 'Earnings section', fallback: DEFAULT_PRINT_LABELS.earnings },
-  { key: 'monthSalary', label: 'Month salary', fallback: DEFAULT_PRINT_LABELS.monthSalary },
-  { key: 'dailySalary', label: 'Daily salary', fallback: DEFAULT_PRINT_LABELS.dailySalary },
-  { key: 'gross', label: 'Gross', fallback: DEFAULT_PRINT_LABELS.gross },
-  { key: 'adjustments', label: 'Adjustments section', fallback: DEFAULT_PRINT_LABELS.adjustments },
-  { key: 'adjustment', label: 'Adjustment', fallback: DEFAULT_PRINT_LABELS.adjustment },
-  { key: 'totalAdjustments', label: 'Total adjustments', fallback: DEFAULT_PRINT_LABELS.totalAdjustments },
-  { key: 'attendance', label: 'Attendance', fallback: DEFAULT_PRINT_LABELS.attendance },
-  { key: 'summary', label: 'Summary section', fallback: DEFAULT_PRINT_LABELS.summary },
-  { key: 'net', label: 'Net', fallback: DEFAULT_PRINT_LABELS.net },
-  { key: 'probationA', label: 'Probation (3 months)', fallback: DEFAULT_PRINT_LABELS.probationA },
-  { key: 'probationB', label: 'Probation (6 months)', fallback: DEFAULT_PRINT_LABELS.probationB }
-]
+export const PRINT_LABEL_FIELDS = Object.keys(DEFAULT_PRINT_LABELS).map((key) => ({
+  key,
+  fallback: DEFAULT_PRINT_LABELS[key]
+}))
 
 export const resolvePrintLabels = (config = {}) => ({
   ...DEFAULT_PRINT_LABELS,

@@ -11,7 +11,6 @@ export const APP_VERSION = pkg.version
 export const SESSION_PREFIX = 'xpayroll_'
 
 export const DEFAULT_PRINT_LABELS = {
-  payslip: 'PAYSLIP',
   days: 'Days',
   daily: 'Daily',
   hourly: 'Hourly',

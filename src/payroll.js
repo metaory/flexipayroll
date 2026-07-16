@@ -305,18 +305,12 @@ export const getStepValue = (step, result, basicConfig) => {
 
 // Basic config field definitions
 export const BASIC_CONFIG_FIELDS = [
-  { key: 'workdayHours', label: 'Working Hours/Day', type: 'number', min: 1, max: 24, step: 0.5 },
-  { key: 'workingDaysPerMonth', label: 'Working Days/Month', type: 'number', min: 1, max: 31 },
-  { key: 'currencySymbol', label: 'Currency Symbol', type: 'text' },
-  { key: 'monthDays', label: 'Days in Month', type: 'number', min: 28, max: 31 },
-  { key: 'firstDayWeekday', label: 'First Day Weekday', type: 'select', options: [
-    { value: 'Saturday', label: 'Saturday' },
-    { value: 'Sunday', label: 'Sunday' },
-    { value: 'Monday', label: 'Monday' },
-    { value: 'Tuesday', label: 'Tuesday' },
-    { value: 'Wednesday', label: 'Wednesday' },
-    { value: 'Thursday', label: 'Thursday' },
-    { value: 'Friday', label: 'Friday' }
+  { key: 'workdayHours', type: 'number', min: 1, max: 24, step: 0.5 },
+  { key: 'workingDaysPerMonth', type: 'number', min: 1, max: 31 },
+  { key: 'currencySymbol', type: 'text' },
+  { key: 'monthDays', type: 'number', min: 28, max: 31 },
+  { key: 'firstDayWeekday', type: 'select', options: [
+    'Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'
   ]}
 ]
 
