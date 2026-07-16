@@ -10,7 +10,7 @@
 
 <header class="wizard-header">
   <div class="step-info">
-    <Icon icon={currentStepData.icon} width="3rem" height="3rem" style="width: 3rem; height: 3rem" />
+    <Icon icon={currentStepData.icon} width="2.25rem" height="2.25rem" style="width: 2.25rem; height: 2.25rem" />
     <div>
       <h1>{currentStepData.title}</h1>
       <p>{currentStepData.formula || `Step ${currentStep + 1} of ${STEPS.length}`}</p>
@@ -53,8 +53,8 @@
     display: grid
     grid-template-columns: 1fr auto
     align-items: center
-    gap: 2rem
-    padding: 2rem
+    gap: 1rem
+    padding: 1rem 1.25rem
     background: transparent
     backdrop-filter: blur(4px)
 
@@ -62,32 +62,32 @@
     display: grid
     grid-template-columns: auto 1fr
     align-items: center
-    gap: 1rem
+    gap: 0.75rem
 
     > :global(svg)
       color: var(--primary)
 
     h1
       margin: 0
-      font-size: 1.5rem
+      font-size: 1.35rem
       @extend %gradient-text
 
     p
       margin: 0
+      font-size: 0.9rem
       color: var(--fg-muted)
 
   .header-right
     display: grid
     grid-template-columns: auto auto
     align-items: center
-    gap: 2rem
+    gap: 1rem
 
   .progress
-    margin-top: 2rem;
     display: grid
     grid-template-columns: auto 1fr
     align-items: center
-    gap: 1rem
+    gap: 0.5rem
 
     span
       font-weight: 600
@@ -95,8 +95,8 @@
       text-align: right
 
   .progress-bar
-    width: 200px
-    height: 0.5rem
+    width: 8rem
+    height: 0.4rem
     background: var(--surface)
     border-radius: var(--radius)
     overflow: hidden
@@ -109,7 +109,7 @@
   .wizard-nav
     display: grid
     grid-template-columns: auto auto
-    gap: 1rem
+    gap: 0.5rem
 
     button
       @extend %button-base
@@ -126,8 +126,8 @@
     left: 0
     right: 0
     bottom: 0
-    padding: 2rem
-    padding-top: calc(2rem + 5rem)
+    padding: 1rem 1.25rem
+    padding-top: 4.75rem
     overflow-y: auto
     overflow-x: hidden
     height: 100%

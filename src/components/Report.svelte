@@ -444,15 +444,7 @@
         box-shadow: 0 4px 12px color-mix(in oklab, var(--neutral) 25%, transparent)
         
   .empty
-    @extend %grid
-    place-items: center
-    gap: 1.25rem
-    padding: 4rem
-    color: var(--fg-muted)
-    
-    p
-      margin: 0
-      font-size: 1.1rem
+    @extend %empty-state
       
   .dialog-summary
     margin-bottom: 1.25rem

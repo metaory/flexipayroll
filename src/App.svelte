@@ -121,28 +121,28 @@
   .app-content
     overflow: hidden
     padding: 0
-    margin: 0.6em 2em
+    margin: 0.5rem 1rem
     background: var(--bg)
-    height: 98vh
+    height: calc(100dvh - 1rem)
     box-sizing: border-box
-    border-radius: 1.6em
+    border-radius: 1rem
     position: relative
     z-index: 1
 
   .toolbar
     position: fixed
-    top: 0.8rem
+    top: 0.5rem
     right: 40%
     display: flex
     z-index: 1000
     background: var(--surface)
     border: 2px solid var(--border-muted)
-    border-radius: 1rem
+    border-radius: 0.75rem
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15)
 
   .toolbar-btn
-    width: 3.5rem
-    height: 3.5rem
+    width: 2.75rem
+    height: 2.75rem
     border-radius: 50%
     cursor: pointer
     @extend %transition
@@ -179,13 +179,13 @@
       right: 0.5rem
 
     .toolbar-btn
-      width: 3rem
-      height: 3rem
+      width: 2.75rem
+      height: 2.75rem
 
     .app-content
-      padding: 1rem
-      margin: 0 0.5em
-      height: 100vh
+      padding: 0.75rem
+      margin: 0 0.5rem
+      height: 100dvh
 
     .version
       left: 0.5rem

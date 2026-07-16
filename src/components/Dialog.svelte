@@ -133,7 +133,7 @@
     display: flex
     justify-content: space-between
     align-items: center
-    padding: 1.5rem 2rem
+    padding: 0.875rem 1.25rem
     border-bottom: 1px solid var(--border-muted)
     flex-shrink: 0
     
@@ -161,12 +161,12 @@
       color: var(--fg)
   
   .dialog-body
-    padding: 2rem
+    padding: 1.25rem
     flex: 1
     overflow-y: auto
-    max-height: calc(95vh - 10rem)
+    max-height: calc(95dvh - 6rem)
     
     // Remove padding if no header
     .dialog:not(:has(.dialog-header)) &
-      padding-top: 2rem
+      padding-top: 1.25rem
 </style>

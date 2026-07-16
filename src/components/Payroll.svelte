@@ -94,13 +94,5 @@
   @use "../styles.sass" as *
   
   .coming-soon
-    @extend %grid
-    place-items: center
-    gap: 1rem
-    padding: 3rem
-    text-align: center
-    color: var(--fg-muted)
-    
-    p
-      margin: 0
+    @extend %empty-state
 </style>

@@ -1,12 +1,12 @@
 @use "sass:color"
 @use "sass:math"
 
-$gap: 1rem
+$gap: 0.75rem
 $padding: 1.5rem
-$radius: 1rem
-$font: 1.2rem
+$radius: 0.75rem
+$font: 1rem
 $spacing: 2rem
-$min-height: 2.5rem
+$min-height: 2.25rem
 
 $bg-filter-light: blur(8em) brightness(1.1) opacity(0.3)
 $bg-filter-dark: blur(8em) saturate(0.4) opacity(0.9)
@@ -97,8 +97,8 @@ $light-bg: hsl(220 12% 96% / 95%)
 :root
   @include generate-colors(false)
   --card-scale: 1
-  --icon-btn-size: 3rem
-  --icon-size: 2.5rem
+  --icon-btn-size: 2.25rem
+  --icon-size: 1.75rem
 
 @mixin generate-bitgrid-colors($dark: false)
   --grid-primary: var(--brand)
@@ -203,7 +203,7 @@ html, body
 
 body
   font-family: 'Baloo 2', sans-serif
-  line-height: 1.6
+  line-height: 1.4
   background: var(--based)
   color: var(--fg)
   height: 100vh
@@ -250,15 +250,15 @@ body
   backdrop-filter: blur(14px)
 
 %focus
-  &:focus
-    outline: none
-    box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 40%, transparent), 0 4px 20px color-mix(in oklab, var(--primary) 30%, transparent)
+  &:focus-visible
+    outline: 3px solid color-mix(in oklab, var(--primary) 55%, transparent)
+    outline-offset: 2px
 
 %button-base
   display: inline-flex
   align-items: center
-  gap: 0.5rem
-  padding: 0.75rem 1rem
+  gap: 0.4rem
+  padding: 0.5rem 0.75rem
   border-radius: var(--radius)
   font-size: $font
   font-weight: 500
@@ -314,8 +314,8 @@ body
   @include button-variant(error)
 
 %input-base
-  padding: 0.75rem
-  border: 6px solid var(--border-muted)
+  padding: 0.5rem 0.65rem
+  border: 3px solid var(--border-muted)
   border-radius: var(--radius)
   background: var(--surface)
   color: var(--fg)
@@ -337,6 +337,21 @@ body
   padding: 0.75rem
   border-radius: var(--radius)
   @extend %transition
+
+%empty-state
+  @extend %grid
+  place-items: center
+  gap: 0.5rem
+  padding: 1.5rem
+  text-align: center
+  color: var(--fg-muted)
+
+  p
+    margin: 0
+
+  .text-muted
+    font-size: 0.875rem
+    opacity: 0.7
 
 .card
   --card-bg: color-mix(in oklab, var(--surface) 97%, var(--card-shade))
@@ -402,14 +417,14 @@ body
 %table-base
   width: 100%
   background: var(--surface)
-  border-radius: 1rem
+  border-radius: var(--radius)
   overflow: hidden
-  border: 4px solid var(--border-muted)
+  border: 2px solid var(--border-muted)
 
   th, td
-    padding: 0.75rem 1rem
+    padding: 0.5rem 0.75rem
     text-align: left
-    border-bottom: 4px solid var(--border-muted)
+    border-bottom: 2px solid var(--border-muted)
 
   th
     background: var(--bg-muted)
@@ -434,7 +449,7 @@ h1
 h2
   font-size: 1.5rem
   color: var(--primary)
-  margin-bottom: 1rem
+  margin-bottom: 0.5rem
 
   @media (max-width: $mobile)
     font-size: 1.25rem
@@ -442,7 +457,7 @@ h2
 h3
   font-size: 2rem
   color: var(--primary)
-  margin-bottom: 1rem
+  margin-bottom: 0.5rem
 
   @media (max-width: $mobile)
     font-size: 1.5rem
@@ -454,7 +469,7 @@ h4
 
 p
   color: var(--fg-muted)
-  margin-bottom: 1rem
+  margin-bottom: 0.75rem
 
 .text-muted
   color: var(--fg-muted)
