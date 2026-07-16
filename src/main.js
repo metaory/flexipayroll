@@ -9,15 +9,6 @@ import { mount } from 'svelte'
 import App from './App.svelte'
 import { addCollection } from '@iconify/svelte/dist/offline-functions.js'
 import tabler from '@iconify-json/tabler/icons.json'
-import { registerSW } from 'virtual:pwa-register'
-
-import platformCompatScreen from "platform-compat-screen";
-
-platformCompatScreen({
-  mode: "block",
-  target: "mobile",
-  message: "This application requires a desktop device.",
-});
 
 const TABLER_ICON_NAMES = [
   'adjustments',
@@ -38,7 +29,6 @@ const TABLER_ICON_NAMES = [
   'eye-closed',
   'file-text',
   'folder-open',
-  'download',
   'help-circle',
   'info-circle',
   'moon',
@@ -60,6 +50,5 @@ const tablerCollection = {
 }
 
 addCollection(tablerCollection)
-registerSW({ immediate: true })
 
 mount(App, { target: document.getElementById('app') }) 

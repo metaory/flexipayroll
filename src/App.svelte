@@ -10,35 +10,11 @@
   import pkg from '../package.json'
 
   let fileInput = $state()
-  let installEvent = $state()
-  let installReady = $state(false)
 
   // Apply theme to document on mount and changes
   $effect(() => {
     const isDark = $theme.mode === 'dark'
     document.documentElement.classList.toggle('dark', isDark)
-  })
-
-  const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
-
-  $effect(() => {
-    if (typeof window === 'undefined') return
-    installReady = !isStandalone()
-    const onBeforeInstallPrompt = (event) => {
-      event.preventDefault()
-      installEvent = event
-      installReady = true
-    }
-    const onAppInstalled = () => {
-      installEvent = null
-      installReady = false
-    }
-    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt)
-    window.addEventListener('appinstalled', onAppInstalled)
-    return () => {
-      window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt)
-      window.removeEventListener('appinstalled', onAppInstalled)
-    }
   })
 
   const handleLoad = async (e) => {
@@ -58,14 +34,6 @@
     if (!filename) return
     storage.downloadSession(filename)
   }
-  const handleInstall = async () => {
-    if (!installEvent) return
-    await installEvent.prompt()
-    const { outcome } = await installEvent.userChoice
-    if (outcome !== 'accepted') return
-    installEvent = null
-    installReady = false
-  }
 </script>
 
 <div class="toolbar">
@@ -78,11 +46,6 @@
   <button class="toolbar-btn" onclick={toggleTheme} aria-label="Toggle color scheme">
     <Icon icon={$theme.mode === 'dark' ? ICONS.themeLight : ICONS.themeDark} width="1.5rem" height="1.5rem" />
   </button>
-  {#if installReady}
-    <button class="toolbar-btn" onclick={handleInstall} aria-label="Install app">
-      <Icon icon={ICONS.install} width="1.5rem" height="1.5rem" />
-    </button>
-  {/if}
 </div>
 <input type="file" accept=".json,.zip,.ziip,.txt" bind:this={fileInput} onchange={handleLoad} hidden />
 

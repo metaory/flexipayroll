@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
-import { VitePWA } from 'vite-plugin-pwa'
 import { resolve } from 'path'
 
 const base = process.env.BASE || '/flexipayroll/'
@@ -27,46 +26,6 @@ export default defineConfig({
     svelte({
       compilerOptions: {
         runes: true
-      }
-    }),
-    VitePWA({
-      registerType: 'autoUpdate',
-      injectRegister: 'auto',
-      includeAssets: ['main.svg', 'logo.svg', 'bg-animated.svg', 'scheme/dark.svg', 'scheme/light.svg'],
-      manifest: {
-        id: base,
-        name: 'FlexiPayroll',
-        short_name: 'FlexiPayroll',
-        description: 'A lightweight, browser-based payroll management system for SMEs.',
-        start_url: base,
-        scope: base,
-        display: 'standalone',
-        theme_color: '#ffa3a5',
-        background_color: '#131214',
-        icons: [
-          {
-            src: 'main.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
-            purpose: 'any maskable'
-          },
-          {
-            src: 'main.svg',
-            sizes: '192x192',
-            type: 'image/svg+xml',
-            purpose: 'any'
-          },
-          {
-            src: 'main.svg',
-            sizes: '512x512',
-            type: 'image/svg+xml',
-            purpose: 'any'
-          }
-        ]
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
-        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024
       }
     })
   ]

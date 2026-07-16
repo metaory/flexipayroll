@@ -8,7 +8,6 @@ export const ICONS = {
   eye: 'tabler:eye',
   eyeClosed: 'tabler:eye-closed',
   folderOpen: 'tabler:folder-open',
-  install: 'tabler:download',
   refresh: 'tabler:refresh',
   save: 'tabler:device-floppy',
   warning: 'tabler:alert-triangle',
