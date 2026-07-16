@@ -1,5 +1,6 @@
 <script>
   import Payroll from './components/Payroll.svelte'
+  import ToastContainer from './components/ToastContainer.svelte'
   import Icon from '@iconify/svelte/dist/OfflineIcon.svelte'
   import { ICONS } from './lib/icons.js'
   import { theme, toggleTheme } from './stores.js'
@@ -88,6 +89,7 @@
 <main class="app-content">
   <Payroll />
 </main>
+<ToastContainer />
 
 <small class="version" aria-hidden="true">v{pkg.version}</small>
 

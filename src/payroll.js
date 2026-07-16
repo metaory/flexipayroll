@@ -5,15 +5,6 @@
 
 import { calculateDailyRate, calculateHourlyRate } from './core.js'
 import { applyRules, RULE_TYPES, bonusProrationRatio, FULL_BONUS_DAYS_THRESHOLD } from './rules.js'
-import {
-  getProbationLabel,
-  getActiveProbationRules,
-  getProbationRulesFor,
-  hasProbationRules,
-  isOnProbation,
-  probationRulesKey,
-  resolveProbation
-} from './probation.js'
 import { ICONS } from './lib/icons.js'
 
 // Step definitions - simplified for rules-based system

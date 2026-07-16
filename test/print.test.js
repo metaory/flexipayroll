@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
-import { resolvePrintLabels, DEFAULT_PRINT_LABELS } from '../src/stores.js'
+import { DEFAULT_PRINT_LABELS } from '../src/persist.js'
+import { resolvePrintLabels } from '../src/stores.js'
 import { formatLocalizedDate, formatLocalizedPeriod } from '../src/core.js'
 import {
   buildAdjustmentSection,

@@ -5,7 +5,8 @@
 
 import { formatCurrency, formatLocalizedPeriod } from '../core.js'
 import { getProbationLabel } from '../payroll.js'
-import { resolvePrintLabels, resolveLocale } from '../stores.js'
+import { resolveLocale } from '../persist.js'
+import { resolvePrintLabels } from '../stores.js'
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
