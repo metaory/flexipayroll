@@ -14,6 +14,7 @@ import { registerSW } from 'virtual:pwa-register'
 import platformCompatScreen from "platform-compat-screen";
 
 platformCompatScreen({
+  mode: "block",
   target: "mobile",
   message: "This application requires a desktop device.",
 });
