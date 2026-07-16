@@ -336,9 +336,14 @@
     margin-top: 1rem
 
   .config-grid
-    @include auto-grid(200px)
-    gap: 1rem
+    display: grid
+    grid-template-columns: repeat(3, 1fr)
+    gap: 1.5rem 2rem
     align-items: start
+
+    @media (max-width: $mobile)
+      grid-template-columns: 1fr
+      gap: 1rem
 
   .field
     @extend %grid

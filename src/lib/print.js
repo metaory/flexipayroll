@@ -4,7 +4,7 @@
  */
 
 import { formatCurrency, formatLocalizedPeriod } from '../core.js'
-import { getProbationLabel } from '../payroll.js'
+import { resolveProbation } from '../payroll.js'
 import { resolveLocale } from '../persist.js'
 import { resolvePrintLabels } from '../stores.js'
 
@@ -16,7 +16,6 @@ const styles = `
   .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 0.75rem; margin-bottom: 1rem; }
   .header h1 { font-size: 17pt; margin-bottom: 0.1rem; letter-spacing: 2px; font-weight: 900; }
   .header p { font-size: 10.5pt; color: #111; font-weight: 900; }
-  .header .probation { font-size: 10.5pt; font-weight: 900; margin-top: 0.25rem; }
   .section { margin-bottom: 0.75rem; }
   .section-title { font-weight: 900; font-size: 12pt; border-bottom: 1px solid #000; padding-bottom: 0.15rem; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 1px; text-align: right; }
   .row { display: flex; justify-content: space-between; padding: 0.15rem 0; border-bottom: 1px dotted #ccc; font-size: 10.5pt; }
@@ -98,11 +97,10 @@ export const buildPrintHtml = (result, period, config = {}) => {
   const locale = resolveLocale(config.locale)
   const fmt = (v) => formatCurrency(v, locale, 'IDR', currencySymbol)
   const periodLabel = formatLocalizedPeriod(period, locale)
-  const probationLabel = getProbationLabel(result.employee)
-  const headerLine = `${esc(result.employee.name)} · ${esc(periodLabel)}`
-  const probationLine = probationLabel
-    ? `<p class="probation">${esc(probationLabel)}</p>`
-    : ''
+  const probationLabel = ({ a: labels.probationA, b: labels.probationB })[resolveProbation(result.employee)] ?? ''
+  const headerLine = probationLabel
+    ? `${esc(probationLabel)} - ${esc(result.employee.name)} · ${esc(periodLabel)}`
+    : `${esc(result.employee.name)} · ${esc(periodLabel)}`
 
   return `<!DOCTYPE html>
 <html>
@@ -115,7 +113,6 @@ export const buildPrintHtml = (result, period, config = {}) => {
   <div class="header">
     ${organizationName ? `<h1>${esc(organizationName)}</h1><p style="font-size:12pt;font-weight:bold;margin:0.3rem 0">${esc(labels.payslip)}</p>` : `<h1>${esc(labels.payslip)}</h1>`}
     <p>${headerLine}</p>
-    ${probationLine}
   </div>
   
   <div class="stats">

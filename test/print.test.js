@@ -136,6 +136,25 @@ const run = () => {
   }
 
   {
+    const html = buildPrintHtml({
+      ...baseResult,
+      employee: { name: 'Alice', probation: 'a' }
+    }, '2026-01', {
+      printLabels: { probationA: 'Masa percobaan 3 bln' }
+    })
+    assert.match(html, /Masa percobaan 3 bln - Alice ·/)
+    assert.doesNotMatch(html, /class="probation"/)
+  }
+
+  {
+    const html = buildPrintHtml({
+      ...baseResult,
+      employee: { name: 'Bob', probation: 'b' }
+    }, '2026-01', {})
+    assert.match(html, /6 months - Bob ·/)
+  }
+
+  {
     assert.equal(formatLocalizedPeriod('2026-06', 'fa-IR'), '۱۴۰۵/۰۳')
     assert.match(formatLocalizedDate(new Date(2026, 5, 24), 'fa-IR'), /۱۴۰۵/)
   }

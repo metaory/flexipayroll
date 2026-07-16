@@ -24,7 +24,9 @@ export const DEFAULT_PRINT_LABELS = {
   totalAdjustments: 'Total adjustments',
   attendance: 'Attendance',
   summary: 'Summary',
-  net: 'Net'
+  net: 'Net',
+  probationA: '3 months',
+  probationB: '6 months'
 }
 
 const LOCALE_OPTIONS = [

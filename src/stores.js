@@ -55,7 +55,9 @@ export const PRINT_LABEL_FIELDS = [
   { key: 'totalAdjustments', label: 'Total adjustments', fallback: DEFAULT_PRINT_LABELS.totalAdjustments },
   { key: 'attendance', label: 'Attendance', fallback: DEFAULT_PRINT_LABELS.attendance },
   { key: 'summary', label: 'Summary section', fallback: DEFAULT_PRINT_LABELS.summary },
-  { key: 'net', label: 'Net', fallback: DEFAULT_PRINT_LABELS.net }
+  { key: 'net', label: 'Net', fallback: DEFAULT_PRINT_LABELS.net },
+  { key: 'probationA', label: 'Probation (3 months)', fallback: DEFAULT_PRINT_LABELS.probationA },
+  { key: 'probationB', label: 'Probation (6 months)', fallback: DEFAULT_PRINT_LABELS.probationB }
 ]
 
 export const resolvePrintLabels = (config = {}) => ({
