@@ -110,7 +110,7 @@ const run = () => {
     assert.match(html, /section-title">Ringkasan</)
     assert.match(html, /section-title">Penyesuaian</)
     assert.match(html, /Gaji bersih/)
-    assert.match(html, /Hari:/)
+    assert.match(html, /stat-label">Hari</)
     assert.doesNotMatch(html, /section-title">Adjustments</)
     assert.doesNotMatch(html, /section-title">Earnings</)
     assert.doesNotMatch(html, /PAYSLIP/)

@@ -25,8 +25,9 @@ const styles = `
   .row.total { border-top: 2px solid #000; font-weight: 900; margin-top: 0.35rem; padding: 0.5rem 0; }
   .label { color: #111; font-weight: 900; text-align: right; }
   .value { font-weight: 900; text-align: left; font-family: 'Courier New', monospace; font-size: 10.5pt; }
-  .stats { display: flex; justify-content: center; gap: 1rem; margin-bottom: 0.5rem; font-size: 10.5pt; color: #111; font-weight: 900; }
-  .stats b { font-weight: 900; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.25rem 1rem; margin-bottom: 0.75rem; text-align: center; font-size: 10.5pt; color: #111; font-weight: 900; }
+  .stats .stat-label { font-size: 9pt; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.75; }
+  .stats .stat-value { font-weight: 900; font-variant-numeric: tabular-nums; }
   .footer-sep { border: none; border-top: 1px solid #000; margin: 0.75rem 0 0.5rem; }
   .footer-label { text-align: center; font-size: 9pt; font-weight: 800; margin-bottom: 0.5rem; }
   @media print { body { padding: 0.5rem; } }
@@ -116,9 +117,12 @@ export const buildPrintHtml = (result, period, config = {}) => {
   </div>
   
   <div class="stats">
-    <span><b>${esc(labels.days)}:</b> ${result.actualDays}</span>
-    <span><b>${esc(labels.daily)}:</b> ${fmt(result.dailyRate)}</span>
-    <span><b>${esc(labels.hourly)}:</b> ${fmt(result.hourlyRate)}</span>
+    <span class="stat-label">${esc(labels.days)}</span>
+    <span class="stat-label">${esc(labels.daily)}</span>
+    <span class="stat-label">${esc(labels.hourly)}</span>
+    <span class="stat-value">${result.actualDays}</span>
+    <span class="stat-value">${fmt(result.dailyRate)}</span>
+    <span class="stat-value">${fmt(result.hourlyRate)}</span>
   </div>
   
   ${section(labels.earnings, buildEarningsSection(result, labels, fmt))}
