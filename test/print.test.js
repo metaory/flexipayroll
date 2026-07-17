@@ -91,7 +91,7 @@ const run = () => {
     assert.match(html, /Daily salary/)
     assert.match(html, /\.section-title[^}]*text-align: right/)
     assert.match(html, /section-title">Adjustments</)
-    assert.match(html, />Net<\/span>/)
+    assert.match(html, />Summary<\/span>/)
   }
 
   {
@@ -101,16 +101,15 @@ const run = () => {
         gross: 'BRUTO',
         summary: 'Ringkasan',
         adjustments: 'Penyesuaian',
-        net: 'Gaji bersih',
         days: 'Hari'
       }
     })
     assert.match(html, /section-title">Pendapatan</)
     assert.match(html, /class="row subtotal heading".*BRUTO/)
-    assert.match(html, /section-title">Ringkasan</)
+    assert.match(html, />Ringkasan<\/span>/)
     assert.match(html, /section-title">Penyesuaian</)
-    assert.match(html, /Gaji bersih/)
     assert.match(html, /stat-label">Hari</)
+    assert.doesNotMatch(html, /section-title">Ringkasan</)
     assert.doesNotMatch(html, /section-title">Adjustments</)
     assert.doesNotMatch(html, /section-title">Earnings</)
     assert.doesNotMatch(html, /PAYSLIP/)

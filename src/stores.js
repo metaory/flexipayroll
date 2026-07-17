@@ -18,7 +18,7 @@ import {
   DEFAULT_SETTINGS
 } from './persist.js'
 
-export { DEFAULT_PRINT_LABELS, DEFAULT_SETTINGS, DEFAULT_THEME, resolveLocale } from './persist.js'
+export { DEFAULT_PRINT_LABELS, DEFAULT_SETTINGS, DEFAULT_THEME, resolveLocale, resolvePrintLabels } from './persist.js'
 
 // ============================================================================
 // STORAGE KEYS
@@ -45,11 +45,6 @@ export const PRINT_LABEL_FIELDS = Object.keys(DEFAULT_PRINT_LABELS).map((key) =>
   key,
   fallback: DEFAULT_PRINT_LABELS[key]
 }))
-
-export const resolvePrintLabels = (config = {}) => ({
-  ...DEFAULT_PRINT_LABELS,
-  ...config?.printLabels
-})
 
 export const LOCALE_OPTIONS = [
   { value: 'id-ID', label: 'Indonesian' },

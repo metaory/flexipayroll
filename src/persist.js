@@ -23,10 +23,17 @@ export const DEFAULT_PRINT_LABELS = {
   totalAdjustments: 'Total adjustments',
   attendance: 'Attendance',
   summary: 'Summary',
-  net: 'Net',
   probationA: '3 months',
   probationB: '6 months'
 }
+
+export const resolvePrintLabels = (config = {}) =>
+  Object.fromEntries(
+    Object.entries(DEFAULT_PRINT_LABELS).map(([k, fallback]) => [
+      k,
+      config?.printLabels?.[k] ?? fallback
+    ])
+  )
 
 const LOCALE_OPTIONS = [
   'id-ID', 'en-US', 'en-GB', 'fa-IR', 'ar-SA', 'de-DE', 'fr-FR',
@@ -158,7 +165,7 @@ const normalizeAdjustment = (adj) => {
 export const normalizeBasicConfig = (c) => ({
   ...DEFAULT_BASIC_CONFIG,
   ...c,
-  printLabels: { ...DEFAULT_PRINT_LABELS, ...c?.printLabels },
+  printLabels: resolvePrintLabels(c),
   locale: resolveLocale(c?.locale),
   workdayHours: toPositiveNum(c?.workdayHours, DEFAULT_BASIC_CONFIG.workdayHours),
   workingDaysPerMonth: toPositiveNum(c?.workingDaysPerMonth, DEFAULT_BASIC_CONFIG.workingDaysPerMonth),

@@ -111,8 +111,7 @@ const fixture = () => {
       adjustments: 'Penyesuaian',
       adjustment: 'PENYESUAIAN',
       totalAdjustments: 'Total penyesuaian',
-      attendance: 'Kehadiran',
-      net: 'Bersih'
+      attendance: 'Kehadiran'
     }
   }
   const attendanceItems = {

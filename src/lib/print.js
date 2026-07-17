@@ -129,7 +129,7 @@ export const buildPrintHtml = (result, period, config = {}) => {
 
   ${section(labels.adjustments, buildAdjustmentSection(result, labels, fmt))}
   
-  ${section(labels.summary, row(labels.net, fmt(result.finalSalary), 'total'))}
+  ${row(labels.summary, fmt(result.finalSalary), 'total')}
 
   ${footerLabel ? `<hr class="footer-sep"><div class="footer-label">${esc(footerLabel)}</div>` : ''}
 </body>
