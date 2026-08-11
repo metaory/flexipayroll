@@ -7,16 +7,9 @@ export const isWordSuffix = (value) =>
   /^[\p{L}\p{N}_-]*$/u.test(String(value ?? ""))
 
 export const resolveSessionName = (value, prefix) => {
-  const trimmed = String(value ?? "").trim()
-  if (!trimmed || !prefix) return null
-  if (trimmed === prefix || trimmed === `${prefix}-`) return prefix
-  if (trimmed.startsWith(`${prefix}-`)) {
-    const suffix = trimmed.slice(prefix.length + 1)
-    if (!isWordSuffix(suffix)) return null
-    return suffix ? `${prefix}-${suffix}` : prefix
-  }
-  if (!isWordSuffix(trimmed)) return null
-  return `${prefix}-${trimmed}`
+  const trimmed = String(value ?? "").trim().replace(/-+$/, "")
+  if (!trimmed) return prefix || null
+  return isWordSuffix(trimmed) ? trimmed : null
 }
 
 export const isValidSessionName = (value, prefix) =>
@@ -25,7 +18,7 @@ export const isValidSessionName = (value, prefix) =>
 export async function filenamePromptDialog(
   defaultValue = "",
   prefix = "",
-  message = "Optional label after the dash (letters, numbers, dash, underscore)",
+  message = "File name (letters, numbers, dash, underscore)",
   title = "Save session",
 ) {
   return new Promise((resolve) => {
