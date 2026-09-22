@@ -78,22 +78,22 @@
         transform: translateY(0)
 
     &.success
-      background: var(--surface-success)
+      background: color-mix(in oklab, var(--success) 22%, var(--bg))
       color: var(--success)
       border-left: 4px solid var(--success)
 
     &.error
-      background: var(--surface-error)
+      background: color-mix(in oklab, var(--error) 22%, var(--bg))
       color: var(--error)
       border-left: 4px solid var(--error)
 
     &.warning
-      background: var(--surface-warning)
+      background: color-mix(in oklab, var(--warning) 22%, var(--bg))
       color: var(--warning)
       border-left: 4px solid var(--warning)
 
     &.info
-      background: var(--surface-medium)
+      background: color-mix(in oklab, var(--secondary) 18%, var(--bg))
       color: var(--secondary)
       border-left: 4px solid var(--secondary)
 
