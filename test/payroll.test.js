@@ -282,13 +282,14 @@ const run = () => {
     const config = { workdayHours: 8, workingDaysPerMonth: 22, monthDays: 30, overtimeRate: 0, undertimeRate: 0 }
     const none = calculateEmployeePayroll(emp, { items: [], absent: 0 }, [], [], config)
     const withAdj = calculateEmployeePayroll(emp, { items: [], absent: 0 }, [
-      { id: 'a1', label: 'Loan', amount: 500000 },
-      { id: 'a2', label: 'Advance', amount: -200000 }
+      { id: 'a1', label: 'Gift', amount: 500000 },
+      { id: 'a2', label: 'Loan', amount: -200000 }
     ], [], config)
-    assert.ok(near(withAdj.adjustmentTotal, -700000), `adjustments must always deduct, got ${withAdj.adjustmentTotal}`)
-    assert.ok(near(withAdj.grossSalary, none.grossSalary - 700000), `gross should fall by 700000, got ${withAdj.grossSalary} vs ${none.grossSalary}`)
-    assert.ok(near(withAdj.finalSalary, none.finalSalary - 700000), `final should fall by 700000, got ${withAdj.finalSalary}`)
-    assert.ok(withAdj.adjustments.every(a => a.amount < 0), 'stored adjustment amounts should be negative')
+    assert.ok(near(withAdj.adjustmentTotal, 300000), `signed adjustments should sum to 300000, got ${withAdj.adjustmentTotal}`)
+    assert.ok(near(withAdj.grossSalary, none.grossSalary + 300000), `gross should rise by 300000, got ${withAdj.grossSalary} vs ${none.grossSalary}`)
+    assert.ok(near(withAdj.finalSalary, none.finalSalary + 300000), `final should rise by 300000, got ${withAdj.finalSalary}`)
+    assert.equal(withAdj.adjustments[0].amount, 500000, 'positive adjustment kept')
+    assert.equal(withAdj.adjustments[1].amount, -200000, 'negative adjustment kept')
   }
 }
 

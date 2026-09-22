@@ -63,12 +63,15 @@
   
   const getCalculationBreakdown = (result) => {
     const applied = getAppliedRules(result)
-    const adjustmentRows = (result.adjustments || []).map(adj => ({
-      label: adj.label || 'Adjustment',
-      value: Math.abs(Number(adj.amount) || 0),
-      type: 'adjustment',
-      sign: '-'
-    }))
+    const adjustmentRows = (result.adjustments || []).map(adj => {
+      const amount = Number(adj.amount) || 0
+      return {
+        label: adj.label || 'Adjustment',
+        value: Math.abs(amount),
+        type: 'adjustment',
+        sign: amount >= 0 ? '+' : '-'
+      }
+    })
     return [
       { label: 'Base Salary', value: result.baseSalary, type: 'base', sign: '+' },
       ...(hasAttendanceHours(result) ? [{ label: 'Overtime / Undertime', value: result.attendanceAdjustment, type: 'attendance', sign: result.attendanceAdjustment >= 0 ? '+' : '-' }] : []),
@@ -168,7 +171,7 @@
           <div class="row bonus"><span>{bonus.label}</span><span>+{fmt(bonus.value)}</span></div>
         {/each}
         {#each (selectedResult.adjustments || []) as adj}
-          <div class="row adjustment"><span>{adj.label || 'Adjustment'}</span><span>-{fmt(Math.abs(adj.amount || 0))}</span></div>
+          <div class="row adjustment"><span>{adj.label || 'Adjustment'}</span><span>{(Number(adj.amount) || 0) >= 0 ? '+' : '-'}{fmt(Math.abs(adj.amount || 0))}</span></div>
         {/each}
         <div class="row subtotal"><span>Gross Salary</span><span>{fmt(selectedResult.grossSalary)}</span></div>
         {#each getAppliedRules(selectedResult).deductions as ded}

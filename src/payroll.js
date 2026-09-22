@@ -20,9 +20,8 @@ export const STEPS = [
 const asAdjustmentList = (adjustments) =>
   Array.isArray(adjustments) ? adjustments : []
 
-/** Manual adjustments page is deduction-only; always reduce pay. */
-const sumAdjustmentDeductions = (adjustments) =>
-  asAdjustmentList(adjustments).reduce((sum, adj) => sum - Math.abs(Number(adj?.amount) || 0), 0)
+const sumAdjustments = (adjustments) =>
+  asAdjustmentList(adjustments).reduce((sum, adj) => sum + (Number(adj?.amount) || 0), 0)
 
 export const calculateEmployeePayroll = (employee, attendanceItems, adjustments, rules, basicConfig) => {
   const dailyRate = calculateDailyRate(employee.dailySalary)
@@ -31,11 +30,11 @@ export const calculateEmployeePayroll = (employee, attendanceItems, adjustments,
   const baseSalary = ruleResults.baseSalary
   const adjustmentList = asAdjustmentList(adjustments).map(adj => ({
     ...adj,
-    amount: -Math.abs(Number(adj?.amount) || 0)
+    amount: Number(adj?.amount) || 0
   }))
-  const adjustmentTotal = sumAdjustmentDeductions(adjustmentList)
+  const adjustmentTotal = sumAdjustments(adjustmentList)
   
-  // Build salary before monthly percentage rules (adjustments reduce this base).
+  // Build salary before monthly percentage rules (signed adjustments apply here).
   const monthlyBaseSalary = ruleResults.grossSalary + adjustmentTotal
 
   // Apply monthly percentage bonuses last on the monthly base salary.

@@ -16,7 +16,7 @@
   const initializeForms = () => {
     const forms = {}
     employees.forEach(emp => {
-      forms[emp.id] = { label: '', amount: '' }
+      forms[emp.id] = { label: '', amount: '', isDeduct: false }
     })
     return forms
   }
@@ -29,10 +29,15 @@
     adjustmentForms = initializeForms()
   })
 
-  const toDeductionAmount = (value) => {
-    const amount = parseFloat(value)
+  const toSignedAmount = (value, isDeduct) => {
+    const amount = Math.abs(parseFloat(value))
     if (isNaN(amount) || amount === 0) return NaN
-    return -Math.abs(amount)
+    return isDeduct ? -amount : amount
+  }
+
+  const formatSigned = (amount) => {
+    const sign = amount > 0 ? '+' : amount < 0 ? '-' : ''
+    return `${sign}${formatCurrency(Math.abs(amount), 'id-ID', 'IDR', $basicConfig.currencySymbol)}`
   }
 
   // Form handlers
@@ -43,7 +48,7 @@
       return
     }
 
-    const amount = toDeductionAmount(form.amount)
+    const amount = toSignedAmount(form.amount, form.isDeduct)
     if (isNaN(amount)) {
       toasts.error('Invalid amount')
       return
@@ -60,7 +65,11 @@
 
   const handleEditAdjustment = (employeeId, adjustment) => {
     editingAdjustments[employeeId] = adjustment
-    adjustmentForms[employeeId] = { label: adjustment.label, amount: Math.abs(adjustment.amount).toString() }
+    adjustmentForms[employeeId] = {
+      label: adjustment.label,
+      amount: Math.abs(adjustment.amount).toString(),
+      isDeduct: adjustment.amount < 0
+    }
   }
 
   const handleUpdateAdjustment = (employeeId) => {
@@ -72,7 +81,7 @@
       return
     }
 
-    const amount = toDeductionAmount(form.amount)
+    const amount = toSignedAmount(form.amount, form.isDeduct)
     if (isNaN(amount)) {
       toasts.error('Invalid amount')
       return
@@ -95,7 +104,7 @@
   }
 
   const resetForm = (employeeId) => {
-    adjustmentForms[employeeId] = { label: '', amount: '' }
+    adjustmentForms[employeeId] = { label: '', amount: '', isDeduct: false }
     delete editingAdjustments[employeeId]
   }
 
@@ -120,7 +129,7 @@
       <h3>Manual Adjustments - {period}</h3>
       <div class="adjustments-summary">
         <span>{employees.length} employees</span>
-        <span>All amounts are deductions</span>
+        <span>Positive = bonus, negative = deduction</span>
       </div>
     </div>
 
@@ -131,8 +140,8 @@
             <h4>{employee.name}</h4>
             <div class="employee-meta">
               <span>{employee.gender} • {employee.maritalStatus} • {employee.childrenStatus === 'has_children' ? 'Has children' : 'No children'}</span>
-              <span class="total-adjustments">
-                Total: {formatCurrency(getTotalAdjustments(employee.id), 'id-ID', 'IDR', $basicConfig.currencySymbol)}
+              <span class="total-adjustments" class:positive={getTotalAdjustments(employee.id) > 0} class:negative={getTotalAdjustments(employee.id) < 0}>
+                Total: {formatSigned(getTotalAdjustments(employee.id))}
               </span>
             </div>
           </div>
@@ -146,11 +155,11 @@
               </div>
             {:else}
               {#each listFor(employee.id) as adjustment}
-                <div class="adjustment-item">
+                <div class="adjustment-item" data-positive={adjustment.amount > 0}>
                   <div class="adjustment-info">
                     <span class="adjustment-label">{adjustment.label}</span>
-                    <span class="adjustment-amount negative">
-                      -{formatCurrency(Math.abs(adjustment.amount), 'id-ID', 'IDR', $basicConfig.currencySymbol)}
+                    <span class="adjustment-amount" class:positive={adjustment.amount > 0} class:negative={adjustment.amount < 0}>
+                      {formatSigned(adjustment.amount)}
                     </span>
                   </div>
                   <div class="adjustment-actions">
@@ -173,16 +182,30 @@
                 value={adjustmentForms[employee.id]?.label || ''}
                 oninput={(e) => adjustmentForms[employee.id] = { ...adjustmentForms[employee.id], label: e.currentTarget.value }}
               />
-              <input
-                type="number"
-                lang="en"
-                placeholder="Amount"
-                min="0"
-                step="0.01"
-                value={adjustmentForms[employee.id]?.amount || ''}
-                oninput={(e) => adjustmentForms[employee.id] = { ...adjustmentForms[employee.id], amount: e.currentTarget.value }}
-                onkeydown={(e) => e.key === 'Enter' && submitAdjustment(employee.id)}
-              />
+              <div class="amount-inputs">
+                <input
+                  type="number"
+                  lang="en"
+                  placeholder="Amount"
+                  min="0"
+                  step="0.01"
+                  value={adjustmentForms[employee.id]?.amount || ''}
+                  oninput={(e) => {
+                    const v = Math.max(0, parseFloat(e.currentTarget.value) || 0)
+                    e.currentTarget.value = e.currentTarget.value === '' ? '' : String(v)
+                    adjustmentForms[employee.id] = { ...adjustmentForms[employee.id], amount: e.currentTarget.value }
+                  }}
+                  onkeydown={(e) => e.key === 'Enter' && submitAdjustment(employee.id)}
+                />
+                <label class="under-toggle" class:active={adjustmentForms[employee.id]?.isDeduct}>
+                  <input
+                    type="checkbox"
+                    checked={adjustmentForms[employee.id]?.isDeduct || false}
+                    onchange={(e) => adjustmentForms[employee.id] = { ...adjustmentForms[employee.id], isDeduct: e.currentTarget.checked }}
+                  />
+                  <span>{adjustmentForms[employee.id]?.isDeduct ? 'Deduct' : 'Bonus'}</span>
+                </label>
+              </div>
             </div>
             <div class="form-actions">
               {#if editingAdjustments[employee.id]}
@@ -271,6 +294,12 @@
       color: var(--fg)
       font-size: 1rem
 
+      &.positive
+        color: var(--success)
+
+      &.negative
+        color: var(--error)
+
   .current-adjustments
     @extend %grid
     gap: 0.3rem
@@ -292,12 +321,24 @@
     padding: 0.4rem
     border-radius: 0.5rem
     border: 2px solid transparent
-    background: color-mix(in oklab, var(--error) 12%, transparent)
+    background: var(--surface-secondary)
     @extend %transition
 
     &:hover
-      border-color: var(--error)
+      border-color: var(--primary)
       transform: translateY(-2px)
+
+    &[data-positive="true"]
+      background: var(--surface-success)
+
+      &:hover
+        border-color: var(--success)
+
+    &[data-positive="false"]
+      background: color-mix(in oklab, var(--error) 12%, transparent)
+
+      &:hover
+        border-color: var(--error)
 
   .adjustment-info
     @extend %flex
@@ -312,7 +353,12 @@
     .adjustment-amount
       font-weight: 600
       font-size: 1rem
-      color: var(--error)
+
+      &.positive
+        color: var(--success)
+
+      &.negative
+        color: var(--error)
 
   .adjustment-actions
     @extend %flex
@@ -346,6 +392,34 @@
       @extend %input-base
       padding: 0.5rem 0.75rem
       font-size: 0.9rem
+
+  .amount-inputs
+    display: grid
+    grid-template-columns: 1fr 70px
+    gap: 0.35rem
+    align-items: center
+
+  .under-toggle
+    @extend %flex
+    align-items: center
+    justify-content: center
+    gap: 0.35rem
+    padding: 0.5rem 0.75rem
+    border-radius: var(--radius)
+    background: var(--surface-success)
+    color: var(--success)
+    font-size: 0.8rem
+    font-weight: 600
+    cursor: pointer
+    user-select: none
+    @extend %transition
+
+    &.active
+      background: color-mix(in oklab, var(--error) 12%, transparent)
+      color: var(--error)
+
+    input
+      display: none
 
   .form-actions
     @extend %flex

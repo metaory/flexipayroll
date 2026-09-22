@@ -405,7 +405,7 @@ const run = () => {
     }
     const fixed = normalizeAdjustmentsStore(dirty)
     assert.equal(fixed['2026-07'].emp_a.length, 2)
-    assert.equal(fixed['2026-07'].emp_a[0].amount, -250000)
+    assert.equal(fixed['2026-07'].emp_a[0].amount, 250000)
     assert.equal(fixed['2026-07'].emp_a[1].amount, -100000)
     assert.deepEqual(fixed['2026-07'].emp_b, [])
   }
@@ -438,7 +438,7 @@ const run = () => {
       }
       const adjustments = {
         [period]: {
-          emp_a: [{ id: 'loan', label: 'Loan', amount: 500000 }]
+          emp_a: [{ id: 'loan', label: 'Loan', amount: -500000 }]
         }
       }
       storage.set('xpayroll_attendance_items', normalizeAttendanceStore(attendance))

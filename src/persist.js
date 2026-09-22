@@ -158,7 +158,7 @@ const normalizeAdjustment = (adj) => {
   return {
     id: String(adj.id || `adj_${Date.now().toString(36)}`),
     label: String(adj.label || 'Adjustment'),
-    amount: -Math.abs(amount)
+    amount
   }
 }
 

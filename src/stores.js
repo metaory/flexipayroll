@@ -101,7 +101,7 @@ employees.subscribe(value => storage.set(KEYS.EMPLOYEES, value))
 export const attendance = writable(storage.get(KEYS.ATTENDANCE, {}))
 attendance.subscribe(value => storage.set(KEYS.ATTENDANCE, value))
 
-// Adjustments store (deduction-only lists per period/employee)
+// Adjustments store (signed amounts per period/employee)
 export const adjustments = writable(
   normalizeAdjustmentsStore(storage.get(KEYS.ADJUSTMENTS, {}))
 )
@@ -173,7 +173,7 @@ export const removeEmployee = (id) => {
 
 // Adjustment actions
 export const addAdjustment = (period, employeeId, adjustment) => {
-  const amount = -Math.abs(Number(adjustment?.amount) || 0)
+  const amount = Number(adjustment?.amount) || 0
   if (!amount) return
   adjustments.update(current => ({
     ...current,
@@ -192,7 +192,7 @@ export const addAdjustment = (period, employeeId, adjustment) => {
 }
 
 export const updateAdjustment = (period, employeeId, adjustmentId, updates) => {
-  const amount = updates?.amount != null ? -Math.abs(Number(updates.amount) || 0) : null
+  const amount = updates?.amount != null ? (Number(updates.amount) || 0) : null
   adjustments.update(current => ({
     ...current,
     [period]: {
