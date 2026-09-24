@@ -63,6 +63,7 @@
   
   const getCalculationBreakdown = (result) => {
     const applied = getAppliedRules(result)
+    const adjustmentTotal = result.adjustmentTotal || 0
     const adjustmentRows = (result.adjustments || []).map(adj => {
       const amount = Number(adj.amount) || 0
       return {
@@ -76,8 +77,9 @@
       { label: 'Base Salary', value: result.baseSalary, type: 'base', sign: '+' },
       ...(hasAttendanceHours(result) ? [{ label: 'Overtime / Undertime', value: result.attendanceAdjustment, type: 'attendance', sign: result.attendanceAdjustment >= 0 ? '+' : '-' }] : []),
       ...applied.bonuses.map(b => ({ label: b.label, value: b.value, type: 'bonus', sign: '+' })),
+      { label: 'GROSS', value: result.grossSalary - adjustmentTotal, type: 'subtotal gross-total', sign: '=' },
       ...adjustmentRows,
-      { label: 'Gross Salary', value: result.grossSalary, type: 'subtotal', sign: '=' },
+      { label: 'Total Adjustments', value: adjustmentTotal, type: 'subtotal adjustment-total', sign: adjustmentTotal >= 0 ? '+' : '-' },
       ...applied.deductions.map(d => ({ label: d.label, value: d.value, type: 'deduction', sign: '-' })),
       { label: 'Take-Home', value: Math.abs(result.finalSalary ?? 0), type: 'final', sign: result.finalSalary < 0 ? '-' : '=' }
     ]
@@ -342,7 +344,7 @@
     .row-label
       font-size: 0.9rem
       color: var(--fg)
-      font-weight: 500
+      font-weight: 700
       
     .row-value
       font-family: 'JetBrains Mono', monospace
@@ -350,11 +352,11 @@
       font-size: 0.95rem
       
     &.base
-      background: var(--success-bg)
-      border-left: 4px solid var(--success)
+      background: color-mix(in oklab, var(--secondary) 18%, var(--surface))
+      border-left: 4px solid var(--secondary)
       
       .row-value
-        color: var(--success)
+        color: var(--secondary)
         
     &.bonus
       background: var(--success-bg)
@@ -378,11 +380,15 @@
         color: var(--warning)
 
     &.attendance
-      background: var(--info-bg)
-      border-left: 4px solid var(--info)
+      --attendance: hsl(188 88% 36%)
+      background: color-mix(in oklab, var(--attendance) 16%, var(--surface))
+      border-left: 4px solid var(--attendance)
 
       .row-value
-        color: var(--info)
+        color: var(--attendance)
+
+    :global(html.dark) &.attendance
+      --attendance: hsl(188 92% 52%)
         
     &.subtotal
       background: var(--surface-medium)
@@ -395,6 +401,20 @@
       .row-value
         font-weight: 700
         color: var(--primary)
+
+    &.gross-total
+      background: color-mix(in oklab, var(--info) 22%, var(--surface))
+      border-left-color: var(--info)
+
+      .row-value
+        color: var(--info)
+
+    &.adjustment-total
+      background: var(--error-bg)
+      border-left-color: var(--error)
+
+      .row-value
+        color: var(--error)
         
     &.final
       background: var(--success-bg)
