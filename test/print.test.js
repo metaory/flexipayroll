@@ -153,6 +153,11 @@ const run = () => {
   }
 
   {
+    const html = buildPrintHtml({ ...baseResult, finalSalary: -100 }, '2026-01', { currencySymbol: '$' })
+    assert.match(html, /\$ -100/)
+  }
+
+  {
     assert.equal(formatLocalizedPeriod('2026-06', 'fa-IR'), '۱۴۰۵/۰۳')
     assert.match(formatLocalizedDate(new Date(2026, 5, 24), 'fa-IR'), /۱۴۰۵/)
   }

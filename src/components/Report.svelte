@@ -79,7 +79,7 @@
       ...adjustmentRows,
       { label: 'Gross Salary', value: result.grossSalary, type: 'subtotal', sign: '=' },
       ...applied.deductions.map(d => ({ label: d.label, value: d.value, type: 'deduction', sign: '-' })),
-      { label: 'Take-Home', value: result.finalSalary || 0, type: 'final', sign: '=' }
+      { label: 'Take-Home', value: Math.abs(result.finalSalary ?? 0), type: 'final', sign: result.finalSalary < 0 ? '-' : '=' }
     ]
   }
 </script>

@@ -72,7 +72,7 @@ export const calculateEmployeePayroll = (employee, attendanceItems, adjustments,
   }, 0)
   
   // Final salary = gross salary - deductions (subtract only once)
-  const finalSalary = Math.max(0, grossSalary - totalDeductions)
+  const finalSalary = grossSalary - totalDeductions
   
   return {
     employee,
@@ -160,19 +160,27 @@ const createFixedDailyProratedStep = (ruleData, result, type) => {
   const workDays = result.configSnapshot?.workingDaysPerMonth ?? 22
   const absentDays = result.ruleResults?.absentDays ?? 0
   const undertimeDayBlocks = result.ruleResults?.undertimeDayBlocks ?? 0
-  const ratio = bonusProrationRatio(effectiveDays)
-  const formulaWithValues = ratio >= 1
+  const isFull = effectiveDays >= FULL_BONUS_DAYS_THRESHOLD
+  const hasDays = effectiveDays > 0
+  const formula = isFull
+    ? `Full bonus (≥ ${FULL_BONUS_DAYS_THRESHOLD} effective days)`
+    : hasDays ? `(Fixed amount × ${FULL_BONUS_DAYS_THRESHOLD}) ÷ Effective days` : 'No effective days'
+  const formulaWithValues = isFull
     ? `${ruleData.rule.value.toLocaleString()} = ${ruleData.value.toLocaleString()}`
-    : `(${ruleData.rule.value.toLocaleString()} × ${effectiveDays}) ÷ ${FULL_BONUS_DAYS_THRESHOLD} = ${ruleData.value.toLocaleString()}`
+    : hasDays
+      ? `(${ruleData.rule.value.toLocaleString()} × ${FULL_BONUS_DAYS_THRESHOLD}) ÷ ${effectiveDays} = ${ruleData.value.toLocaleString()}`
+      : `0 effective days = ${ruleData.value.toLocaleString()}`
   return {
     label: ruleData.rule.label,
-    formula: ratio >= 1 ? `Full bonus (≥ ${FULL_BONUS_DAYS_THRESHOLD} effective days)` : `(Fixed amount × Effective days) ÷ ${FULL_BONUS_DAYS_THRESHOLD}`,
+    formula,
     formulaWithValues,
     result: ruleData.value,
-    explanation: ratio >= 1
+    explanation: isFull
       ? `${type.charAt(0).toUpperCase() + type.slice(1)} is paid in full because effective work days (${effectiveDays}) are at least ${FULL_BONUS_DAYS_THRESHOLD}.`
-      : `${type.charAt(0).toUpperCase() + type.slice(1)} uses ${bonusDaysExplain(result, effectiveDays)}, divided by ${FULL_BONUS_DAYS_THRESHOLD}.`,
-    inputs: { amount: ruleData.rule.value, effectiveDays, workDays, ratio, absentDays, undertimeDayBlocks },
+      : hasDays
+        ? `${type.charAt(0).toUpperCase() + type.slice(1)} uses the fixed ${FULL_BONUS_DAYS_THRESHOLD}-day factor divided by ${bonusDaysExplain(result, effectiveDays)}.`
+        : `${type.charAt(0).toUpperCase() + type.slice(1)} is zero because there are no effective work days.`,
+    inputs: { amount: ruleData.rule.value, effectiveDays, workDays, factor: FULL_BONUS_DAYS_THRESHOLD, absentDays, undertimeDayBlocks },
     type
   }
 }
@@ -320,9 +328,9 @@ export const buildCalculationSteps = (result) => {
   steps.push({
     label: 'Input Summary',
     formula: 'Base = Effective work days × Daily salary',
-    formulaWithValues: 'Effective work days = working days − absent − full undertime days. Bonuses use those same days ÷ 30.',
+    formulaWithValues: 'Effective work days = working days − absent − full undertime days. Bonus formulas use a fixed 30-day threshold or factor.',
     result: result.employee.dailySalary,
-    explanation: 'Employee daily salary and config. Base salary, report days, and prorated bonuses all use the same effective work days. Only the bonus divisor is hardcoded to 30.',
+    explanation: 'Employee daily salary and config. Base salary, report days, and prorated bonuses use the same effective work days. Bonus calculations use a hardcoded 30-day threshold or factor.',
     inputs: { dailySalary: result.employee.dailySalary, workdayHours: result.configSnapshot.workdayHours, workDays: result.configSnapshot.workingDaysPerMonth ?? 22 },
     type: 'base',
     section: 'inputs'

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { applyRules } from '../src/rules.js'
-import { calculateEmployeePayroll } from '../src/payroll.js'
+import { buildCalculationSteps, calculateEmployeePayroll } from '../src/payroll.js'
 import { normalizeProbationFields } from '../src/probation.js'
 import { attendancePay } from '../src/core.js'
 
@@ -56,14 +56,14 @@ const run = () => {
     const r = applyRules(employee, attendanceItems, [fixedDailyRule], baseConfig)
     assert.ok(near(r.undertimeDayBlocks, 3), `expected 3 undertime day blocks, got ${r.undertimeDayBlocks}`)
     assert.ok(near(r.effectiveDays, 16), `expected effectiveDays 16 (22 - 3 absent - 3 UT), got ${r.effectiveDays}`)
-    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 16) / 30), `bonus should use same 16 days, got ${r.bonuses.fdp.value}`)
+    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 30) / 16), `bonus should use fixed 30-day factor over 16 days, got ${r.bonuses.fdp.value}`)
   }
 
   {
     const attendanceItems = [{ hours: 6.5 * 40 }]
     const r = applyRules(employee, attendanceItems, [fixedDailyRule], baseConfig)
     assert.ok(near(r.effectiveDays, 22), `expected effectiveDays 22, got ${r.effectiveDays}`)
-    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 22) / 30), `bonus should use 22/30, got ${r.bonuses.fdp.value}`)
+    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 30) / 22), `bonus should use 30/22, got ${r.bonuses.fdp.value}`)
   }
 
   {
@@ -76,7 +76,7 @@ const run = () => {
     const config28 = { ...baseConfig, workingDaysPerMonth: 28, monthDays: 30 }
     const r = applyRules(employee, { items: [], absent: 0 }, [fixedDailyRule], config28)
     assert.ok(near(r.effectiveDays, 28), `expected effectiveDays 28 from config, got ${r.effectiveDays}`)
-    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 28) / 30), `bonus should use 28/30, got ${r.bonuses.fdp.value}`)
+    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 30) / 28), `bonus should use 30/28, got ${r.bonuses.fdp.value}`)
   }
 
   {
@@ -84,7 +84,23 @@ const run = () => {
     const r = applyRules(employee, { items: [], absent: 3 }, [fixedDailyRule], config28)
     assert.ok(near(r.effectiveDays, 25), `base effectiveDays should be 28 - 3 from config, got ${r.effectiveDays}`)
     assert.ok(near(r.baseSalary, employee.dailySalary * 25), `base salary should use config days, got ${r.baseSalary}`)
-    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 25) / 30), `bonus should use same 25 days ÷ 30, got ${r.bonuses.fdp.value}`)
+    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 30) / 25), `bonus should use fixed 30-day factor over 25 days, got ${r.bonuses.fdp.value}`)
+  }
+
+  {
+    const config28 = { ...baseConfig, workingDaysPerMonth: 28, monthDays: 31 }
+    const result = calculateEmployeePayroll(employee, { items: [], absent: 3 }, [], [fixedDailyRule], config28)
+    const step = buildCalculationSteps(result).find(({ label }) => label.startsWith(fixedDailyRule.label))
+    const expected = (fixedDailyRule.value * 30) / 25
+    assert.ok(near(result.ruleResults.bonuses.fdp.value, expected), `monthDays must not replace the fixed 30-day factor, got ${result.ruleResults.bonuses.fdp.value}`)
+    assert.equal(step.formula, '(Fixed amount × 30) ÷ Effective days')
+    assert.equal(step.formulaWithValues, `(3,000 × 30) ÷ 25 = ${expected.toLocaleString()}`)
+  }
+
+  {
+    const result = applyRules(employee, { items: [], absent: 22 }, [fixedDailyRule], baseConfig)
+    assert.equal(result.effectiveDays, 0)
+    assert.equal(result.bonuses.fdp.value, 0, 'zero effective days should produce zero fixed daily bonus')
   }
 
   const hourlyProratedRule = {
@@ -116,14 +132,14 @@ const run = () => {
   {
     const r = applyRules(employee, { items: [], absent: 3 }, rules31, config31)
     assert.ok(near(r.effectiveDays, 28), `effectiveDays should be 31 - 3, got ${r.effectiveDays}`)
-    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 28) / 30), `bonus should use 28/30, got ${r.bonuses.fdp.value}`)
+    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 30) / 28), `bonus should use 30/28, got ${r.bonuses.fdp.value}`)
     assert.ok(near(r.bonuses.hp.value, (hourlyProratedRule.value * 28) / 30), `hourly bonus should use 28/30, got ${r.bonuses.hp.value}`)
   }
 
   {
     const r = applyRules(employee, { items: [], absent: 5 }, rules31, config31)
     assert.ok(near(r.effectiveDays, 26), `effectiveDays should be 31 - 5, got ${r.effectiveDays}`)
-    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 26) / 30), `bonus should use 26/30, got ${r.bonuses.fdp.value}`)
+    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 30) / 26), `bonus should use 30/26, got ${r.bonuses.fdp.value}`)
   }
 
   {
@@ -151,7 +167,7 @@ const run = () => {
     const r = applyRules(employee, attendanceItems, rules31, config31)
     assert.ok(near(r.undertimeDayBlocks, 2), `16h / 8h = 2 day blocks, got ${r.undertimeDayBlocks}`)
     assert.ok(near(r.effectiveDays, 29), `expected effectiveDays 29, got ${r.effectiveDays}`)
-    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 29) / 30), `bonus must match employee days 29 not 30, got ${r.bonuses.fdp.value}`)
+    assert.ok(near(r.bonuses.fdp.value, (fixedDailyRule.value * 30) / 29), `bonus should use fixed 30-day factor over 29 days, got ${r.bonuses.fdp.value}`)
   }
 
   {
@@ -275,6 +291,15 @@ const run = () => {
     assert.ok(near(ot, (daily / 0.6) * 47.92), `expected ot ${(daily / 0.6) * 47.92}, got ${ot}`)
     assert.ok(near(ut, (daily / 0.6) * 12.73), `expected ut ${(daily / 0.6) * 12.73}, got ${ut}`)
     assert.ok(near(ot - ut, ((daily / 0.6) * 47.92) - ((daily / 0.6) * 12.73)), `expected ot-ut, got ${ot - ut}`)
+  }
+
+  {
+    const emp = { id: 'debt', dailySalary: 100 }
+    const config = { workdayHours: 8, workingDaysPerMonth: 22, monthDays: 30, overtimeRate: 0, undertimeRate: 0 }
+    const deduction = { id: 'loan', label: 'Loan', type: 'fixed', value: 3000, criteria: { appliesTo: [] }, category: 'deduction', enabled: true }
+    const result = calculateEmployeePayroll(emp, { items: [], absent: 0 }, [], [deduction], config)
+    assert.equal(result.grossSalary, 2200)
+    assert.equal(result.finalSalary, -800, 'deductions exceeding gross should produce a negative net')
   }
 
   {
