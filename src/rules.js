@@ -176,11 +176,6 @@ export const bonusProrationRatio = (effectiveDays) =>
   effectiveDays >= FULL_BONUS_DAYS_THRESHOLD ? 1
   : Math.min(effectiveDays, FULL_BONUS_DAYS_THRESHOLD) / FULL_BONUS_DAYS_THRESHOLD
 
-export const fixedDailyProrationRatio = (effectiveDays) =>
-  effectiveDays >= FULL_BONUS_DAYS_THRESHOLD ? 1
-  : effectiveDays > 0 ? FULL_BONUS_DAYS_THRESHOLD / effectiveDays
-  : 0
-
 const buildAttendanceMetrics = (attendanceData, config) => {
   const { items, absent } = normalizeAttendance(attendanceData)
   const workdayHours = resolveWorkdayHours(config)
@@ -225,7 +220,7 @@ const RULE_CALCULATORS = {
     RULE_CALCULATORS[RULE_TYPES.HOURLY_PRORATED](rule, employee, attendanceItems, hourlyRate, config, totalDaysWorked, metrics),
 
   [RULE_TYPES.FIXED_DAILY_PRORATED]: (rule, _, __, ___, ____, _____, metrics) =>
-    rule.value * fixedDailyProrationRatio(metrics.effectiveDays),
+    rule.value * bonusProrationRatio(metrics.effectiveDays),
 
   [RULE_TYPES.DAYS_MULTIPLIER]: (rule, employee, _, __, ___, ____, metrics) => {
     const fullMonthValue = rule.value * employee.dailySalary

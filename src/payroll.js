@@ -164,11 +164,11 @@ const createFixedDailyProratedStep = (ruleData, result, type) => {
   const hasDays = effectiveDays > 0
   const formula = isFull
     ? `Full bonus (≥ ${FULL_BONUS_DAYS_THRESHOLD} effective days)`
-    : hasDays ? `(Fixed amount × ${FULL_BONUS_DAYS_THRESHOLD}) ÷ Effective days` : 'No effective days'
+    : hasDays ? `(Fixed amount ÷ ${FULL_BONUS_DAYS_THRESHOLD}) × Effective days` : 'No effective days'
   const formulaWithValues = isFull
     ? `${ruleData.rule.value.toLocaleString()} = ${ruleData.value.toLocaleString()}`
     : hasDays
-      ? `(${ruleData.rule.value.toLocaleString()} × ${FULL_BONUS_DAYS_THRESHOLD}) ÷ ${effectiveDays} = ${ruleData.value.toLocaleString()}`
+      ? `(${ruleData.rule.value.toLocaleString()} ÷ ${FULL_BONUS_DAYS_THRESHOLD}) × ${effectiveDays} = ${ruleData.value.toLocaleString()}`
       : `0 effective days = ${ruleData.value.toLocaleString()}`
   return {
     label: ruleData.rule.label,
@@ -178,7 +178,7 @@ const createFixedDailyProratedStep = (ruleData, result, type) => {
     explanation: isFull
       ? `${type.charAt(0).toUpperCase() + type.slice(1)} is paid in full because effective work days (${effectiveDays}) are at least ${FULL_BONUS_DAYS_THRESHOLD}.`
       : hasDays
-        ? `${type.charAt(0).toUpperCase() + type.slice(1)} uses the fixed ${FULL_BONUS_DAYS_THRESHOLD}-day factor divided by ${bonusDaysExplain(result, effectiveDays)}.`
+        ? `${type.charAt(0).toUpperCase() + type.slice(1)} divides the fixed amount by ${FULL_BONUS_DAYS_THRESHOLD}, then multiplies it by ${bonusDaysExplain(result, effectiveDays)}.`
         : `${type.charAt(0).toUpperCase() + type.slice(1)} is zero because there are no effective work days.`,
     inputs: { amount: ruleData.rule.value, effectiveDays, workDays, factor: FULL_BONUS_DAYS_THRESHOLD, absentDays, undertimeDayBlocks },
     type
