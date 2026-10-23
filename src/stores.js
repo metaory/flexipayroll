@@ -7,6 +7,7 @@ import { writable, derived } from 'svelte/store'
 import { storage } from './core.js'
 import { DEFAULT_RULES, createRule, validateRule, getNextOrder, ensureRuleId } from './rules.js'
 import {
+  DEFAULT_PAGE_LABELS,
   DEFAULT_PRINT_LABELS,
   DEFAULT_THEME,
   normalizeBasicConfig,
@@ -18,7 +19,17 @@ import {
   DEFAULT_SETTINGS
 } from './persist.js'
 
-export { DEFAULT_PRINT_LABELS, DEFAULT_SETTINGS, DEFAULT_THEME, resolveLocale, resolvePrintLabels } from './persist.js'
+export {
+  DEFAULT_PAGE_LABELS,
+  DEFAULT_PRINT_LABELS,
+  DEFAULT_SETTINGS,
+  DEFAULT_THEME,
+  currentLocalePeriod,
+  localeCalendar,
+  resolveLocale,
+  resolvePageLabels,
+  resolvePrintLabels
+} from './persist.js'
 
 // ============================================================================
 // STORAGE KEYS
@@ -44,6 +55,11 @@ const KEYS = {
 export const PRINT_LABEL_FIELDS = Object.keys(DEFAULT_PRINT_LABELS).map((key) => ({
   key,
   fallback: DEFAULT_PRINT_LABELS[key]
+}))
+
+export const PAGE_LABEL_FIELDS = Object.keys(DEFAULT_PAGE_LABELS).map((key) => ({
+  key,
+  fallback: DEFAULT_PAGE_LABELS[key]
 }))
 
 export const LOCALE_OPTIONS = [

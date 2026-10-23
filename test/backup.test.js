@@ -4,10 +4,13 @@ import {
   APP_VERSION,
   BACKUP_DEFAULTS,
   BACKUP_VERSION,
+  DEFAULT_PAGE_LABELS,
   buildBackupPayload,
+  currentLocalePeriod,
   normalizeAdjustmentsStore,
   normalizeAttendanceStore,
   normalizeBackupData,
+  normalizeBasicConfig,
   parseLegacyPayload,
   readAllSessionData,
   validateBackupData
@@ -454,6 +457,35 @@ const run = () => {
     } finally {
       globalThis.localStorage = previous
     }
+  }
+
+  {
+    const now = currentLocalePeriod('id-ID')
+    const filled = normalizeBasicConfig({ locale: 'id-ID', organizationName: 'Acme' })
+    assert.equal(filled.year, now.year)
+    assert.equal(filled.month, now.month)
+    assert.deepEqual(filled.pageLabels, DEFAULT_PAGE_LABELS)
+
+    const kept = normalizeBasicConfig({
+      locale: 'id-ID',
+      year: now.year - 1,
+      month: 1,
+      pageLabels: { config: 'Pengaturan' }
+    })
+    assert.equal(kept.year, now.year - 1)
+    assert.equal(kept.month, 1)
+    assert.equal(kept.pageLabels.config, 'Pengaturan')
+    assert.equal(kept.pageLabels.employees, 'Employees')
+
+    const fallback = normalizeBasicConfig({ locale: 'id-ID', year: now.year + 11, month: 99 })
+    assert.equal(fallback.year, now.year)
+    assert.equal(fallback.month, now.month)
+
+    const fa = currentLocalePeriod('fa-IR')
+    const faConfig = normalizeBasicConfig({ locale: 'fa-IR' })
+    assert.equal(faConfig.year, fa.year)
+    assert.equal(faConfig.month, fa.month)
+    assert.notEqual(fa.year, new Date().getFullYear())
   }
 
   console.log('backup.test.js: all passed')

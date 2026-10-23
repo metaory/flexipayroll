@@ -126,7 +126,6 @@
     </div>
   {:else}
     <div class="adjustments-header">
-      <h3>Manual Adjustments - {period}</h3>
       <div class="adjustments-summary">
         <span>{employees.length} employees</span>
         <span>Positive = bonus, negative = deduction</span>
@@ -235,11 +234,7 @@
 
   .adjustments-header
     @extend %flex-between
-
-    h3
-      margin: 0
-      font-size: 1.5rem
-      @extend %gradient-text
+    justify-content: flex-end
 
   .adjustments-summary
     @extend %flex

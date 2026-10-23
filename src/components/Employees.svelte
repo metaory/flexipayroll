@@ -170,7 +170,6 @@
   <!-- Employee Management -->
   <section class="employee-management">
     <div class="employee-header">
-      <h3>Employees ({employees.length})</h3>
       <div class="employee-actions">
         <button class="primary" onclick={startAddEmployee}>
           <Icon icon={ICONS.add} width="1rem" height="1rem" />
@@ -342,13 +341,9 @@
     @extend %card-base
     padding: 0.65rem
 
-    h3
-      margin-bottom: 0.6rem
-      font-size: 1.5rem
-      color: var(--primary)
-
   .employee-header
     @extend %flex-between
+    justify-content: flex-end
     margin-bottom: 0.6rem
 
   .employee-actions

@@ -3,7 +3,7 @@
   import { STEPS } from '../payroll.js'
   import { ICONS } from '../lib/icons.js'
 
-  let { currentStep = 0, onNext, onPrev } = $props()
+  let { currentStep = 0, title = '', onNext, onPrev } = $props()
 
   const currentStepData = $derived(STEPS[currentStep])
 </script>
@@ -12,7 +12,7 @@
   <div class="step-info">
     <Icon icon={currentStepData.icon} width="2.25rem" height="2.25rem" style="width: 2.25rem; height: 2.25rem" />
     <div>
-      <h1>{currentStepData.title}</h1>
+      <h1>{title}</h1>
       <p>{currentStepData.formula || `Step ${currentStep + 1} of ${STEPS.length}`}</p>
     </div>
   </div>
@@ -126,7 +126,7 @@
     left: 0
     right: 0
     bottom: 0
-    padding: 1rem 1.25rem
+    padding: 1rem 1rem
     padding-top: 4.75rem
     overflow-y: auto
     overflow-x: hidden

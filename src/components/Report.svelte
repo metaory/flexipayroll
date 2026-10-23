@@ -1,7 +1,7 @@
 <script>
   import Icon from '@iconify/svelte/dist/OfflineIcon.svelte'
   import Dialog from './Dialog.svelte'
-  import { formatCurrency, formatHours } from '../core.js'
+  import { formatCurrency, formatHours, formatLocalePeriod } from '../core.js'
   import { buildCalculationSteps, getProbationLabel, hasProbationRules, resolveProbation } from '../payroll.js'
   import { PROBATION_BG } from '../probation.js'
   import { basicConfig } from '../stores.js'
@@ -110,7 +110,7 @@
               </span>
             {/if}
           </span>
-          <span class="period">{period}</span>
+          <span class="period">{formatLocalePeriod($basicConfig.year, $basicConfig.month, $basicConfig.locale)}</span>
         </div>
         <div class="stats">
           <span><Icon icon="tabler:calendar-check" width="1.1rem" height="1.1rem" />{result.actualDays} days</span>

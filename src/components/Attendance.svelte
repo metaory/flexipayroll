@@ -118,7 +118,6 @@
     </div>
   {:else}
     <div class="attendance-header">
-      <h3>Attendance - {period}</h3>
       <div class="attendance-summary">
         <span>{employees.length} employees</span>
         <span>Hours deviation (negative = missed)</span>
@@ -243,11 +242,7 @@
 
   .attendance-header
     @extend %flex-between
-
-    h3
-      margin: 0
-      font-size: 1.5rem
-      @extend %gradient-text
+    justify-content: flex-end
 
   .attendance-summary
     @extend %flex

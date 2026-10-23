@@ -72,6 +72,28 @@ export const formatLocalizedPeriod = (period, locale = 'id-ID') => {
     .format(new Date(year, month - 1, 1))
 }
 
+const monthWidth = (locale) => {
+  const probe = String(locale).startsWith('fa') ? new Date(2026, 3, 10) : new Date(2026, 0, 15)
+  const month = new Intl.DateTimeFormat(locale, {
+    ...localizedDateOptions(locale, { day: false }),
+    numberingSystem: 'latn'
+  }).formatToParts(probe).find((p) => p.type === 'month')?.value ?? ''
+  return month.startsWith('0') ? 2 : 1
+}
+
+export const formatLocalePeriod = (year, month, locale = 'id-ID') => {
+  const resolved = resolveLocale(locale)
+  const digits = (n, size) => new Intl.NumberFormat(resolved, {
+    minimumIntegerDigits: size,
+    useGrouping: false
+  }).format(n)
+  const rendered = { year: digits(year, 1), month: digits(month, monthWidth(resolved)) }
+  return new Intl.DateTimeFormat(resolved, localizedDateOptions(resolved, { day: false }))
+    .formatToParts(new Date())
+    .map((p) => rendered[p.type] ?? p.value)
+    .join('')
+}
+
 export const generateEmployeeId = () =>
   `emp_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`
 

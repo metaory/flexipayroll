@@ -3,7 +3,7 @@
  * Single-page summary for PDF export
  */
 
-import { formatCurrency, formatLocalizedPeriod } from '../core.js'
+import { formatCurrency, formatLocalePeriod, formatLocalizedPeriod } from '../core.js'
 import { resolveProbation } from '../payroll.js'
 import { resolveLocale } from '../persist.js'
 import { resolvePrintLabels } from '../stores.js'
@@ -97,7 +97,12 @@ export const buildPrintHtml = (result, period, config = {}) => {
   const labels = resolvePrintLabels(config)
   const locale = resolveLocale(config.locale)
   const fmt = (v) => formatCurrency(v, locale, 'IDR', currencySymbol)
-  const periodLabel = formatLocalizedPeriod(period, locale)
+  const year = Number(config.year)
+  const month = Number(config.month)
+  const chosen = Number.isInteger(year) && year > 0 && Number.isInteger(month) && month >= 1 && month <= 12
+  const periodLabel = chosen
+    ? formatLocalePeriod(year, month, locale)
+    : formatLocalizedPeriod(period, locale)
   const probationLabel = ({ a: labels.probationA, b: labels.probationB })[resolveProbation(result.employee)] ?? ''
   const headerLine = probationLabel
     ? `${esc(probationLabel)} - ${esc(result.employee.name)} · ${esc(periodLabel)}`

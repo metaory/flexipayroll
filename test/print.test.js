@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
-import { DEFAULT_PRINT_LABELS } from '../src/persist.js'
+import { DEFAULT_PAGE_LABELS, DEFAULT_PRINT_LABELS, resolvePageLabels } from '../src/persist.js'
 import { resolvePrintLabels } from '../src/stores.js'
-import { formatLocalizedDate, formatLocalizedPeriod } from '../src/core.js'
+import { formatLocalePeriod, formatLocalizedDate, formatLocalizedPeriod } from '../src/core.js'
 import {
   buildAdjustmentSection,
   buildEarningsSection,
@@ -160,6 +160,23 @@ const run = () => {
   {
     assert.equal(formatLocalizedPeriod('2026-06', 'fa-IR'), '۱۴۰۵/۰۳')
     assert.match(formatLocalizedDate(new Date(2026, 5, 24), 'fa-IR'), /۱۴۰۵/)
+  }
+
+  {
+    assert.equal(formatLocalePeriod(1405, 3, 'fa-IR'), '۱۴۰۵/۰۳')
+    const html = buildPrintHtml(baseResult, '2026-01', { locale: 'fa-IR', year: 1405, month: 3 })
+    assert.match(html, /۱۴۰۵\/۰۳/)
+    assert.doesNotMatch(html, /2026/)
+  }
+
+  {
+    assert.deepEqual(resolvePageLabels({}), DEFAULT_PAGE_LABELS)
+    const labels = resolvePageLabels({ pageLabels: { config: 'Pengaturan', report: '   ' } })
+    assert.equal(labels.config, 'Pengaturan')
+    assert.equal(labels.employees, DEFAULT_PAGE_LABELS.employees)
+    assert.equal(labels.attendance, DEFAULT_PAGE_LABELS.attendance)
+    assert.equal(labels.adjustments, DEFAULT_PAGE_LABELS.adjustments)
+    assert.equal(labels.report, DEFAULT_PAGE_LABELS.report)
   }
 
   console.log('print.test.js: all passed')

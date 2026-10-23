@@ -1,6 +1,6 @@
 <script>
   import Icon from '@iconify/svelte/dist/OfflineIcon.svelte'
-  import { rules, basicConfig, addRule, updateRule, removeRule, toggleRule, reorderRules, resetRules, updateBasicConfig, PRINT_LABEL_FIELDS, LOCALE_OPTIONS } from '../stores.js'
+  import { rules, basicConfig, addRule, updateRule, removeRule, toggleRule, reorderRules, resetRules, updateBasicConfig, PRINT_LABEL_FIELDS, PAGE_LABEL_FIELDS, LOCALE_OPTIONS, currentLocalePeriod, localeCalendar } from '../stores.js'
   import { RULE_TYPES, RULE_CATEGORIES, CRITERIA_TYPES } from '../rules.js'
   import { ICONS } from '../lib/icons.js'
   import { toasts } from '../lib/toast.js'
@@ -28,6 +28,14 @@
     { key: 'monthDays', type: 'number', min: 28, max: 31, fallback: 30 },
     { key: 'firstDayWeekday', type: 'select', fallback: 'Saturday', options: ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] }
   ]
+  const periodNow = $derived(currentLocalePeriod(basicConfigData.locale))
+  const configFields = $derived(CONFIG_FIELDS.flatMap((field) => field.key === 'locale'
+    ? [
+        field,
+        { key: 'month', type: 'select', fallback: String(periodNow.month), options: Array.from({ length: 12 }, (_, i) => String(i + 1)) },
+        { key: 'year', type: 'select', fallback: String(periodNow.year), options: Array.from({ length: 21 }, (_, i) => String(periodNow.year - 10 + i)) }
+      ]
+    : [field]))
   const RULE_TYPE_OPTIONS = [
     { value: RULE_TYPES.FIXED, label: 'Fixed' },
     { value: RULE_TYPES.HOURLY_PRORATED, label: 'Hourly Prorated' },
@@ -62,14 +70,16 @@
 
   // Basic config handler
   const updateBasicConfigField = (field, value) => {
-    basicConfigData = { ...basicConfigData, [field]: value }
-    updateBasicConfig({ [field]: value })
+    const resetPeriod = field === 'locale' && localeCalendar(basicConfigData.locale) !== localeCalendar(value)
+    const patch = resetPeriod ? { locale: value, ...currentLocalePeriod(value) } : { [field]: value }
+    basicConfigData = { ...basicConfigData, ...patch }
+    updateBasicConfig(patch)
   }
 
-  const updatePrintLabel = (key, fallback, value) => {
-    const printLabels = { ...basicConfigData.printLabels, [key]: value || fallback }
-    basicConfigData = { ...basicConfigData, printLabels }
-    updateBasicConfig({ printLabels })
+  const updateGroupedLabel = (group, key, fallback, value) => {
+    const labels = { ...basicConfigData[group], [key]: value || fallback }
+    basicConfigData = { ...basicConfigData, [group]: labels }
+    updateBasicConfig({ [group]: labels })
   }
 
   // Storage reset
@@ -136,13 +146,12 @@
 
 <div class="rules-container">
   <section class="basic-config">
-    <h3>Config</h3>
     <div class="config-grid">
-      {#each CONFIG_FIELDS as f}
+      {#each configFields as f}
         <label class="field">
           <span>{f.key}</span>
           {#if f.type === 'select'}
-            <select value={basicConfigData[f.key] || f.fallback} onchange={(e) => updateBasicConfigField(f.key, e.target.value || f.fallback)}>
+            <select value={String(basicConfigData[f.key] || f.fallback)} onchange={(e) => updateBasicConfigField(f.key, e.target.value || f.fallback)}>
               {#each f.options as opt}
                 {#if typeof opt === 'object'}
                   <option value={opt.value}>{opt.value}</option>
@@ -171,7 +180,7 @@
           <input type="text"
             placeholder={f.fallback}
             value={basicConfigData.printLabels?.[f.key] === f.fallback ? '' : (basicConfigData.printLabels?.[f.key] ?? '')}
-            oninput={(e) => updatePrintLabel(f.key, f.fallback, e.target.value)} />
+            oninput={(e) => updateGroupedLabel('printLabels', f.key, f.fallback, e.target.value)} />
         </label>
       {/each}
     </div>
@@ -182,6 +191,18 @@
         value={basicConfigData.footerLabel ?? ''}
         oninput={(e) => updateBasicConfigField('footerLabel', e.target.value)} />
     </label>
+    <h4 class="config-subhead">Page labels</h4>
+    <div class="config-grid">
+      {#each PAGE_LABEL_FIELDS as f}
+        <label class="field">
+          <span>{f.key}</span>
+          <input type="text"
+            placeholder={f.fallback}
+            value={basicConfigData.pageLabels?.[f.key] === f.fallback ? '' : (basicConfigData.pageLabels?.[f.key] ?? '')}
+            oninput={(e) => updateGroupedLabel('pageLabels', f.key, f.fallback, e.target.value)} />
+        </label>
+      {/each}
+    </div>
     <div class="config-actions">
       <button class="danger" onclick={resetAllStorage}>
         <Icon icon={ICONS.warning} width="1.4rem" height="1.4rem" />

@@ -9,11 +9,11 @@ import { ICONS } from './lib/icons.js'
 
 // Step definitions - simplified for rules-based system
 export const STEPS = [
-  { id: 'config', title: 'Configuration', icon: ICONS.stepConfig, type: 'config' },
-  { id: 'employees', title: 'Employees', icon: ICONS.stepEmployees, type: 'form' },
-  { id: 'attendance', title: 'Attendance', icon: ICONS.stepAttendance, type: 'form' },
-  { id: 'adjustments', title: 'Adjustments', icon: ICONS.stepAdjustments, type: 'form' },
-  { id: 'report', title: 'Reports', icon: ICONS.stepReport, type: 'report' }
+  { id: 'config', icon: ICONS.stepConfig, type: 'config' },
+  { id: 'employees', icon: ICONS.stepEmployees, type: 'form' },
+  { id: 'attendance', icon: ICONS.stepAttendance, type: 'form' },
+  { id: 'adjustments', icon: ICONS.stepAdjustments, type: 'form' },
+  { id: 'report', icon: ICONS.stepReport, type: 'report' }
 ]
 
 // Pure calculation functions using rules engine

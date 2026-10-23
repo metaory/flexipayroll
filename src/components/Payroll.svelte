@@ -7,13 +7,25 @@
   import Report from './Report.svelte'
   import Icon from '@iconify/svelte/dist/OfflineIcon.svelte'
   
-  import { employees, rules, basicConfig, currentPeriod, attendanceItems, adjustments, wizardStep } from '../stores.js'
+  import { employees, rules, basicConfig, currentPeriod, attendanceItems, adjustments, wizardStep, resolvePageLabels } from '../stores.js'
   import { STEPS, calculateEmployeePayroll } from '../payroll.js'
   import { normalizeAttendance } from '../core.js'
   
   // Keep config values as-is: workingDaysPerMonth and monthDays are independent user settings.
   const currentStepData = $derived(STEPS[$wizardStep])
   const payrollConfig = $derived($basicConfig)
+  const pageTitle = $derived.by(() => {
+    const labels = resolvePageLabels(payrollConfig)
+    const period = $currentPeriod
+    const titles = {
+      config: labels.config,
+      employees: `${labels.employees} (${$employees.length})`,
+      attendance: `${labels.attendance} - ${period}`,
+      adjustments: `${labels.adjustments} - ${period}`,
+      report: labels.report
+    }
+    return titles[currentStepData.id]
+  })
   
   const results = $derived.by(() => {
     const period = $currentPeriod
@@ -58,7 +70,7 @@
 
 <svelte:window onkeydown={handleKey} />
 
-<Wizard currentStep={$wizardStep} onNext={handleNext} onPrev={handlePrev}>
+<Wizard title={pageTitle} currentStep={$wizardStep} onNext={handleNext} onPrev={handlePrev}>
   
   {#if currentStepData.id === 'config'}
     <Rules basicConfigData={$basicConfig} />

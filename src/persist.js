@@ -35,6 +35,49 @@ export const resolvePrintLabels = (config = {}) =>
     ])
   )
 
+export const DEFAULT_PAGE_LABELS = {
+  config: 'Config',
+  employees: 'Employees',
+  attendance: 'Attendance',
+  adjustments: 'Manual Adjustments',
+  report: 'Reports'
+}
+
+const labelOr = (value, fallback) => {
+  const text = String(value ?? '').trim()
+  return text || fallback
+}
+
+export const resolvePageLabels = (config = {}) =>
+  Object.fromEntries(
+    Object.entries(DEFAULT_PAGE_LABELS).map(([k, fallback]) => [
+      k,
+      labelOr(config?.pageLabels?.[k], fallback)
+    ])
+  )
+
+const faCalendar = (locale) => (String(locale).startsWith('fa') ? { calendar: 'persian' } : {})
+
+export const localeCalendar = (locale) =>
+  new Intl.DateTimeFormat(resolveLocale(locale), faCalendar(locale)).resolvedOptions().calendar
+
+export const currentLocalePeriod = (locale, date = new Date()) => {
+  const resolved = resolveLocale(locale)
+  const parts = new Intl.DateTimeFormat(resolved, {
+    year: 'numeric',
+    month: 'numeric',
+    numberingSystem: 'latn',
+    ...faCalendar(resolved)
+  }).formatToParts(date)
+  const num = (type) => Number(parts.find((p) => p.type === type)?.value)
+  return { year: num('year'), month: num('month') }
+}
+
+const inSpan = (value, min, max, fallback) => {
+  const n = Number(value)
+  return Number.isInteger(n) && n >= min && n <= max ? n : fallback
+}
+
 const LOCALE_OPTIONS = [
   'id-ID', 'en-US', 'en-GB', 'fa-IR', 'ar-SA', 'de-DE', 'fr-FR',
   'es-ES', 'nl-NL', 'pt-BR', 'tr-TR', 'ja-JP', 'zh-CN', 'hi-IN'
@@ -53,7 +96,8 @@ export const DEFAULT_BASIC_CONFIG = {
   overtimeRate: 1.5,
   undertimeRate: 0.5,
   footerLabel: '',
-  printLabels: { ...DEFAULT_PRINT_LABELS }
+  printLabels: { ...DEFAULT_PRINT_LABELS },
+  pageLabels: { ...DEFAULT_PAGE_LABELS }
 }
 
 export const DEFAULT_SETTINGS = {
@@ -162,24 +206,31 @@ const normalizeAdjustment = (adj) => {
   }
 }
 
-export const normalizeBasicConfig = (c) => ({
-  ...DEFAULT_BASIC_CONFIG,
-  ...c,
-  printLabels: resolvePrintLabels(c),
-  locale: resolveLocale(c?.locale),
-  workdayHours: toPositiveNum(c?.workdayHours, DEFAULT_BASIC_CONFIG.workdayHours),
-  workingDaysPerMonth: toPositiveNum(c?.workingDaysPerMonth, DEFAULT_BASIC_CONFIG.workingDaysPerMonth),
-  monthDays: toPositiveNum(c?.monthDays, DEFAULT_BASIC_CONFIG.monthDays),
-  overtimeRate: toNum(c?.overtimeRate, DEFAULT_BASIC_CONFIG.overtimeRate),
-  undertimeRate: toNum(
-    c?.undertimeRate ?? c?.undertimeDeductionRate,
-    DEFAULT_BASIC_CONFIG.undertimeRate
-  ),
-  organizationName: String(c?.organizationName ?? DEFAULT_BASIC_CONFIG.organizationName),
-  currencySymbol: String(c?.currencySymbol ?? DEFAULT_BASIC_CONFIG.currencySymbol),
-  footerLabel: String(c?.footerLabel ?? ''),
-  firstDayWeekday: String(c?.firstDayWeekday || DEFAULT_BASIC_CONFIG.firstDayWeekday)
-})
+export const normalizeBasicConfig = (c) => {
+  const locale = resolveLocale(c?.locale)
+  const now = currentLocalePeriod(locale)
+  return {
+    ...DEFAULT_BASIC_CONFIG,
+    ...c,
+    printLabels: resolvePrintLabels(c),
+    pageLabels: resolvePageLabels(c),
+    locale,
+    year: inSpan(c?.year, now.year - 10, now.year + 10, now.year),
+    month: inSpan(c?.month, 1, 12, now.month),
+    workdayHours: toPositiveNum(c?.workdayHours, DEFAULT_BASIC_CONFIG.workdayHours),
+    workingDaysPerMonth: toPositiveNum(c?.workingDaysPerMonth, DEFAULT_BASIC_CONFIG.workingDaysPerMonth),
+    monthDays: toPositiveNum(c?.monthDays, DEFAULT_BASIC_CONFIG.monthDays),
+    overtimeRate: toNum(c?.overtimeRate, DEFAULT_BASIC_CONFIG.overtimeRate),
+    undertimeRate: toNum(
+      c?.undertimeRate ?? c?.undertimeDeductionRate,
+      DEFAULT_BASIC_CONFIG.undertimeRate
+    ),
+    organizationName: String(c?.organizationName ?? DEFAULT_BASIC_CONFIG.organizationName),
+    currencySymbol: String(c?.currencySymbol ?? DEFAULT_BASIC_CONFIG.currencySymbol),
+    footerLabel: String(c?.footerLabel ?? ''),
+    firstDayWeekday: String(c?.firstDayWeekday || DEFAULT_BASIC_CONFIG.firstDayWeekday)
+  }
+}
 
 export const normalizeRules = (list) => {
   const used = new Set()
