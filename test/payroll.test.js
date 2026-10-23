@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { applyRules } from '../src/rules.js'
-import { buildCalculationSteps, calculateEmployeePayroll } from '../src/payroll.js'
+import { buildCalculationSteps, calculateEmployeePayroll, roundTakeHome } from '../src/payroll.js'
+import { buildPrintHtml } from '../src/lib/print.js'
 import { normalizeProbationFields } from '../src/probation.js'
 import { attendancePay } from '../src/core.js'
 
@@ -315,6 +316,27 @@ const run = () => {
     assert.ok(near(withAdj.finalSalary, none.finalSalary + 300000), `final should rise by 300000, got ${withAdj.finalSalary}`)
     assert.equal(withAdj.adjustments[0].amount, 500000, 'positive adjustment kept')
     assert.equal(withAdj.adjustments[1].amount, -200000, 'negative adjustment kept')
+  }
+
+  {
+    assert.equal(roundTakeHome(225023948), 225024000, '9-digit take-home rounds up to the next thousand')
+    assert.equal(roundTakeHome(225024000), 225024000, 'exact thousand stays')
+    assert.equal(roundTakeHome(99999999), 99999999, '8-digit amount stays exact')
+    assert.equal(roundTakeHome(1000000000), 1000000000, '10-digit amount stays exact')
+    assert.equal(roundTakeHome(-225023948), -225023948, 'negative amount stays exact')
+  }
+
+  {
+    const emp = { id: 'nine', dailySalary: 225023948 }
+    const config = { workdayHours: 8, workingDaysPerMonth: 1, monthDays: 30, overtimeRate: 0, undertimeRate: 0 }
+    const result = calculateEmployeePayroll(emp, { items: [], absent: 0 }, [], [], config)
+    assert.equal(result.grossSalary, 225023948)
+    assert.equal(result.finalSalary, 225024000, 'payroll payout uses the rounded take-home')
+    const takeHome = buildCalculationSteps(result).find(step => step.section === 'final')
+    assert.equal(takeHome.result, 225024000)
+    assert.match(takeHome.formulaWithValues, /rounded up to/)
+    const html = buildPrintHtml(result, '2026-01', { currencySymbol: '$' })
+    assert.match(html, /\$ 225\.024\.000/)
   }
 }
 

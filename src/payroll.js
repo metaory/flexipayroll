@@ -23,6 +23,13 @@ const asAdjustmentList = (adjustments) =>
 const sumAdjustments = (adjustments) =>
   asAdjustmentList(adjustments).reduce((sum, adj) => sum + (Number(adj?.amount) || 0), 0)
 
+/** 9-digit amounts round up so the last three digits are zero. Any other length stays as-is. */
+export const roundTakeHome = (amount) => {
+  const shown = Math.round(amount)
+  if (shown < 1e8 || shown > 1e9 - 1) return amount
+  return Math.ceil(shown / 1000) * 1000
+}
+
 export const calculateEmployeePayroll = (employee, attendanceItems, adjustments, rules, basicConfig) => {
   const dailyRate = calculateDailyRate(employee.dailySalary)
   const hourlyRate = calculateHourlyRate(employee.dailySalary, basicConfig.workdayHours)
@@ -72,7 +79,7 @@ export const calculateEmployeePayroll = (employee, attendanceItems, adjustments,
   }, 0)
   
   // Final salary = gross salary - deductions (subtract only once)
-  const finalSalary = grossSalary - totalDeductions
+  const finalSalary = roundTakeHome(grossSalary - totalDeductions)
   
   return {
     employee,
@@ -460,12 +467,20 @@ export const buildCalculationSteps = (result) => {
     section: 'summary'
   })
   const totalDeductions = Object.values(result.ruleResults.deductions || {}).reduce((sum, item) => sum + (item.finalValue || item.value), 0)
+  const exact = result.grossSalary - totalDeductions
+  const payout = result.finalSalary
+  const shown = Math.round(exact)
+  const changed = roundTakeHome(exact) === payout && shown !== payout
+  const tail = changed
+    ? `${shown.toLocaleString()}, rounded up to ${payout.toLocaleString()}`
+    : payout.toLocaleString()
+  const explanation = 'The final amount the employee receives after all deductions have been subtracted from the gross salary (which includes base salary, bonuses, and adjustments).'
   steps.push({
     label: 'Take-Home Salary',
     formula: 'Gross Salary - All Deductions',
-    formulaWithValues: `${result.grossSalary.toLocaleString()} - ${totalDeductions.toLocaleString()} = ${result.finalSalary.toLocaleString()}`,
-    result: result.finalSalary,
-    explanation: 'The final amount the employee receives after all deductions have been subtracted from the gross salary (which includes base salary, bonuses, and adjustments).',
+    formulaWithValues: `${result.grossSalary.toLocaleString()} - ${totalDeductions.toLocaleString()} = ${tail}`,
+    result: payout,
+    explanation: changed ? `${explanation} Rounded up to the next thousand.` : explanation,
     inputs: { gross: result.grossSalary, deductions: totalDeductions },
     type: 'final',
     section: 'final'
